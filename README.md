@@ -3,7 +3,7 @@
 ## Install
 
 ```powershell
-pip install datasets pillow
+python -m pip install -r .\requirements.txt
 ```
 
 ## Run
