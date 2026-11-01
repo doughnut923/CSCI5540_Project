@@ -1,0 +1,59 @@
+{
+  "seed": 55402026,
+  "samples_per_count_per_condition": 16,
+  "counts": [
+    1,
+    2,
+    3,
+    4,
+    8
+  ],
+  "conditions": [
+    "native_aspect",
+    "padded_control"
+  ],
+  "target_visual_tokens_per_sample": 576,
+  "source_pool_size": 8,
+  "source_type": "already-local Dataset Viewer JPEG previews, not full-resolution original dataset",
+  "source_pool_reuse": "sources repeat across samples; distinct ordered samples do not imply independent unique photos",
+  "selection": "random.Random(seed + N*100000 + sample_index).sample(range(8), N); same assignments in both conditions",
+  "padded_control": {
+    "processed_target_hw": {
+      "1": [
+        672,
+        672
+      ],
+      "2": [
+        448,
+        504
+      ],
+      "3": [
+        336,
+        448
+      ],
+      "4": [
+        336,
+        336
+      ],
+      "8": [
+        224,
+        252
+      ]
+    },
+    "prepared_canvas": "2x target H and W",
+    "fit": "aspect ratio preserved, complete field of view retained, centered gray RGB128 padding, no crop",
+    "caution": "padding is a controlled intervention; this does not establish model quality or a native solution for arbitrary image shapes"
+  },
+  "processor": {
+    "model_id": "Qwen/Qwen2-VL-2B-Instruct",
+    "revision": "895c3a49bc3fa70a340399125c650a463535e71c",
+    "transformers": "4.49.0",
+    "min_pixels": 3136,
+    "max_pixels": "(576 // N) * 784",
+    "patch_size": 14,
+    "merge_size": 2,
+    "temporal_patch_size": 2
+  },
+  "scope": "official processor plus tokenizer, NumPy, CPU; no weights or model forward or training",
+  "performance_measurement": false
+}

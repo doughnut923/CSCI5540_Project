@@ -1,0 +1,253 @@
+{
+  "samples_total": 160,
+  "source_image_instances_total": 576,
+  "source_pool_unique_images": 8,
+  "all_samples_retention_pass": true,
+  "groups": [
+    {
+      "condition": "native_aspect",
+      "image_count": 1,
+      "sample_count": 16,
+      "source_image_instances": 16,
+      "all_images_retained_count": 16,
+      "min_derived_total": 216,
+      "max_derived_total": 252,
+      "unique_derived_totals": [
+        216,
+        221,
+        234,
+        252
+      ],
+      "exact_576_count": 0,
+      "processed_hw_values": [
+        "[336, 504]",
+        "[364, 476]",
+        "[364, 504]",
+        "[392, 504]",
+        "[504, 336]"
+      ],
+      "patch_row_totals": [
+        864,
+        884,
+        936,
+        1008
+      ]
+    },
+    {
+      "condition": "native_aspect",
+      "image_count": 2,
+      "sample_count": 16,
+      "source_image_instances": 32,
+      "all_images_retained_count": 16,
+      "min_derived_total": 432,
+      "max_derived_total": 486,
+      "unique_derived_totals": [
+        432,
+        437,
+        450,
+        455,
+        468,
+        473,
+        486
+      ],
+      "exact_576_count": 0,
+      "processed_hw_values": [
+        "[336, 504]",
+        "[364, 476]",
+        "[364, 504]",
+        "[392, 504]",
+        "[504, 336]"
+      ],
+      "patch_row_totals": [
+        1728,
+        1748,
+        1800,
+        1820,
+        1872,
+        1892,
+        1944
+      ]
+    },
+    {
+      "condition": "native_aspect",
+      "image_count": 3,
+      "sample_count": 16,
+      "source_image_instances": 48,
+      "all_images_retained_count": 16,
+      "min_derived_total": 536,
+      "max_derived_total": 576,
+      "unique_derived_totals": [
+        536,
+        543,
+        548,
+        552,
+        559,
+        560,
+        564,
+        571,
+        576
+      ],
+      "exact_576_count": 1,
+      "processed_hw_values": [
+        "[308, 476]",
+        "[336, 420]",
+        "[336, 448]",
+        "[448, 308]"
+      ],
+      "patch_row_totals": [
+        2144,
+        2172,
+        2192,
+        2208,
+        2236,
+        2240,
+        2256,
+        2284,
+        2304
+      ]
+    },
+    {
+      "condition": "native_aspect",
+      "image_count": 4,
+      "sample_count": 16,
+      "source_image_instances": 64,
+      "all_images_retained_count": 16,
+      "min_derived_total": 512,
+      "max_derived_total": 520,
+      "unique_derived_totals": [
+        512,
+        516,
+        520
+      ],
+      "exact_576_count": 0,
+      "processed_hw_values": [
+        "[252, 392]",
+        "[280, 364]",
+        "[392, 252]"
+      ],
+      "patch_row_totals": [
+        2048,
+        2064,
+        2080
+      ]
+    },
+    {
+      "condition": "native_aspect",
+      "image_count": 8,
+      "sample_count": 16,
+      "source_image_instances": 128,
+      "all_images_retained_count": 16,
+      "min_derived_total": 498,
+      "max_derived_total": 498,
+      "unique_derived_totals": [
+        498
+      ],
+      "exact_576_count": 0,
+      "processed_hw_values": [
+        "[168, 280]",
+        "[196, 252]",
+        "[280, 168]"
+      ],
+      "patch_row_totals": [
+        1992
+      ]
+    },
+    {
+      "condition": "padded_control",
+      "image_count": 1,
+      "sample_count": 16,
+      "source_image_instances": 16,
+      "all_images_retained_count": 16,
+      "min_derived_total": 576,
+      "max_derived_total": 576,
+      "unique_derived_totals": [
+        576
+      ],
+      "exact_576_count": 16,
+      "processed_hw_values": [
+        "[672, 672]"
+      ],
+      "patch_row_totals": [
+        2304
+      ]
+    },
+    {
+      "condition": "padded_control",
+      "image_count": 2,
+      "sample_count": 16,
+      "source_image_instances": 32,
+      "all_images_retained_count": 16,
+      "min_derived_total": 576,
+      "max_derived_total": 576,
+      "unique_derived_totals": [
+        576
+      ],
+      "exact_576_count": 16,
+      "processed_hw_values": [
+        "[448, 504]"
+      ],
+      "patch_row_totals": [
+        2304
+      ]
+    },
+    {
+      "condition": "padded_control",
+      "image_count": 3,
+      "sample_count": 16,
+      "source_image_instances": 48,
+      "all_images_retained_count": 16,
+      "min_derived_total": 576,
+      "max_derived_total": 576,
+      "unique_derived_totals": [
+        576
+      ],
+      "exact_576_count": 16,
+      "processed_hw_values": [
+        "[336, 448]"
+      ],
+      "patch_row_totals": [
+        2304
+      ]
+    },
+    {
+      "condition": "padded_control",
+      "image_count": 4,
+      "sample_count": 16,
+      "source_image_instances": 64,
+      "all_images_retained_count": 16,
+      "min_derived_total": 576,
+      "max_derived_total": 576,
+      "unique_derived_totals": [
+        576
+      ],
+      "exact_576_count": 16,
+      "processed_hw_values": [
+        "[336, 336]"
+      ],
+      "patch_row_totals": [
+        2304
+      ]
+    },
+    {
+      "condition": "padded_control",
+      "image_count": 8,
+      "sample_count": 16,
+      "source_image_instances": 128,
+      "all_images_retained_count": 16,
+      "min_derived_total": 576,
+      "max_derived_total": 576,
+      "unique_derived_totals": [
+        576
+      ],
+      "exact_576_count": 16,
+      "processed_hw_values": [
+        "[224, 252]"
+      ],
+      "patch_row_totals": [
+        2304
+      ]
+    }
+  ],
+  "scope": "official processor plus tokenizer, NumPy, CPU; no weights or model forward or training",
+  "inference_or_training_performed": false
+}

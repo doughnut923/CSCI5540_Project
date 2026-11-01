@@ -1,0 +1,6 @@
+datasets
+numpy
+Pillow
+torch
+torchvision
+transformers

@@ -1,0 +1,55 @@
+{
+  "seed": 55402026,
+  "samples_per_count": 8,
+  "counts": [
+    1,
+    2,
+    3,
+    4,
+    8
+  ],
+  "target": 576,
+  "aligned_shapes_hw": {
+    "1": [
+      672,
+      672
+    ],
+    "2": [
+      448,
+      504
+    ],
+    "3": [
+      336,
+      448
+    ],
+    "4": [
+      336,
+      336
+    ],
+    "8": [
+      224,
+      252
+    ]
+  },
+  "min_pixels": 3136,
+  "max_pixels_rule": "576/N * 28^2",
+  "allocation": "equal visual tokens per image, constructed aspect ratios",
+  "mixtures": {
+    "A2-Low": {
+      "1": 1.0
+    },
+    "A2-Med": {
+      "1": 0.3333333333333333,
+      "2": 0.3333333333333333,
+      "3": 0.3333333333333333
+    },
+    "A2-High": {
+      "1": 0.25,
+      "2": 0.25,
+      "4": 0.25,
+      "8": 0.25
+    }
+  },
+  "mixture_status": "temporary balanced pilot, reuse the recorded N-strata",
+  "scope": "official image processor and tokenizer only; no model weights or forward"
+}
