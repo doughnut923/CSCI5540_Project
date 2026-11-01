@@ -14,6 +14,7 @@ import numpy as np
 
 RESOLUTIONS = (128, 256, 384)
 TOKEN_COST = {128: 25, 256: 81, 384: 196}
+SOURCE_RESOLUTIONS = (128, 256, 384)
 DISTRIBUTIONS = {
     "Low": None,
     "Medium": None,
@@ -39,8 +40,21 @@ def generate_datasets(
     *,
     seed: int = 42,
 ) -> DatasetMetadata:
-    """Generate exact-count resolution datasets for each variance level."""
+    """Generate exact-count datasets with source and target resolutions aligned."""
     image_ids = _validate_image_ids(base_image_ids)
+    source_pools = {
+        resolution: [
+            image_id
+            for image_id in image_ids
+            if f"image_sets/{resolution}/" in image_id.replace("\\", "/")
+        ]
+        for resolution in RESOLUTIONS
+    }
+    if any(not pool for pool in source_pools.values()):
+        raise ValueError(
+            "Each of image_sets/128, image_sets/256, and image_sets/384 "
+            "must contain at least one source image."
+        )
     dataset_metadata: DatasetMetadata = {}
 
     for group_name in DISTRIBUTIONS:
@@ -55,18 +69,29 @@ def generate_datasets(
             resolutions = [128, 128, 384] * (len(image_ids) // 3)
 
         resolutions.extend([256] * (len(image_ids) - len(resolutions)))
-        random.Random(seed).shuffle(resolutions)
+        randomizer = random.Random(seed)
+        randomizer.shuffle(resolutions)
+        pool_positions = {resolution: 0 for resolution in RESOLUTIONS}
+        aligned_image_ids = []
+        for resolution in resolutions:
+            pool = source_pools[resolution]
+            position = pool_positions[resolution]
+            aligned_image_ids.append(pool[position % len(pool)])
+            pool_positions[resolution] += 1
+
         group_dataset = [
             {
                 "image_id": image_id,
                 "resolution": resolution,
-                "tokens": TOKEN_COST[resolution],
+                "token_cost_estimate": TOKEN_COST[resolution],
             }
-            for image_id, resolution in zip(image_ids, resolutions)
+            for image_id, resolution in zip(aligned_image_ids, resolutions)
         ]
         dataset_metadata[group_name] = group_dataset
 
-        tokens = np.array([record["tokens"] for record in group_dataset])
+        tokens = np.array(
+            [record["token_cost_estimate"] for record in group_dataset]
+        )
         print(
             f"{group_name}: mean={tokens.mean():.1f}, "
             f"std={tokens.std():.1f}"
@@ -80,7 +105,7 @@ def verify_datasets(
 ) -> None:
     """Print token mean and population standard deviation for each group."""
     for group_name, dataset in dataset_metadata.items():
-        tokens = [record["tokens"] for record in dataset]
+        tokens = [record["token_cost_estimate"] for record in dataset]
         average = statistics.mean(tokens)
         std_dev = statistics.pstdev(tokens) if len(tokens) > 1 else 0.0
         print(f"--- {group_name} Verification ---")
@@ -119,10 +144,11 @@ def load_image_ids(path: Path) -> list[str]:
 
 
 def discover_image_ids(image_dir: Path = Path("image_sets")) -> list[str]:
-    """Discover image paths from generated image-set folders."""
+    """Discover images only from the configured source-resolution folders."""
     image_paths = sorted(
         path
-        for path in image_dir.rglob("*")
+        for resolution in SOURCE_RESOLUTIONS
+        for path in (image_dir / str(resolution)).glob("*")
         if path.is_file() and path.suffix.lower() in {".jpg", ".jpeg", ".png"}
     )
     return [path.as_posix() for path in image_paths]
