@@ -2,7 +2,18 @@
 
 This folder contains Group 8's image-count input-pipeline check. It is separate from the repository's image-resolution data-preparation script. It does not implement a BigMac integration or run training.
 
-**Reference candidate, not a selected group model:** `Qwen/Qwen2-VL-2B-Instruct`, revision `895c3a49bc3fa70a340399125c650a463535e71c`. This is a different model family from the proposal's provisional approximately 1.5B LLaVA-style model. The final checkpoint and training-system integration remain open.
+**Planned group model:** `Qwen/Qwen2-VL-2B-Instruct`. The checks use tokenizer/config revision `895c3a49bc3fa70a340399125c650a463535e71c`. Full-model training-system integration has not been run by this pilot. The proposal originally listed a provisional LLaVA-style model; the group now plans to use Qwen2-VL.
+
+## Latest real-photo check
+
+The midterm real-photo check is in [`real_photo_pilot/`](real_photo_pilot/).
+It checks 160 paired inputs built from eight real photo previews, with N = 1, 2,
+3, 4 and 8. All images survived preprocessing; all 80 padded inputs reached the
+derived shared 576-token target. That folder includes a portable script, the
+eight small previews, provenance, original records and reproduction instructions.
+It is processor-only, not a model training run.
+
+The sections below describe the earlier synthetic-input pilot and its original evidence.
 
 ## Reproduce
 
@@ -59,7 +70,7 @@ Equal token totals do not establish equal encoder compute. The constructed shape
 
 A2-Low uses N=1; A2-Med lists N=1/2/3; A2-High lists N=1/2/4/8. Equal mixture weights recorded in `reference_config.json` are temporary pilot settings, not a requirement or a performed mixed training run.
 
-Next: confirm the group's model, audit a small real-image pilot, verify all embeddings in an actual model forward pass, and only then measure matched encoder/runtime/training behavior on authorized hardware.
+The real-photo preprocessing follow-up is now available above. Next: integrate the planned Qwen2-VL model, verify all embeddings in an actual model forward pass, and only then measure matched encoder/runtime/training behavior on authorized hardware.
 
 ## Included evidence
 
@@ -73,3 +84,4 @@ Files named `reference_*.csv` and `reference_*.json` contain the original succes
 - [Pinned candidate files](https://huggingface.co/Qwen/Qwen2-VL-2B-Instruct/tree/895c3a49bc3fa70a340399125c650a463535e71c)
 - [Transformers 4.49.0 image processor](https://github.com/huggingface/transformers/blob/v4.49.0/src/transformers/models/qwen2_vl/image_processing_qwen2_vl.py)
 - [Transformers 4.49.0 multimodal processor](https://github.com/huggingface/transformers/blob/v4.49.0/src/transformers/models/qwen2_vl/processing_qwen2_vl.py)
+
