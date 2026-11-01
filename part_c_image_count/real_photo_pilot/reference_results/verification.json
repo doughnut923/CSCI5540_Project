@@ -1,0 +1,13 @@
+{
+  "portable_rerun_exit_code": 0,
+  "sample_records": 160,
+  "source_photos": 8,
+  "summary_matches_original": true,
+  "all_sample_records_match_original": true,
+  "csv_bytes_match_original": true,
+  "representative_padded_pngs_match_original": true,
+  "pinned_asset_hashes_verified": true,
+  "existing_output_rejected_without_changes": true,
+  "python_compile_passed": true,
+  "scope": "CPU processor/tokenizer checks only; no encoder/LLM forward or training"
+}
