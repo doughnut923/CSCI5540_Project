@@ -1,0 +1,66 @@
+{
+  "image_grid_thw": [
+    [
+      1,
+      16,
+      18
+    ],
+    [
+      1,
+      16,
+      18
+    ],
+    [
+      1,
+      16,
+      18
+    ],
+    [
+      1,
+      16,
+      18
+    ],
+    [
+      1,
+      16,
+      18
+    ],
+    [
+      1,
+      16,
+      18
+    ],
+    [
+      1,
+      16,
+      18
+    ],
+    [
+      1,
+      16,
+      18
+    ],
+    [
+      1,
+      16,
+      18
+    ]
+  ],
+  "pixel_values_shape": [
+    2592,
+    1176
+  ],
+  "input_ids_shape": [
+    2,
+    594
+  ],
+  "padding_tokens_per_sample": [
+    518,
+    0
+  ],
+  "image_slots_per_sample": [
+    72,
+    576
+  ],
+  "purpose": "padding accounting check only; common 72-token per-image cap; not shared-budget experiment"
+}

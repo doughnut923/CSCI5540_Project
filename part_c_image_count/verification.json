@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "date": "2026-10-31",
+  "scope": "CPU preprocessing, tokenizer and data bookkeeping only",
+  "assets_verified": 6,
+  "network_used": false,
+  "weights_downloaded": false,
+  "aligned_samples": 40,
+  "square_stress_samples": 5,
+  "padding_check": true,
+  "all_images_retained": true,
+  "reference_sample_records_compared": 45,
+  "reference_record_fields_equal_except": [
+    "cpu_processor_ms_uncontrolled"
+  ],
+  "synthetic_png_hashes_match_reference": true,
+  "summary_matches_reference": true,
+  "padding_matches_reference": true,
+  "encoder_forward": false,
+  "llm_forward": false,
+  "training": false,
+  "limitations": "Timing is uncontrolled; derived visual-token totals are not measured encoder outputs or LLM embeddings.",
+  "command": "python validate_pipeline.py --assets-dir EXISTING_PINNED_ASSETS --output-dir runs/portable_full_v1",
+  "existing_run_refuses_overwrite": true,
+  "corrupt_asset_rejected": true,
+  "python_compile": true
+}

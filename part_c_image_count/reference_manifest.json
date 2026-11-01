@@ -1,0 +1,1775 @@
+[
+  {
+    "sample_id": "aligned_N1_00",
+    "kind": "aligned",
+    "image_count": 1,
+    "images": [
+      {
+        "image_id": "aligned_N1_00:0",
+        "seed": 55412026,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "6c3b630bbceeb87f3cb570738666ce112fabf2fb134d3384b6fedee01e42853f"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N1_01",
+    "kind": "aligned",
+    "image_count": 1,
+    "images": [
+      {
+        "image_id": "aligned_N1_01:0",
+        "seed": 55412126,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "956aca72b4e2e7e8e89324865bf1ef0a6a85cd79654b7df6ab9f7a6880986c0e"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N1_02",
+    "kind": "aligned",
+    "image_count": 1,
+    "images": [
+      {
+        "image_id": "aligned_N1_02:0",
+        "seed": 55412226,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "f550bcd0f92873361ce3ef69a586ac35437b03eef8b38a84e40bb956eeb03265"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N1_03",
+    "kind": "aligned",
+    "image_count": 1,
+    "images": [
+      {
+        "image_id": "aligned_N1_03:0",
+        "seed": 55412326,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "a34d8a384a5a6a1ace06256980d293791a03629a96a84039821e0417c9e12d8a"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N1_04",
+    "kind": "aligned",
+    "image_count": 1,
+    "images": [
+      {
+        "image_id": "aligned_N1_04:0",
+        "seed": 55412426,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "b88f3d5bd4d5e6d9f92ba7de61b23d3c8da7b6751bb2af17422f6448e9c9f5f9"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N1_05",
+    "kind": "aligned",
+    "image_count": 1,
+    "images": [
+      {
+        "image_id": "aligned_N1_05:0",
+        "seed": 55412526,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "ab2bd885be311dca85bb4b3ac27eb755b8a7f73e61eba10d480e74439cc94ece"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N1_06",
+    "kind": "aligned",
+    "image_count": 1,
+    "images": [
+      {
+        "image_id": "aligned_N1_06:0",
+        "seed": 55412626,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "c95ca431e51f6d06a763f02baca15bf01dc1cdb3daa8b8af9ffb4868c2630f49"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N1_07",
+    "kind": "aligned",
+    "image_count": 1,
+    "images": [
+      {
+        "image_id": "aligned_N1_07:0",
+        "seed": 55412726,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "61d6c2171ff73fa47956c835c9ec986e94086b1865df92b8b07428e614e24f5d"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N2_00",
+    "kind": "aligned",
+    "image_count": 2,
+    "images": [
+      {
+        "image_id": "aligned_N2_00:0",
+        "seed": 55422026,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "9d845085008cebc98e0c72855f9973485c6f873c9f2a874fa2d9d515953d2242"
+      },
+      {
+        "image_id": "aligned_N2_00:1",
+        "seed": 55422027,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "1af6606936517c88529a60321bd074105f1250f0de16ccdc070cf8c572a5ab86"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N2_01",
+    "kind": "aligned",
+    "image_count": 2,
+    "images": [
+      {
+        "image_id": "aligned_N2_01:0",
+        "seed": 55422126,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "dcdc4231e50287ed40383b3fda2022b1021a93fb55ace1854ea3ba9a0ca5ebce"
+      },
+      {
+        "image_id": "aligned_N2_01:1",
+        "seed": 55422127,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "3774d196a52771fc416ba76a7cdba09e50b20ced1f934cc18268aa120cb10019"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N2_02",
+    "kind": "aligned",
+    "image_count": 2,
+    "images": [
+      {
+        "image_id": "aligned_N2_02:0",
+        "seed": 55422226,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "e85a9be709fdb107150c09d82555d1b67aa9a23e02fc61f966239ca604b5c835"
+      },
+      {
+        "image_id": "aligned_N2_02:1",
+        "seed": 55422227,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "c5201229959d04b9e7221e4769a7f671f3674de0d4a97c09c6f381c37b143a30"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N2_03",
+    "kind": "aligned",
+    "image_count": 2,
+    "images": [
+      {
+        "image_id": "aligned_N2_03:0",
+        "seed": 55422326,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "ab6d1108e326a6c659d8480b9ade75626139ecff3ae0cc35095690341227601e"
+      },
+      {
+        "image_id": "aligned_N2_03:1",
+        "seed": 55422327,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "027f85bc09fe3661e59d7b4c96ecae4e144bb29ea8e91c729e137d804af54e09"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N2_04",
+    "kind": "aligned",
+    "image_count": 2,
+    "images": [
+      {
+        "image_id": "aligned_N2_04:0",
+        "seed": 55422426,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "4526f761d8c38ce83df4700c3515f3888760d9abc67081325362ed319c9af402"
+      },
+      {
+        "image_id": "aligned_N2_04:1",
+        "seed": 55422427,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "8ce02a72e5e0130d07487659fa8be2e9d8e8431a36aceaa37fb7b77b24716500"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N2_05",
+    "kind": "aligned",
+    "image_count": 2,
+    "images": [
+      {
+        "image_id": "aligned_N2_05:0",
+        "seed": 55422526,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "d81ebe7b333c19f1cd3536f9f27179e01150b927ea003a6191ed9651cb2eba3c"
+      },
+      {
+        "image_id": "aligned_N2_05:1",
+        "seed": 55422527,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "b52596811b5aa98271cf8e8a48df46031f0f13ab0f932504be4dcaf5a8d8017e"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N2_06",
+    "kind": "aligned",
+    "image_count": 2,
+    "images": [
+      {
+        "image_id": "aligned_N2_06:0",
+        "seed": 55422626,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "29b60bea83d3725703465764f3174909a32b15139418d58c1a07699942ffebe3"
+      },
+      {
+        "image_id": "aligned_N2_06:1",
+        "seed": 55422627,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "bb87a5e54b44a39006f56e288cb8771755daa01d14e9c2e255ab669c19b297ab"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N2_07",
+    "kind": "aligned",
+    "image_count": 2,
+    "images": [
+      {
+        "image_id": "aligned_N2_07:0",
+        "seed": 55422726,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "d39b6a71ef6d01f5dff0ee0193ca5ee6473a5aca080706af14df429546637bd0"
+      },
+      {
+        "image_id": "aligned_N2_07:1",
+        "seed": 55422727,
+        "original_hw": [
+          896,
+          1008
+        ],
+        "sha256": "42975901955db77964b6bc5072dd0bbd7946150708eb3713516f310e9de88451"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N3_00",
+    "kind": "aligned",
+    "image_count": 3,
+    "images": [
+      {
+        "image_id": "aligned_N3_00:0",
+        "seed": 55432026,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "2d82b288ea18d309835ea18db8f256ddf1576bad72a70563e385b31f8883eacb"
+      },
+      {
+        "image_id": "aligned_N3_00:1",
+        "seed": 55432027,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "0aecf29322766be6be131ce699590fd2f88cae5682d245b3cf0fa91d72c3b0ed"
+      },
+      {
+        "image_id": "aligned_N3_00:2",
+        "seed": 55432028,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "44edd640331c40ae50921f89b0bde32b6b4ce21e7017ff2ced0c3cd16a5b1059"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N3_01",
+    "kind": "aligned",
+    "image_count": 3,
+    "images": [
+      {
+        "image_id": "aligned_N3_01:0",
+        "seed": 55432126,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "b9ff21fccd40e1c0717611ac185780227609f3c67ecec4dd4b30c9e53517dd90"
+      },
+      {
+        "image_id": "aligned_N3_01:1",
+        "seed": 55432127,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "10c5c7a09cd0eba0a37a8ff316743cca14353bd4f54b3eb006bd0c7c87609be4"
+      },
+      {
+        "image_id": "aligned_N3_01:2",
+        "seed": 55432128,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "3f3a052c4780c930e91b7f61187deeb830e70c379fd50035c991e2853c16f022"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N3_02",
+    "kind": "aligned",
+    "image_count": 3,
+    "images": [
+      {
+        "image_id": "aligned_N3_02:0",
+        "seed": 55432226,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "e58ed132329c284313801e879a0ed6fcf2c86893f4dfd24446865a2de9faed1b"
+      },
+      {
+        "image_id": "aligned_N3_02:1",
+        "seed": 55432227,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "fe59c83663267bb538dc5e10350967cacdca5650ae48c1113597a7abf972179b"
+      },
+      {
+        "image_id": "aligned_N3_02:2",
+        "seed": 55432228,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "90f86c83c24c5bdeac2e6f3cfe407009b1c6e4930cb5d164828dfdf83eedf0ad"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N3_03",
+    "kind": "aligned",
+    "image_count": 3,
+    "images": [
+      {
+        "image_id": "aligned_N3_03:0",
+        "seed": 55432326,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "faf492362fdc5636a3ef700686533aa167667889786cded33ba8cedfdde58680"
+      },
+      {
+        "image_id": "aligned_N3_03:1",
+        "seed": 55432327,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "f72b3e83f1256619d62c49bcc6edb8e4dcd679ec1c0dc61c433f020fcd158d43"
+      },
+      {
+        "image_id": "aligned_N3_03:2",
+        "seed": 55432328,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "2e65acc37a0e363b9c992e293b3d9635ad8ccaa026876495deb22d5dbda90c2f"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N3_04",
+    "kind": "aligned",
+    "image_count": 3,
+    "images": [
+      {
+        "image_id": "aligned_N3_04:0",
+        "seed": 55432426,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "c8dfc1e2d214fd3bef2f6449aad6da801c7a495fc1cbb7f4477e3b42134210e7"
+      },
+      {
+        "image_id": "aligned_N3_04:1",
+        "seed": 55432427,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "5c2cb0267617b5e1a2032a912b62d156e0331e51f32475bd4be8c5a76d61611d"
+      },
+      {
+        "image_id": "aligned_N3_04:2",
+        "seed": 55432428,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "d179e2e47679fc8c771673f723b51e08d27b653f14f9f914494e77c6a763332b"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N3_05",
+    "kind": "aligned",
+    "image_count": 3,
+    "images": [
+      {
+        "image_id": "aligned_N3_05:0",
+        "seed": 55432526,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "b353af3f31f4be4a4d6e1f945f30a80456ed8d8e219ccc9804b2f3cbbbb94db7"
+      },
+      {
+        "image_id": "aligned_N3_05:1",
+        "seed": 55432527,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "4971e09801684d88950cce1f67f856b0083a84f55c8b8800caba105c3527a8f5"
+      },
+      {
+        "image_id": "aligned_N3_05:2",
+        "seed": 55432528,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "e49b3c523ecd9cf1e9674cb7db9f8fc7a052310733eb9f36c2a7ee983cddf291"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N3_06",
+    "kind": "aligned",
+    "image_count": 3,
+    "images": [
+      {
+        "image_id": "aligned_N3_06:0",
+        "seed": 55432626,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "a4d092fe7c6bcbd0fb4082c1d5b62d1b401cce1a189733ae33b985cd9f7bddac"
+      },
+      {
+        "image_id": "aligned_N3_06:1",
+        "seed": 55432627,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "eddc87a3ec560d8912e9c7544f09382947defa5b083ab32f5bbf01df43f35d28"
+      },
+      {
+        "image_id": "aligned_N3_06:2",
+        "seed": 55432628,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "1e4cc3d643f218542f95a154624c0c819e91546d5c6619cb862d0a51845c2597"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N3_07",
+    "kind": "aligned",
+    "image_count": 3,
+    "images": [
+      {
+        "image_id": "aligned_N3_07:0",
+        "seed": 55432726,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "c5872b13fcd986dcd7bfee1fbee504dcd03075bd5294f1fa1e7314bd32944441"
+      },
+      {
+        "image_id": "aligned_N3_07:1",
+        "seed": 55432727,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "d78530edd5390a0080e17809cd4d3a56bbdd51da10669f6282ff8daf2550a20a"
+      },
+      {
+        "image_id": "aligned_N3_07:2",
+        "seed": 55432728,
+        "original_hw": [
+          672,
+          896
+        ],
+        "sha256": "c2eda01d31e371f05f7e60edcd4e3f58ecdf7f82499fd63ac502bd7b047566f8"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N4_00",
+    "kind": "aligned",
+    "image_count": 4,
+    "images": [
+      {
+        "image_id": "aligned_N4_00:0",
+        "seed": 55442026,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "77f51c80bb0c57b8c790b94d3a6c4a7d7557ae4355e129620bc6d1fe2b02415c"
+      },
+      {
+        "image_id": "aligned_N4_00:1",
+        "seed": 55442027,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "d7402df24eac938559a95af04a956d302edcca8bd142aef3159898738345c201"
+      },
+      {
+        "image_id": "aligned_N4_00:2",
+        "seed": 55442028,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "466e0fc2a037f0182e83e6310bb179f654b64c239813d8b4ea71984ad3526349"
+      },
+      {
+        "image_id": "aligned_N4_00:3",
+        "seed": 55442029,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "da365767e87e3b281694e1da4b1d0fa90b8a02d32ebbbac9e9b1f20ca5661ad9"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N4_01",
+    "kind": "aligned",
+    "image_count": 4,
+    "images": [
+      {
+        "image_id": "aligned_N4_01:0",
+        "seed": 55442126,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "66d2bed6a3fbe37dec687b9c80619735a238643c865f8d1dca5e8925db72a3db"
+      },
+      {
+        "image_id": "aligned_N4_01:1",
+        "seed": 55442127,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "1eea123cf2464326d33a4ef7a02aebe8331daec35027b7ecc400d618e811b5f8"
+      },
+      {
+        "image_id": "aligned_N4_01:2",
+        "seed": 55442128,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "2fcd3447d0d3264ffafe0a8113b471e0578f7a2e8bfb19ef5fd9f7975f8c6dda"
+      },
+      {
+        "image_id": "aligned_N4_01:3",
+        "seed": 55442129,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "522c30e0cdd9eaedb1a14788700044ffeac6bc5de8ecc6588c475172d11355db"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N4_02",
+    "kind": "aligned",
+    "image_count": 4,
+    "images": [
+      {
+        "image_id": "aligned_N4_02:0",
+        "seed": 55442226,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "4642fef915a409d21ceddaf0f19a636f53238fab0c75db010c4cea053aa2e5d8"
+      },
+      {
+        "image_id": "aligned_N4_02:1",
+        "seed": 55442227,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "95d21a6fbdff9c2114c573946f99d88ccbe4f9a2a91970b35a6eff48f3252a38"
+      },
+      {
+        "image_id": "aligned_N4_02:2",
+        "seed": 55442228,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "a809708decf4448af22e9c8570292424af2241dd32fae45e27979fa00253135b"
+      },
+      {
+        "image_id": "aligned_N4_02:3",
+        "seed": 55442229,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "485334e1fb9e89004d317d786346a10f6ab2b52e1a5fdef00759a27429cebc48"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N4_03",
+    "kind": "aligned",
+    "image_count": 4,
+    "images": [
+      {
+        "image_id": "aligned_N4_03:0",
+        "seed": 55442326,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "f1a11479a2e2115e7523d0ada052b2934539d90a6813c5a575e472164b7b6f59"
+      },
+      {
+        "image_id": "aligned_N4_03:1",
+        "seed": 55442327,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "10bbe1df2cc073097cc95d9bd7ebce850349f64e7df1a56f171f134f0a98ecb4"
+      },
+      {
+        "image_id": "aligned_N4_03:2",
+        "seed": 55442328,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "e7dda537299fe1ffc0ec54dc8318d26427763ad94b1749290776aa1b92ae2c55"
+      },
+      {
+        "image_id": "aligned_N4_03:3",
+        "seed": 55442329,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "5656dca9776f3bf4c272d1f323cfeb91057db6a3fddd549ed9a6ccb189addd5e"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N4_04",
+    "kind": "aligned",
+    "image_count": 4,
+    "images": [
+      {
+        "image_id": "aligned_N4_04:0",
+        "seed": 55442426,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "016d489854dabed1e0f228bc1e8b89ffdea2c0c405a6207bdf14659b9c433c75"
+      },
+      {
+        "image_id": "aligned_N4_04:1",
+        "seed": 55442427,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "b99dd753b7288e31b12af9d92d2ea2fcf178f054fd46362b55fcab185628e68a"
+      },
+      {
+        "image_id": "aligned_N4_04:2",
+        "seed": 55442428,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "ddc227090973498e94fba5cd318c0122668998a0750eefc24d754e0da4b730b7"
+      },
+      {
+        "image_id": "aligned_N4_04:3",
+        "seed": 55442429,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "d0205bd2623411f64a2a153484e9cea39ceaae43888689ce8f16b2428a02800a"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N4_05",
+    "kind": "aligned",
+    "image_count": 4,
+    "images": [
+      {
+        "image_id": "aligned_N4_05:0",
+        "seed": 55442526,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "6d1ed654616494652ae7313c678622d020397e537e0970ea741df0f017b4c1fc"
+      },
+      {
+        "image_id": "aligned_N4_05:1",
+        "seed": 55442527,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "6fb14376303233a90b323600f77e313f1760c0d8aa9f6470286b066a5436adb4"
+      },
+      {
+        "image_id": "aligned_N4_05:2",
+        "seed": 55442528,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "027baf3964be9c1b56628a0122c256abac3fcb5cbee78fa3dcfe9118a17abae1"
+      },
+      {
+        "image_id": "aligned_N4_05:3",
+        "seed": 55442529,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "375cb1230b008ad168e0e405b714505b562872c85f4d8e5dc3ac845e6ea404c5"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N4_06",
+    "kind": "aligned",
+    "image_count": 4,
+    "images": [
+      {
+        "image_id": "aligned_N4_06:0",
+        "seed": 55442626,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "3eada693555a38e4d2e388d29340399b34694369cef1d21233acf9c63c769ab9"
+      },
+      {
+        "image_id": "aligned_N4_06:1",
+        "seed": 55442627,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "5acf71d24dc4f0a953be502f16ab0f93b36d2518686e40dc415c7c053b14a25c"
+      },
+      {
+        "image_id": "aligned_N4_06:2",
+        "seed": 55442628,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "b5f31f045a27a93c3aec1c768f0685befd7ee9cd9533695fe10e3e03e84f9a40"
+      },
+      {
+        "image_id": "aligned_N4_06:3",
+        "seed": 55442629,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "1ca8e6f0654b125206ce888f474a1f982c2f41c43a03a7fe227754cf34776904"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N4_07",
+    "kind": "aligned",
+    "image_count": 4,
+    "images": [
+      {
+        "image_id": "aligned_N4_07:0",
+        "seed": 55442726,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "691fb21573b6e9ded368f0c678889e7fd7dfa43a8463b9eace9772696bbd5120"
+      },
+      {
+        "image_id": "aligned_N4_07:1",
+        "seed": 55442727,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "7ee4fd6b4d734802d533dfb4eb67e96a54db7722b80047059b9c036897148d42"
+      },
+      {
+        "image_id": "aligned_N4_07:2",
+        "seed": 55442728,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "176f293f17af9b8c7cd85f20f2dc4b2062498f9a5b716638b3a04de6efd27c54"
+      },
+      {
+        "image_id": "aligned_N4_07:3",
+        "seed": 55442729,
+        "original_hw": [
+          672,
+          672
+        ],
+        "sha256": "15a710aa3f339cefe009d1562ebf123d0416dba353304dbcf043be99fef3a776"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N8_00",
+    "kind": "aligned",
+    "image_count": 8,
+    "images": [
+      {
+        "image_id": "aligned_N8_00:0",
+        "seed": 55482026,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "0098798f5436422b7e7d04bd761b3cef72b6e11fe251ec1c5269887911fce34b"
+      },
+      {
+        "image_id": "aligned_N8_00:1",
+        "seed": 55482027,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "95b4eaa45be52ec0482fe3a2bd37b5bfecaf4f5d75d1cce5942afa5d7e0beb54"
+      },
+      {
+        "image_id": "aligned_N8_00:2",
+        "seed": 55482028,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "81b5155e5ee597c8f2f7f7ae7859315ea6eddc63151d9f61b557bda7eb769c39"
+      },
+      {
+        "image_id": "aligned_N8_00:3",
+        "seed": 55482029,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "33a495c9308ee9ef022dc674f1f9f5219039eb2e18ab9d5faebb88600e5d38e7"
+      },
+      {
+        "image_id": "aligned_N8_00:4",
+        "seed": 55482030,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "b6b763d28a6ffe6d59ecb4ea058fae7195ab8a9e23aa5b91146834a48f5867bd"
+      },
+      {
+        "image_id": "aligned_N8_00:5",
+        "seed": 55482031,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "fdb20976b5389d139304bbc6e9871cb6106319b4fef393985e54cda8e75ea4c5"
+      },
+      {
+        "image_id": "aligned_N8_00:6",
+        "seed": 55482032,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "34f74b5640e96f024b8202c19f921770d488e8f03a878b53c1abed74c6848a50"
+      },
+      {
+        "image_id": "aligned_N8_00:7",
+        "seed": 55482033,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "a1b9969e1a946c73c1c2c4093df97cbc84d6a2610df74ab6c112219eec5f523b"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N8_01",
+    "kind": "aligned",
+    "image_count": 8,
+    "images": [
+      {
+        "image_id": "aligned_N8_01:0",
+        "seed": 55482126,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "a975022445c2bb2958833ceba435c63a2b4bc63c1fb26453e8fce6677e3c4adf"
+      },
+      {
+        "image_id": "aligned_N8_01:1",
+        "seed": 55482127,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "fcda9cd94ba3cb6bffe2cb626eaed6fb8605d69c84204a9e04ff8a57457b6e1b"
+      },
+      {
+        "image_id": "aligned_N8_01:2",
+        "seed": 55482128,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "f1be7d4dd51a3e3d441bf05c3a2cb8242aa34395ed694a103302789eff2111de"
+      },
+      {
+        "image_id": "aligned_N8_01:3",
+        "seed": 55482129,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "b4efde1add52eb09af3c39f0ea1ed324436a1861d638e482a20d240e9fe83cd8"
+      },
+      {
+        "image_id": "aligned_N8_01:4",
+        "seed": 55482130,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "5e7d765acf10c7399aaf15614a2fb9a028c83db0a40bcb64b9fb73168591c522"
+      },
+      {
+        "image_id": "aligned_N8_01:5",
+        "seed": 55482131,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "3b362a99e3161c7cdedf36e1e03206e50dc28cbff25077cd041f3537d57a3c8a"
+      },
+      {
+        "image_id": "aligned_N8_01:6",
+        "seed": 55482132,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "99578b075f90a157260e90db6868cab13f75c256a6db8edbf99c4ae7061c2e8d"
+      },
+      {
+        "image_id": "aligned_N8_01:7",
+        "seed": 55482133,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "71b2935d2c8697034d90892a3e1764a414643593bb75cd44afc2197e9347c0a1"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N8_02",
+    "kind": "aligned",
+    "image_count": 8,
+    "images": [
+      {
+        "image_id": "aligned_N8_02:0",
+        "seed": 55482226,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "53d1f713d45014918e85fa640db96a4c8edace0b15762389d7dd218979f51025"
+      },
+      {
+        "image_id": "aligned_N8_02:1",
+        "seed": 55482227,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "37bac15ee08f103d92e068e0bac4516175ab6018e4f423d3f0839ce55f45c472"
+      },
+      {
+        "image_id": "aligned_N8_02:2",
+        "seed": 55482228,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "452c4b3d8b14bf72f036c1e3f8bcf4729952e897c0e5da95532963336157ac53"
+      },
+      {
+        "image_id": "aligned_N8_02:3",
+        "seed": 55482229,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "a858ccc7bec4e45e24942465a28823457a819d121d589e6833a6f6d3df95bddc"
+      },
+      {
+        "image_id": "aligned_N8_02:4",
+        "seed": 55482230,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "f72c0cf1b00421ac924e76c28f78cff346f06d24bd367c8303cdbdf25c8e430b"
+      },
+      {
+        "image_id": "aligned_N8_02:5",
+        "seed": 55482231,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "09c091d6b43eb1f157e820937fd4402ce892acfa8609ebdd61594b23e0520fe2"
+      },
+      {
+        "image_id": "aligned_N8_02:6",
+        "seed": 55482232,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "6d729d3295f35602519d50e34ff33f2f8dbf97e3fd768d4e652909a1c8b0c42e"
+      },
+      {
+        "image_id": "aligned_N8_02:7",
+        "seed": 55482233,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "9b1b906571714978fc4302cd761421fb7c8b67e5ae311f750222351650fcf4a6"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N8_03",
+    "kind": "aligned",
+    "image_count": 8,
+    "images": [
+      {
+        "image_id": "aligned_N8_03:0",
+        "seed": 55482326,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "6bd3923a635c38f44bbabaa665b586dd66544f56f3e45a6f854180154b41350a"
+      },
+      {
+        "image_id": "aligned_N8_03:1",
+        "seed": 55482327,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "ca6da4ae61891e9075db11fb7331f2093e459d206fed74b21a6afffc90ce7ec5"
+      },
+      {
+        "image_id": "aligned_N8_03:2",
+        "seed": 55482328,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "0405729461cb65785dd8ed02684e1a27d490ebf8b3e8977f924a5156fdd8cad4"
+      },
+      {
+        "image_id": "aligned_N8_03:3",
+        "seed": 55482329,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "6c507f2fab3ff5970baaf4bf0aa947025350af34e302ac7daa445b31e086dc2b"
+      },
+      {
+        "image_id": "aligned_N8_03:4",
+        "seed": 55482330,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "dc141467081550dd406433020891636a159d76148fbe69507e3cdd508daecd1f"
+      },
+      {
+        "image_id": "aligned_N8_03:5",
+        "seed": 55482331,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "f79103855463a4f4388557a1fb632cd59caae0e2e765610cbaf793898744f5a6"
+      },
+      {
+        "image_id": "aligned_N8_03:6",
+        "seed": 55482332,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "63390ac94ea235503f9b763b41912ac0dcf73acfc26523925227b08a2d149758"
+      },
+      {
+        "image_id": "aligned_N8_03:7",
+        "seed": 55482333,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "2f003a511c7bd59c25a8d2b603c1a50234236508f4ce49561a21baa7fcb713d0"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N8_04",
+    "kind": "aligned",
+    "image_count": 8,
+    "images": [
+      {
+        "image_id": "aligned_N8_04:0",
+        "seed": 55482426,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "5990f72512f4f04e6a7eb246d66e09190664ba03bff87e262f1f3449d630ddba"
+      },
+      {
+        "image_id": "aligned_N8_04:1",
+        "seed": 55482427,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "9b8cb6e71ed24688761edcb52fddbbb4f498a367268190e576fdd050e88045b4"
+      },
+      {
+        "image_id": "aligned_N8_04:2",
+        "seed": 55482428,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "8e08358a24c384a2717a83e1ea50adfa00a2da3a3c047754f9b269347f798b4d"
+      },
+      {
+        "image_id": "aligned_N8_04:3",
+        "seed": 55482429,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "d5144e310de16ff2b0c8673f885b53c979e9389b439745d57619192c8d72b527"
+      },
+      {
+        "image_id": "aligned_N8_04:4",
+        "seed": 55482430,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "1771184be7640e082a9ebd5912984e64f5b5202329f90d30700a6ea0f94166c8"
+      },
+      {
+        "image_id": "aligned_N8_04:5",
+        "seed": 55482431,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "43d636a7c25ddaf6b21bbdd07d74d63c1f244a87067408b6c4ff3cee50314914"
+      },
+      {
+        "image_id": "aligned_N8_04:6",
+        "seed": 55482432,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "a504cc5a9cb4456fa11272e0f0d7b2b2514c6cc08d842f7083db57192109fb97"
+      },
+      {
+        "image_id": "aligned_N8_04:7",
+        "seed": 55482433,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "6b47a725219748b177f0803265523b66fa007cdb299a1fa7ec417ff2ca564276"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N8_05",
+    "kind": "aligned",
+    "image_count": 8,
+    "images": [
+      {
+        "image_id": "aligned_N8_05:0",
+        "seed": 55482526,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "766f295197aa16120053ab7bf56103894f7054403703966e908ab5cf7b1b57fd"
+      },
+      {
+        "image_id": "aligned_N8_05:1",
+        "seed": 55482527,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "c93480411aa486bd9e61f924fb18d554737dad7f28c47d34c425f9b4bfcb3b57"
+      },
+      {
+        "image_id": "aligned_N8_05:2",
+        "seed": 55482528,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "0b3e21ee09df5c89abc898b4d7d3437a104405d5dfe9fb3dd823a375e4a81e81"
+      },
+      {
+        "image_id": "aligned_N8_05:3",
+        "seed": 55482529,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "024545a52dc3054f6c0bc415a6d23d0f7ff9dc6613e2a781b8c0e9123584a7e3"
+      },
+      {
+        "image_id": "aligned_N8_05:4",
+        "seed": 55482530,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "26078a0afa82f4f0ed29ef0787e535181836900c57ae21670940695cc4cecedd"
+      },
+      {
+        "image_id": "aligned_N8_05:5",
+        "seed": 55482531,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "c55b75d4e52cc19b73bd1b04e99b2f039ec302e6f590ababd7ed7813ed61a7c5"
+      },
+      {
+        "image_id": "aligned_N8_05:6",
+        "seed": 55482532,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "91ee132c5aac4d330f518bddd38ce53438a6c9d54cd5360282e1277000525c6c"
+      },
+      {
+        "image_id": "aligned_N8_05:7",
+        "seed": 55482533,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "11b948a013368ac4d99d277621a6a159b7c8d71fc9b3792368c62752e7344878"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N8_06",
+    "kind": "aligned",
+    "image_count": 8,
+    "images": [
+      {
+        "image_id": "aligned_N8_06:0",
+        "seed": 55482626,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "966b605f73607ec41854bed7d323ef9c38e3d34a78b44a482675d1ab0b82f8f3"
+      },
+      {
+        "image_id": "aligned_N8_06:1",
+        "seed": 55482627,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "d3948a5dbc872597881d08d3134806c86536451eee0bb1af4a5dea3ecdfd40ac"
+      },
+      {
+        "image_id": "aligned_N8_06:2",
+        "seed": 55482628,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "ea313d971da09bf8d8a9a84d512fa8f5096439ebf9dc2e72c9279565a63813c1"
+      },
+      {
+        "image_id": "aligned_N8_06:3",
+        "seed": 55482629,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "db3082d7a524e8dae2f744ab3b847ac67f1bff57526e21bd98a1c06c9aa768c7"
+      },
+      {
+        "image_id": "aligned_N8_06:4",
+        "seed": 55482630,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "102e4b1540c1fa75cee4a48452305a8bbe0f936d7f1446c4286575ae5ed5cc65"
+      },
+      {
+        "image_id": "aligned_N8_06:5",
+        "seed": 55482631,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "e28e5109bf66dbd294902fd329ce0c5fb6c988f379ce0d8a529d4bfc8d20b1fa"
+      },
+      {
+        "image_id": "aligned_N8_06:6",
+        "seed": 55482632,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "7e8e169c84460ec97893af8c7dec96b37d5f3d401eb2700a378664e3eb374f3e"
+      },
+      {
+        "image_id": "aligned_N8_06:7",
+        "seed": 55482633,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "cf7c5043f4b6d307526f61508140ce52008ade695bf4f567820424099cd05425"
+      }
+    ]
+  },
+  {
+    "sample_id": "aligned_N8_07",
+    "kind": "aligned",
+    "image_count": 8,
+    "images": [
+      {
+        "image_id": "aligned_N8_07:0",
+        "seed": 55482726,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "ddddfd44b6bb5094e8c2204f20682b5b91ac487f1c4ecc416d2860e85f2498cd"
+      },
+      {
+        "image_id": "aligned_N8_07:1",
+        "seed": 55482727,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "661ac0ca2257ef6e7348bdba51ae7b5f4b70380b0403b72a95f63e05014a5dee"
+      },
+      {
+        "image_id": "aligned_N8_07:2",
+        "seed": 55482728,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "622b2d6946051e3adb54115aabe255e9a0a06cd9a5a1ccac52c619120cc9d710"
+      },
+      {
+        "image_id": "aligned_N8_07:3",
+        "seed": 55482729,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "856e1d27aead396e457123a6ad2591220196e8f12d68cc6a64980b176a321d4e"
+      },
+      {
+        "image_id": "aligned_N8_07:4",
+        "seed": 55482730,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "7e7f3c2320ffac38d5de78f225a3599d40b74c10698a75212f56192a4d07f1b2"
+      },
+      {
+        "image_id": "aligned_N8_07:5",
+        "seed": 55482731,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "c3c50a4290de1861e6f2f13b51ba4fa743385ae398b4584fcd4d3bfa70b7ade3"
+      },
+      {
+        "image_id": "aligned_N8_07:6",
+        "seed": 55482732,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "38719c1873759f569642c82e046cd8ff1dc81226b073a53a527b22c5b3cd90e4"
+      },
+      {
+        "image_id": "aligned_N8_07:7",
+        "seed": 55482733,
+        "original_hw": [
+          448,
+          504
+        ],
+        "sha256": "be490b1da2133641c00547e87786cf465be500497365d30aafb2a7bfc9a548ff"
+      }
+    ]
+  },
+  {
+    "sample_id": "square_stress_N1_00",
+    "kind": "square_stress",
+    "image_count": 1,
+    "images": [
+      {
+        "image_id": "square_stress_N1_00:0",
+        "seed": 55412026,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "6c3b630bbceeb87f3cb570738666ce112fabf2fb134d3384b6fedee01e42853f"
+      }
+    ]
+  },
+  {
+    "sample_id": "square_stress_N2_00",
+    "kind": "square_stress",
+    "image_count": 2,
+    "images": [
+      {
+        "image_id": "square_stress_N2_00:0",
+        "seed": 55422026,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "1a0d1dddde63c12b6f82220f0f7553df406a0d0ad636d0cd06fd1fed6205d9e4"
+      },
+      {
+        "image_id": "square_stress_N2_00:1",
+        "seed": 55422027,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "188687c4887f3664cc3c15a000e613c281ea4234318c02f72246b49397ee3107"
+      }
+    ]
+  },
+  {
+    "sample_id": "square_stress_N3_00",
+    "kind": "square_stress",
+    "image_count": 3,
+    "images": [
+      {
+        "image_id": "square_stress_N3_00:0",
+        "seed": 55432026,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "70f63d803b2894fdfc269f0606d6315b25cd8b89a29dcca3d6a3efa7520b882a"
+      },
+      {
+        "image_id": "square_stress_N3_00:1",
+        "seed": 55432027,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "1a7ce9ad164cd9532615fbd8880a8095fe76dc3f955f9454b98892165156e5e4"
+      },
+      {
+        "image_id": "square_stress_N3_00:2",
+        "seed": 55432028,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "0b06c5b8fe5f660541cc908083ec90474ebf311afac4126e503955aa05c42b95"
+      }
+    ]
+  },
+  {
+    "sample_id": "square_stress_N4_00",
+    "kind": "square_stress",
+    "image_count": 4,
+    "images": [
+      {
+        "image_id": "square_stress_N4_00:0",
+        "seed": 55442026,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "8bc0102ff56b90a3ab75cca3b0f2f363844de5f71b1940d79bfcd83f2df1ad27"
+      },
+      {
+        "image_id": "square_stress_N4_00:1",
+        "seed": 55442027,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "39f7ae180e9c86a15d7301be1b414f66f69bb232953effb8c45be8767875db85"
+      },
+      {
+        "image_id": "square_stress_N4_00:2",
+        "seed": 55442028,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "787f18daa2d019d2644c2dd752d69d8bd507c7055d54a887fea0930f16375ee1"
+      },
+      {
+        "image_id": "square_stress_N4_00:3",
+        "seed": 55442029,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "37c9fd0979f06d02fd3911e091f9f258c506915eaa6b1b50f9ae77fef409a917"
+      }
+    ]
+  },
+  {
+    "sample_id": "square_stress_N8_00",
+    "kind": "square_stress",
+    "image_count": 8,
+    "images": [
+      {
+        "image_id": "square_stress_N8_00:0",
+        "seed": 55482026,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "abe91c6363c85a24353599cc5897be831464da5b05c2a4f4ccfd72736898c084"
+      },
+      {
+        "image_id": "square_stress_N8_00:1",
+        "seed": 55482027,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "14b18e9ab5ede90cc5325ce99516fa580eb1836d4a8ddeb7f1fd0074d23260ea"
+      },
+      {
+        "image_id": "square_stress_N8_00:2",
+        "seed": 55482028,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "1bfde9b1b0c67b5a4c3b7e598dbb6e627d775709f64beca69d2227270cb628aa"
+      },
+      {
+        "image_id": "square_stress_N8_00:3",
+        "seed": 55482029,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "f1858d9bbec88a03f31203fe9ac1326b0688ce180dac95f01d8e0138f6c84d5a"
+      },
+      {
+        "image_id": "square_stress_N8_00:4",
+        "seed": 55482030,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "5f2a905acb32d0c3738e62ab5639d90fddd659f057949b5214ee5c59aca12896"
+      },
+      {
+        "image_id": "square_stress_N8_00:5",
+        "seed": 55482031,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "f66100b16c6c0694a279af4f16926cf6a27232a816aeb04e1bc5b89ebcda0d41"
+      },
+      {
+        "image_id": "square_stress_N8_00:6",
+        "seed": 55482032,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "d6629df5f0e3892adef608c715a662dc5910bfbe6b8fa61ff1a5ad4825ced0b5"
+      },
+      {
+        "image_id": "square_stress_N8_00:7",
+        "seed": 55482033,
+        "original_hw": [
+          1344,
+          1344
+        ],
+        "sha256": "5d09e593c04de6098363855576f436477c97e91bc1269efc93957427346de57d"
+      }
+    ]
+  }
+]
