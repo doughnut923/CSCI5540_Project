@@ -90,6 +90,7 @@ def main() -> None:
             peak_note = "measured"
 
     bubbles = [float(r["pipeline_bubble_ratio"]) for r in post if r.get("pipeline_bubble_ratio") is not None]
+    bubble_times = [float(r["bubble_time_s"]) for r in post if r.get("bubble_time_s") is not None]
     summary = {
         "run_label": args.run_label,
         "input": str(args.input),
@@ -114,6 +115,12 @@ def main() -> None:
                 "values": bubbles or None,
                 "mean": _mean(bubbles),
                 "status": "measured (instrumented)" if bubbles else "unmeasured (no comparable instrumentation)",
+            },
+            "pipeline_bubble_time_s": {
+                "values": bubble_times or None,
+                "mean": _mean(bubble_times),
+                "total": sum(bubble_times) if bubble_times else None,
+                "status": "measured (instrumented)" if bubble_times else "unmeasured",
             },
         },
         "correctness": {"skipped_steps": skipped, "nan_or_inf_steps": bad, "pass": skipped == 0 and bad == 0},
