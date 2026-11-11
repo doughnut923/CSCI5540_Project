@@ -19,7 +19,7 @@ authoritative pair — read them before touching the cluster.
 - Do not commit generated data (`variance_datasets/*_batches.json`, `image_sets/`) or cluster paths into code.
 
 ## Cluster (facts that cost hours to rediscover)
-- Keep everything under `/research/d7/fyp26/lkchau3/workspaces/cyfok3`. Never write elsewhere on the cluster.
+- Workspace: any directory you own with ~40 GB free that the GPU nodes can see, exported as `WS`; also export `BIND_ROOT` (the filesystem root containing it: `/research`, or `$HOME`). The legacy `/research/d7/fyp26/lkchau3/workspaces/cyfok3` default in the scripts is just the original author's value — override it. Never write outside your own workspace.
 - `export SLURM_CONF=/opt1/slurm/gpu-slurm.conf` — without it every `squeue`/`sacct`/`scancel` says "Invalid job id".
 - Submit with `--account=gpu -p gpu_2h --gres=gpu:N --constraint=rtx3090 --exclude=gpu54`. Omit `--mem` (rtx3090 nodes reject it). Keep CPU:GPU ≤ 6:1 unless the node has `highcpucount` — the rtx3090 nodes do, so `-c 8` is fine there but fails without the constraint.
 - `gpu54` silently kills batch jobs (no stdout). Always exclude it.

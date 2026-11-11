@@ -1,87 +1,59 @@
-# Track B cluster implementation (Megatron+BigMac plan)
+# Track B cluster implementation (Megatron + BigMac)
 
-Portable scaffolding for Phases 0–4 of `C:\Users\jonas\.opencode\plan\megatron-bigmac-integration.md`. **No heavy work on login nodes.** Run GPU jobs via SLURM under the confirmed `cyfok3` workspace.
+Execution layer for Track B: run the same Qwen2-VL-2B N=2 pilot under Megatron-Core with
+BigMac's `pp_executor` on and off, and compare.
 
-## What's implemented here (local, commit to GitHub)
-- `part_b_image_res/track_b_pilot.py` — deterministic Track B pilot builder: **N=2 images/sample**, seed, mixtures, manifest + SHA256 hashes, derived token totals (128→25,256→81,384→196).
-- `part_b_image_res/validate_n2_pilot.py` — processor-only validation gate for N=2 manifests (grids/totals, per-image slice isolation). Requires Qwen2-VL processor assets; no model weights/forward.
-- `track_b_cluster/scripts/collect_step_metrics.py` — post-warmup metric aggregation: throughput, step time mean/p50/p95, peak GPU mem/rank. Bubble/stall/encoder-variance recorded only when instrumentation provides them (else `unmeasured`).
-- SLURM/script templates for Part A CUDA sanity and Track B native-vs-BigMac toggle runs.
+**Start here**
 
-## Must confirm on cluster before GPU runs (plan open items)
-1. Canonical absolute workspace path (`CYFOK3_WORKSPACE`; plan notes a possible path-string mismatch).
-2. Approved container `.sif` (NGC 25.10-like preferred per BigMac validation) and bind mounts; or approved venv/module stack.
-3. GPU allocation/partition/GRES for 4-GPU smoke and 8-GPU runs; time/mem limits.
-4. Qwen2-VL HF→MCore checkpoint/loader compatibility in deployed MCore/BigMac runtime.
-5. BigMac checkout commit in `<WS>/third_party/BigMac` and exact Qwen2-VL bridge patch location.
+| Document | Use it for |
+| --- | --- |
+| [`SETUP.md`](SETUP.md) | build the environment from scratch on the CSE cluster — clone, pinned third-party, patches, container, deps, data, conversion, first runs |
+| [`HANDOFF.md`](HANDOFF.md) | current state, verified numbers, known bugs, open work |
+| [`patches/README.md`](patches/README.md) | why each compat patch exists and how to re-apply it |
 
-## Phase 0 (staging, no login-node heavy work)
-```sh
-# On cluster (allocation or approved transfer path), under $CYFOK3_WORKSPACE
-export CYFOK3_WORKSPACE=/research/d7/fyp26/lkchau3/workspaces/cyfok3  # CONFIRM
-mkdir -p "$CYFOK3_WORKSPACE"/{proj,third_party,models,runs,caches}
-export HF_HOME="$CYFOK3_WORKSPACE/caches/hf"
-git clone <this-repo-url> "$CYFOK3_WORKSPACE/proj/csci5540"
-git clone https://github.com/Dots-Infra/BigMac "$CYFOK3_WORKSPACE/third_party/BigMac" && git -C "$CYFOK3_WORKSPACE/third_party/BigMac" rev-parse HEAD
-# Stage model (ModelScope or approved mirror) and verify revision/hash parity with 895c3a49bc3fa70a340399125c650a463535e71c.
-# Stage/generate part_b image_sets + variance_datasets deterministically; record hashes.
-```
+Nothing here is tied to one account: pick any workspace with ~40 GB free on a filesystem the
+GPU nodes can see, and set `WS` / `BIND_ROOT` (see `SETUP.md` §0). The SLURM templates read both
+from the environment.
 
-## Build Track B N=2 pilot manifest (CPU-safe)
-```sh
-cd "$CYFOK3_WORKSPACE/proj/csci5540"
-python part_b_image_res/track_b_pilot.py \
-  --output-dir runs/track_b_n2_pilot_smoke \
-  --mixtures Low Medium High --samples-per-mixture 24 --seed 55402026
-```
-Default pilot: 72 samples (24/mixture), N=2, seed 55402026. Adjust `--samples-per-mixture`/mixtures for the confirmed smoke spec; keep identical manifest for native and BigMac.
+## The comparison contract
 
-## Processor gate (Phase 3.2, CPU/job as appropriate)
-```sh
-python part_b_image_res/validate_n2_pilot.py \
-  --manifest runs/track_b_n2_pilot_smoke/pilot_manifest.json \
-  --output-dir runs/track_b_n2_pilot_smoke/processor_gate \
-  --model "$CYFOK3_WORKSPACE/models/Qwen2-VL-2B-Instruct" \
-  --local-files-only --check-hashes --repo-root .
-```
+Only `USE_PP_EXECUTOR` may differ between the two arms. Same manifest, same sample order, same
+seed, same microbatches, same step count, same container, same commits.
 
-### Verified cluster recipe (pytorch-sam3.sif + extra deps on /research)
-Host GLIBC is too old for modern torch, so run inside the SIF. Keep pip TMPDIR on `/research`
-(root fs is small) and install only the packages missing from the container with `--no-deps`:
-```sh
-export TMPDIR=$CYFOK3_WORKSPACE/tmp
-D=$CYFOK3_WORKSPACE/venvs/trackb_pydeps
-singularity exec --env PIP_NO_CACHE_DIR=1 --env TMPDIR=$TMPDIR \
-  -B /research/d7/fyp26/lkchau3:/research/d7/fyp26/lkchau3 \
-  /research/d7/fyp26/lkchau3/fyp/containers/pytorch-sam3.sif \
-  python3 -m pip install --target $D --no-deps transformers==4.49.0 tokenizers==0.21.4 \
-  safetensors regex tqdm huggingface-hub==0.26.2 httpcore2 h11 certifi \
-  qwen-vl-utils av sentencepiece protobuf accelerate psutil
-```
-Then (CPU, no `--nv`):
-```sh
-singularity exec --env PYTHONPATH=$D -B /research/d7/fyp26/lkchau3:/research/d7/fyp26/lkchau3 \
-  /research/d7/fyp26/lkchau3/fyp/containers/pytorch-sam3.sif \
-  python part_b_image_res/validate_n2_pilot.py --manifest ... --local-files-only --check-hashes ...
-```
-Pitfall: a plain `pip install transformers` also pulls a second torch + CUDA 13 wheels (~2.5 GB)
-and fills the container root fs; `--no-deps` + the container's torch avoids that.
+- Native: `USE_PP_EXECUTOR=0` — MCore's own schedule, running on BigMac's MCore fork. **Not**
+  "stock upstream Megatron-LM"; do not claim that without a separate parity check.
+- BigMac: `USE_PP_EXECUTOR=1` — plus `MEGATRON_USE_PP_EXECUTOR=1` and, for encoder nesting,
+  `MEGATRON_PP_EXECUTOR_WITH_VE=1`.
 
-## Controlled comparison (Phase 4)
-Run the **same** pilot/hardware/env/config; only toggle `USE_PP_EXECUTOR`.
-- Native: `USE_PP_EXECUTOR=0` (MCore native path in the adapted runtime; not claimed as stock upstream Megatron-LM without parity checks).
-- BigMac: `USE_PP_EXECUTOR=1`.
-Capture per-step JSON lines/records, then aggregate:
-```sh
-python track_b_cluster/scripts/collect_step_metrics.py \
-  --input runs/track_b/native/step_metrics.jsonl \
-  --output runs/track_b/native/metrics_summary.json \
-  --warmup-steps 2 --world-size 4 --batch-size 1 --grad-accum 1
-```
+`pp_executor` only wraps when `pp_size > 1`, so any PP=1 comparison is a no-op.
 
-## Phase 2 bridge (critical path, not fully runnable here)
-BigMac provides Qwen3-VL examples but not turnkey Qwen2-VL. `bridge/` contains a contract/spec scaffold. Actual work requires the cluster BigMac+MCore runtime:
-1. Adapt `pp_executor/mcore_patch.py`/bridge for Qwen2-VL `visual` + merger, `image_grid_thw`/`pixel_values`, image token positions.
-2. Preserve Part A loss masking (mask prompt/image slots/padding; ≥2 assistant targets).
-3. Parity ladder: single-GPU native vs Part A → native PP N=2 → `USE_PP_EXECUTOR=1`. Debug shapes/token counts/grads first.
-4. Resolve HF→MCore checkpoint/loader compatibility before full runs.
+## Files
+
+| Path | Purpose |
+| --- | --- |
+| `bridge/native_forward_check.py` | 1-GPU parity gate: MCore vs HF loss + gradient on one N=2 sample |
+| `bridge/pp2_equivalence.py` | PP equivalence harness; `PP_SIZE`/`NUM_LAYERS`/`BENCH_STEPS`/`NUM_MICROBATCHES` come from env |
+| `bridge/runner_template.py` | contract for the eventual training-step runner (not implemented) |
+| `bridge/mock_step_runner.py` | synthetic step records for wiring tests — never evidence |
+| `scripts/collect_step_metrics.py` | aggregates step JSONL into throughput / step-time percentiles / peak memory / bubble |
+| `scripts/common_env.sh` | shared env for SLURM jobs (`WS`, `BIND_ROOT`, `PROJ_ROOT`, `MODEL_DIR`, `HF_HOME`) |
+| `slurm/*.sbatch` | conversion, parity gate, PP=2 equivalence, PP scaling, legacy templates |
+
+## Parity ladder
+
+1. **G1 forward**: MCore vs HF on one sample — `rel_diff` ~1e-5. Done (2.7e-05).
+2. **G1b backward**: finite, non-zero gradient norm. Done (263.50).
+3. **G2 schedule equivalence**: native vs `pp_executor` at PP=2, identical seed/weights/data,
+   matching loss and grad norm. Native passes; `MODE=1` currently fails — see `HANDOFF.md` §9.
+4. **G3**: 0 skipped / 0 NaN across all measured steps, both arms.
+5. **G4**: provenance recorded — manifest hash, prompt hash, container, commits, PP/M/steps.
+
+Timing is only meaningful after G2 and with enough microbatches per step: the bubble scales as
+roughly `(PP−1)/M`, so `M=2` at PP=4 measures fill/drain, not scheduling quality.
+
+## Scope limits (keep claims honest)
+
+- The bridge exercises the **text-side** schedule. Qwen2-VL encoder nesting (`LLMPPExecutorWithVE`)
+  is not wired yet.
+- `part_b_image_res` token totals are derived; only the processor gate makes them measured.
+- No training-convergence claim comes out of these runs — they are systems measurements.

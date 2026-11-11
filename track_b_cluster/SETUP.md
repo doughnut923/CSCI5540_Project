@@ -4,29 +4,48 @@ Target: run the Megatron-Core training pipeline for Qwen2-VL-2B with the Track B
 resolution-heterogeneity pilot, on the CSE cluster, with the option of toggling BigMac's
 `pp_executor`.
 
-Every command below has been run on this cluster. Anything that looks odd is odd because the
-cluster requires it — see the troubleshooting table before "fixing" something.
+**No special workspace is required.** Any account with ~40 GB of storage on a filesystem the
+GPU nodes can see will do. The examples below use a placeholder `$WS`; point it at your own
+directory and none of the commands change.
+
+Every command below has been run on this cluster (with `$WS=/research/d7/fyp26/lkchau3/workspaces/cyfok3`).
+Anything that looks odd is odd because the cluster requires it — see the troubleshooting table
+before "fixing" something.
 
 ---
 
-## 0. What you need
+## 0. Prerequisites
 
-- An account on the CSE GPU cluster with access to the `cyfok3` workspace
-  (`/research/d7/fyp26/lkchau3/workspaces/cyfok3`).
-- ~40 GB free under that workspace (model 4.5 GB, container 11 GB, checkpoint 4.2 GB,
-  vendored repos ~2 GB).
-- GitHub access to `doughnut923/CSCI5540_Project` and to the BigMac repository.
-- **No** sudo. Nothing is installed on the host; everything lives in the workspace.
+| Need | Why |
+| --- | --- |
+| CSE cluster account | SLURM jobs, GPU nodes |
+| **~40 GB** free on a shared filesystem visible from GPU nodes | container 11 GB (+~10 GB pull cache), model 4.5 GB, MCore checkpoint 4.2 GB, vendored repos ~2 GB, python extras 0.7 GB |
+| Access to the `rtx3090` GPU nodes | the vision encoder needs sm80+; older cards cannot run it at all |
+| GitHub access | `doughnut923/CSCI5540_Project`, `Dots-Infra/BigMac`, `NVIDIA/Megatron-LM`, `alibaba/Pai-Megatron-Patch` (submodule) |
 
-All commands assume:
+Pick a workspace and put it in your shell profile:
 
 ```bash
-export WS=/research/d7/fyp26/lkchau3/workspaces/cyfok3
+export WS=<your workspace, e.g. /research/<group>/<user>/workspaces/<name>}
 export PROJ=$WS/proj/csci5540
 export SLURM_CONF=/opt1/slurm/gpu-slurm.conf
+
+# the filesystem root that must be bind-mounted into the container;
+# /research for /research/... workspaces, $HOME if you keep the workspace in your home
+export BIND_ROOT=/research
 ```
 
-Put those three in `~/.bashrc`; forgetting `SLURM_CONF` gives "Invalid job id" errors.
+Check the space before you start:
+
+```bash
+df -h "$WS"        # want >= 40 GB available
+```
+
+> If your workspace is under `$HOME`, be careful: home quotas are small and Singularity will
+> cache ~10 GB of OCI layers. Set `SINGULARITY_CACHEDIR`/`SINGULARITY_TMPDIR` on the same big
+> filesystem (see §4) and `export BIND_ROOT=$HOME`.
+
+Forgetting `SLURM_CONF` gives "Invalid job id" from every `squeue`/`sacct`/`scancel`.
 
 ---
 
@@ -42,7 +61,7 @@ cd "$PROJ"
 That branch contains the pilot builder, the processor gate, the parity harness, the PP=2/PP
 scaling harness, the SLURM templates and `HANDOFF.md`.
 
-Directory you will create next:
+Layout you will create next (name and location are yours to choose):
 
 ```
 $WS/
@@ -149,7 +168,7 @@ The host is CentOS 7 with GLIBC 2.17 and driver 565.57.01 (CUDA 12.7). Modern to
 run on the host, so everything runs inside a SIF.
 
 ```bash
-# cache/tmp must be on /research — the home quota is small
+# cache/tmp must live on the big filesystem, not the home quota
 export SINGULARITY_CACHEDIR=$WS/singcache
 export SINGULARITY_TMPDIR=$WS/tmp
 mkdir -p "$SINGULARITY_CACHEDIR" "$SINGULARITY_TMPDIR"
@@ -162,9 +181,9 @@ Pull it **on a GPU node**: the login node has no `mksquashfs`.
 cd "$WS/containers"
 sbatch --account=gpu -p gpu_2h --gres=gpu:1 --constraint=rtx3090 --exclude=gpu54 \
   --time=01:00:00 --wrap '
-    export SINGULARITY_CACHEDIR='"$SINGULARITY_CACHEDIR"';
-    export SINGULARITY_TMPDIR=/tmp;
-    cd '"$WS"'/containers;
+    export WS='"$WS"'; export BIND_ROOT='"$BIND_ROOT"';
+    export SINGULARITY_CACHEDIR=$WS/singcache; export SINGULARITY_TMPDIR=/tmp;
+    cd "$WS/containers";
     singularity pull ngc-pytorch-25.03-py3.sif docker://nvcr.io/nvidia/pytorch:25.03-py3'
 ```
 
@@ -173,7 +192,7 @@ Expect `ngc-pytorch-25.03-py3.sif`, ~11 GB, torch 2.7.0a0+cu128 + Transformer En
 **Do not use NGC 25.10 or later** — those images carry CUDA-13 torch and refuse driver 565
 (`driver too old (found 12080)`).
 
-Verify:
+Verify (replace `$BIND_ROOT` with yours):
 
 ```bash
 sbatch --account=gpu -p gpu_2h --gres=gpu:1 --constraint=rtx3090 --exclude=gpu54 \
@@ -181,7 +200,7 @@ sbatch --account=gpu -p gpu_2h --gres=gpu:1 --constraint=rtx3090 --exclude=gpu54
   singularity exec --nv \
     --bind /lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 \
     --bind /lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1 \
-    '"$WS"'/containers/ngc-pytorch-25.03-py3.sif \
+    -B '"$BIND_ROOT:$BIND_ROOT"' '"$WS"'/containers/ngc-pytorch-25.03-py3.sif \
     python -c "import torch,transformer_engine as te;print(torch.__version__,te.__version__,torch.cuda.is_available())"'
 ```
 
@@ -197,10 +216,9 @@ The container already has torch, numpy, cv2, flash-attn. Only add what is missin
 ```bash
 D=$WS/venvs/trackb_pydeps
 mkdir -p "$D"
-export TMPDIR=$WS/tmp
 
 singularity exec --env PIP_NO_CACHE_DIR=1 --env TMPDIR=$WS/tmp \
-  -B /research/d7/fyp26/lkchau3:/research/d7/fyp26/lkchau3 \
+  -B "$BIND_ROOT:$BIND_ROOT" \
   "$WS/containers/ngc-pytorch-25.03-py3.sif" \
   python3 -m pip install --target "$D" --no-deps \
     transformers==4.49.0 tokenizers==0.21.4 safetensors regex tqdm \
@@ -253,7 +271,7 @@ python3 part_b_image_res/track_b_pilot.py \
   --samples-per-mixture 8
 
 singularity exec --env PYTHONPATH="$WS/venvs/trackb_pydeps" \
-  -B /research/d7/fyp26/lkchau3:/research/d7/fyp26/lkchau3 \
+  -B "$BIND_ROOT:$BIND_ROOT" \
   "$WS/containers/ngc-pytorch-25.03-py3.sif" \
   python3 part_b_image_res/validate_n2_pilot.py \
     --manifest runs/track_b_n2_pilot_measured_v1/pilot_manifest.json \
@@ -268,7 +286,12 @@ Expected: `{"status": "pass", "samples_checked": 24, "passed": 24, "failed": 0}`
 
 ## 7. Convert the checkpoint to Megatron-Core
 
+Every `track_b_cluster/slurm/*.sbatch` reads `WS` (and `BIND_ROOT`) from the environment and
+falls back to the original author's paths, so **always export them first** (or pass
+`--export=ALL,WS=...,BIND_ROOT=...`):
+
 ```bash
+export WS="$WS" BIND_ROOT="$BIND_ROOT"
 cd "$PROJ"
 sbatch track_b_cluster/slurm/convert_qwen2vl_2b.sbatch
 tail -f "$WS/containers/convert-q2vl-2b.log"
@@ -307,7 +330,7 @@ troubleshooting.
 
 ```bash
 sbatch --gres=gpu:4 \
-  --export=ALL,PP=4,BENCH_STEPS=10,WARMUP_STEPS=2,NUM_MICROBATCHES=8 \
+  --export=ALL,WS="$WS",BIND_ROOT="$BIND_ROOT",PP=4,BENCH_STEPS=10,WARMUP_STEPS=2,NUM_MICROBATCHES=8 \
   track_b_cluster/slurm/pp_scale_native.sbatch
 ```
 
@@ -329,8 +352,8 @@ print(d['primary']['throughput_samples_per_s'], d['primary']['pipeline_bubble_ra
 ### 9.2 BigMac schedule
 
 ```bash
-MODE=0 sbatch --export=ALL,MODE=0 track_b_cluster/slurm/pp2_equivalence.sbatch   # native PP=2
-MODE=1 sbatch --export=ALL,MODE=1 track_b_cluster/slurm/pp2_equivalence.sbatch   # pp_executor PP=2
+MODE=0 sbatch --export=ALL,WS="$WS",BIND_ROOT="$BIND_ROOT",MODE=0 track_b_cluster/slurm/pp2_equivalence.sbatch
+MODE=1 sbatch --export=ALL,WS="$WS",BIND_ROOT="$BIND_ROOT",MODE=1 track_b_cluster/slurm/pp2_equivalence.sbatch
 ```
 
 Compare `loss` and `grad_norm` in `pp2_equivalence_mode{0,1}.json` — they must match.
@@ -346,7 +369,8 @@ traceback). `MODE=1` at PP=2 is also only the LLM schedule; the encoder-nesting 
 | Symptom | Cause | Fix |
 |---|---|---|
 | Job fails in ~2 s, no output at all | landed on `gpu54` | add `--exclude=gpu54` |
-| `Requested node configuration is not available` | rtx3090 nodes are `highcpucount`; `--mem` or bare `--gres=gpu:rtx3090:N` rejected | use `--gres=gpu:N --constraint=rtx3090` and **remove `--mem`** |
+| `Requested node configuration is not available` | rtx3090 nodes reject `--mem`; bare `--gres=gpu:rtx3090:N` also fails | use `--gres=gpu:N --constraint=rtx3090`, remove `--mem` |
+| `Memory specification can not be satisfied` | same `--mem` issue | drop the `--mem` line |
 | `No dot product attention support for the provided inputs!` | job landed on sm75 (RTX 2080/Titan); THD vision attention needs sm80+ | `--constraint=rtx3090` |
 | `CUDA initialization: driver too old (found 12080)` | CUDA-13 image (NGC 25.10+) | use NGC 25.03 |
 | `libcuda.so cannot found!` / triton driver error | `--nv` did not inject the host libs | bind `libcuda.so.1` + `libnvidia-ml.so.1` into `/usr/lib/x86_64-linux-gnu`, set `TRITON_LIBCUDA_PATH` |
@@ -357,8 +381,8 @@ traceback). `MODE=1` at PP=2 is also only the LLM schedule; the encoder-nesting 
 | `nvidia_resiliency_ext has no __version__` | NGC package quirk | `megatron-lm-nvrx.patch` |
 | `No module named 'multistorageclient'` | energon | install the local stub, remove real energon |
 | `numpy.core.multiarray failed to import` | numpy 2 shadowing the container | delete `$D/numpy*`, keep pyarrow 17 |
-| two torch installs, root fs full | `pip install transformers` pulled torch | always `--no-deps`, `TMPDIR` on `/research` |
-| `--mem` seen but job still fails | also `-c 8` with 1 GPU breaks the CPU:GPU ratio | keep `-c ≤6` unless the node has `highcpucount` |
+| two torch installs, root fs full | `pip install transformers` pulled torch | always `--no-deps`, `TMPDIR` on the big filesystem |
+| file not found inside the container | `$WS` not covered by `-B` | bind `$BIND_ROOT` (or the exact directory) |
 
 ---
 

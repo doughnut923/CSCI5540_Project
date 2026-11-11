@@ -1,4 +1,8 @@
-# BigMac staging notes (cluster, under cyfok3)
+# BigMac staging notes (cluster, under $WS)
+
+> **Historical.** Written before the runtime was settled. Current environment facts, verified
+> numbers and open work live in `HANDOFF.md`; build steps in `SETUP.md`. The container below
+> (`pytorch-sam3.sif`) and the NGC 25.10 plan were both abandoned — see `HANDOFF.md` §2.
 
 Pinned checkouts (all under `$CYFOK3_WORKSPACE/third_party/`):
 

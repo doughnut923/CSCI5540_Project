@@ -9,7 +9,8 @@
 #SBATCH --exclude=gpu54
 # Single-GPU parity: MCore Qwen2-VL forward vs HF reference on one N=2 Track B sample.
 set -euo pipefail
-WS=/research/d7/fyp26/lkchau3/workspaces/cyfok3
+: "${WS:=/research/d7/fyp26/lkchau3/workspaces/cyfok3}"   # override for your account
+: "${BIND_ROOT:=/research}"                         # filesystem root that contains $WS
 PROJ=$WS/proj/csci5540
 LOG=$WS/containers/native-fwd.log
 exec > "$LOG" 2>&1
@@ -33,7 +34,7 @@ export SINGULARITYENV_TOKENIZERS_PARALLELISM=false
 singularity exec --nv \
   --bind /lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 \
   --bind /lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1 \
-  -B /research/d7/fyp26/lkchau3:/research/d7/fyp26/lkchau3 \
+  -B "$BIND_ROOT:$BIND_ROOT" \
   "$SIF" \
   torchrun --nproc_per_node 1 --master_port 12555 \
   "$PROJ/track_b_cluster/bridge/native_forward_check.py" \

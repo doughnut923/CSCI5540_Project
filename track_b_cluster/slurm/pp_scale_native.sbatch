@@ -12,7 +12,8 @@
 # (PP=4 needs 4 GPUs on one node; PP=8 needs NUM_LAYERS=32 because 28 % 8 != 0).
 # Benchmark mode: --export=ALL,PP=4,BENCH_STEPS=10,WARMUP_STEPS=2[,NUM_MICROBATCHES=8]
 set -euo pipefail
-WS=/research/d7/fyp26/lkchau3/workspaces/cyfok3
+: "${WS:=/research/d7/fyp26/lkchau3/workspaces/cyfok3}"   # override for your account
+: "${BIND_ROOT:=/research}"                         # filesystem root that contains $WS
 PROJ=$WS/proj/csci5540
 PP=${PP:-4}
 NUM_LAYERS=${NUM_LAYERS:-28}
@@ -52,7 +53,7 @@ export SINGULARITYENV_QWEN2VL_HF_DIR=$HF
 singularity exec --nv \
   --bind /lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 \
   --bind /lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1 \
-  -B /research/d7/fyp26/lkchau3:/research/d7/fyp26/lkchau3 \
+  -B "$BIND_ROOT:$BIND_ROOT" \
   "$SIF" \
   torchrun --standalone --tee 3 --nproc_per_node "$PP" --master_port 12677 \
   "$PROJ/track_b_cluster/bridge/pp2_equivalence.py" "$OUT"
@@ -60,7 +61,7 @@ echo "PP_NATIVE_SCALE_RC=$?"
 
 if [ "$BENCH_STEPS" -gt 0 ]; then
   singularity exec \
-    -B /research/d7/fyp26/lkchau3:/research/d7/fyp26/lkchau3 \
+    -B "$BIND_ROOT:$BIND_ROOT" \
     "$SIF" \
     python3 "$PROJ/track_b_cluster/scripts/collect_step_metrics.py" \
       --input "$JSONL" --output "$SUMMARY" \

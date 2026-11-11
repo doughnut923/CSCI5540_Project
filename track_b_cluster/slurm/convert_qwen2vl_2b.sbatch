@@ -8,10 +8,12 @@
 #SBATCH --time=00:40:00
 #SBATCH --exclude=gpu54
 # Convert Qwen2-VL-2B-Instruct HF -> Megatron-Core checkpoint (TP=1, PP=1, bf16).
-# Runs inside the NGC PyTorch 25.10 SIF, which provides torch + transformer_engine.
+# Runs inside the NGC PyTorch 25.03 SIF, which provides torch + transformer_engine.
+# (25.10+ is CUDA-13 and does not run on this cluster's driver.)
 # Set MEGATRON_SRC to override the Megatron-LM/MCore checkout used.
 set -euo pipefail
-WS=/research/d7/fyp26/lkchau3/workspaces/cyfok3
+: "${WS:=/research/d7/fyp26/lkchau3/workspaces/cyfok3}"   # override for your account
+: "${BIND_ROOT:=/research}"                         # filesystem root that contains $WS
 LOG=$WS/containers/convert-q2vl-2b.log
 exec > "$LOG" 2>&1
 set -x
@@ -44,7 +46,7 @@ export SINGULARITYENV_TRITON_LIBCUDA_PATH=/usr/lib/x86_64-linux-gnu
 singularity exec --nv \
   --bind /lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 \
   --bind /lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1 \
-  -B /research/d7/fyp26/lkchau3:/research/d7/fyp26/lkchau3 \
+  -B "$BIND_ROOT:$BIND_ROOT" \
   "$SIF" \
   bash hf2mcore_qwen2_vl_convertor.sh 2B "$HF" "$OUT" 1 1 false bf16
 echo "CONVERT_RC=$?"

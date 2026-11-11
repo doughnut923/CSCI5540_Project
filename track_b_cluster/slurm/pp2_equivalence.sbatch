@@ -9,7 +9,8 @@
 #SBATCH --exclude=gpu54
 # PP=2 equivalence: native schedule vs pp_executor, identical seed/weights/data.
 set -euo pipefail
-WS=/research/d7/fyp26/lkchau3/workspaces/cyfok3
+: "${WS:=/research/d7/fyp26/lkchau3/workspaces/cyfok3}"   # override for your account
+: "${BIND_ROOT:=/research}"                         # filesystem root that contains $WS
 PROJ=$WS/proj/csci5540
 MODE=${MODE:-0}
 LOG=$WS/containers/pp2-equiv-${MODE}.log
@@ -38,7 +39,7 @@ export SINGULARITYENV_QWEN2VL_HF_DIR=$HF
 singularity exec --nv \
   --bind /lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 \
   --bind /lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1 \
-  -B /research/d7/fyp26/lkchau3:/research/d7/fyp26/lkchau3 \
+  -B "$BIND_ROOT:$BIND_ROOT" \
   "$SIF" \
   torchrun --standalone --tee 3 --nproc_per_node 2 --master_port 12666 \
   "$PROJ/track_b_cluster/bridge/pp2_equivalence.py" "$OUT"

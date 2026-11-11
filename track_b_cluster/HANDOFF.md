@@ -42,7 +42,7 @@ used to validate that the converted checkpoint is numerically correct.
 
 | Item | Value |
 | --- | --- |
-| Workspace | `/research/d7/fyp26/lkchau3/workspaces/cyfok3` |
+| Workspace | any directory you own with ~40 GB free, exported as `$WS` (examples use `/research/<group>/<user>/workspaces/<name>`); set `$BIND_ROOT` to the filesystem root that contains it |
 | Project | `$WS/proj/csci5540` |
 | SLURM config | `SLURM_CONF=/opt1/slurm/gpu-slurm.conf` |
 | Account / partition | `--account=gpu -p gpu_2h` (or `gpu_8h`) |
@@ -62,7 +62,7 @@ used to validate that the converted checkpoint is numerically correct.
 singularity exec --nv \
   --bind /lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 \
   --bind /lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1 \
-  -B /research/d7/fyp26/lkchau3:/research/d7/fyp26/lkchau3 \
+  -B "$BIND_ROOT:$BIND_ROOT" \
   "$SIF" ...
 ```
 
@@ -169,7 +169,8 @@ Parity (`low_0000`, 2×256 px, seq 194, grid `[[1,18,18],[1,18,18]]`, 162 image 
 
 ```bash
 export SLURM_CONF=/opt1/slurm/gpu-slurm.conf
-WS=/research/d7/fyp26/lkchau3/workspaces/cyfok3
+WS=${WS:?set WS to your workspace}   # e.g. /research/<group>/<user>/workspaces/<name>
+export BIND_ROOT=${BIND_ROOT:-/research}
 PROJ=$WS/proj/csci5540
 
 # 1. parity gate (1 GPU)

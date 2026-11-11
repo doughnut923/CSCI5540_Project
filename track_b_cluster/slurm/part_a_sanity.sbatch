@@ -15,7 +15,7 @@ export SLURM_CONF="${SLURM_CONF:-/opt1/slurm/gpu-slurm.conf}"
 source "${PROJ_ROOT:-$CYFOK3_WORKSPACE/proj/csci5540}/track_b_cluster/scripts/common_env.sh"
 
 SIF="${SIF:-}"  # set to approved .sif path
-BIND="${BIND:-$CYFOK3_WORKSPACE:$CYFOK3_WORKSPACE}"  # CONFIRM
+BIND="${BIND:-${BIND_ROOT:-$CYFOK3_WORKSPACE}:${BIND_ROOT:-$CYFOK3_WORKSPACE}}"  # CONFIRM
 
 run_in_env() {
   if [[ -n "${SIF}" ]]; then

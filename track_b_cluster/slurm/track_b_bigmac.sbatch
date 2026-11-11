@@ -18,7 +18,7 @@ source "${PROJ_ROOT:-$CYFOK3_WORKSPACE/proj/csci5540}/track_b_cluster/scripts/co
 : "${MANIFEST:?set MANIFEST to Track B N=2 pilot_manifest.json}"
 : "${BRIDGE_RUNNER:?set BRIDGE_RUNNER to the cluster BigMac/MCore Qwen2-VL runner entrypoint}"
 SIF="${SIF:-}"
-BIND="${BIND:-$CYFOK3_WORKSPACE:$CYFOK3_WORKSPACE}"
+BIND="${BIND:-${BIND_ROOT:-$CYFOK3_WORKSPACE}:${BIND_ROOT:-$CYFOK3_WORKSPACE}}"
 
 OUT="$RUN_ROOT/bigmac_${SLURM_JOB_ID:-local}"
 mkdir -p "$OUT"
