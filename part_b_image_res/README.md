@@ -60,7 +60,7 @@ High:   repeating [128, 128, 384]
 Any remainder is filled with 256 and the assignments are shuffled. Use
 `--seed` to reproduce the shuffle.
 
-## Valiadation
+## Validation
 ```powershell
 python .\part_b_image_res\resolution_validation.py `
   --dataset-dir .\part_b_image_res\variance_datasets `
@@ -88,3 +88,24 @@ current datasets:
 | Low (750)   | —                 | n=750, mean=81.0, var=0.00 | —                          | 81.0 | 0.00 |
 | Medium (750)| n=250, mean=25.0, var=0.00 | n=375, mean=81.0, var=0.00 | n=125, mean=196.0, var=0.00 | 81.5 | 3249.25 |
 | High (750)  | n=500, mean=25.0, var=0.00 | —                          | n=250, mean=196.0, var=0.00 | 82.0 | 6498.00 |
+
+## Track B N=2 pilot (Megatron+BigMac integration, plan Phase 0.3/3)
+
+Builds a deterministic **2-images/sample** manifest from existing variance datasets (resolution heterogeneity; image count fixed at 2). Records SHA256 hashes and derived visual-token totals (128→25, 256→81, 384→196). Output dir must not exist.
+
+```sh
+python part_b_image_res/track_b_pilot.py \
+  --output-dir runs/track_b_n2_pilot_smoke \
+  --mixtures Low Medium High --samples-per-mixture 24 --seed 55402026
+```
+
+Processor gate (no model weights/forward): checks grids/totals and per-image slice isolation in each 2-image batch.
+
+```sh
+python part_b_image_res/validate_n2_pilot.py \
+  --manifest runs/track_b_n2_pilot_smoke/pilot_manifest.json \
+  --output-dir runs/track_b_n2_pilot_smoke/processor_gate \
+  --model /path/to/Qwen2-VL-2B-Instruct --local-files-only --check-hashes --repo-root .
+```
+
+Cluster SLURM/scripts and the BigMac bridge scaffold: `track_b_cluster/`. The bridge/runner needs the cluster BigMac+MCore runtime (not runnable locally).
