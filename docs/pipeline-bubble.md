@@ -23,10 +23,16 @@ estimate from a formula: both terms come from CUDA events on the actual run.
 
 - `T`: `torch.distributed.barrier()` → CUDA event → `forward_backward_func(...)` →
   event → barrier. `T` is the max over ranks, so it is one global window.
-- `busy_i`: CUDA events around each `model(...)` call in `forward_step` (forward), and
-  around each backward pass via `register_full_backward_pre_hook` /
-  `register_full_backward_hook` on the pipeline chunk. In 1F1B (non-interleaved) forward
-  and backward do not overlap on a rank, so the intervals are serial and are summed.
+- `busy_i`: CUDA events around each `model(...)` call in `forward_step` (forward), split
+  at the vision-encoder / language-model boundary by a `forward_pre_hook` on
+  `language_model`, so `enc` and `llm` are measured separately. Backward is timed by
+  wrapping `torch.autograd.backward`, which is what MCore's `backward_step` calls per
+  microbatch (`deallocate_pipeline_outputs` must stay off or MCore takes the
+  `custom_backward` path instead). Module backward hooks cannot be used here: the stage
+  activation enters the model through `set_input_tensor()`, not as a forward argument, so
+  no forward input requires grad and the full-backward post-hook fires immediately after
+  the pre-hook, giving zero-width intervals. In 1F1B (non-interleaved) forward and
+  backward do not overlap on a rank, so the intervals are serial and are summed.
 - `busy_i` is all-reduced (SUM); `T` is all-reduced (MAX). Both are computed per step,
   after `torch.cuda.synchronize()`.
 
@@ -38,6 +44,11 @@ max_memory_allocated_bytes_by_rank, busy_time_s_total,
 bubble_time_s, pipeline_bubble_ratio, backward_busy_timed,
 loss, skipped, nan_or_inf, pp_size, num_layers, num_microbatches, mode
 ```
+
+`busy_intervals` adds every busy interval as `[pp_rank, kind, start_s, end_s]`
+relative to the step start, with `kind` = `enc` (vision encoder), `llm` (language
+model) or `bwd`; `scripts/plot_pipeline_gantt.py` draws the utilization diagram
+(time on x, stage on y) from it.
 
 `samples` per step is `micro_batch_size * num_microbatches * data_parallel` = `num_microbatches`
 here (micro batch 1, DP 1), which is what the throughput calculation divides by.
@@ -51,12 +62,14 @@ here (micro batch 1, DP 1), which is what the throughput calculation divides by.
   report it.
 - **Event resolution.** CUDA events are accurate to ~microseconds; event markers add a
   small overhead to `step_time_s` when benchmark mode is on.
-- **If backward timing fails** to register (platform/hook incompatibility), the script
-  sets `backward_busy_timed: false` and the bubble is overestimated (busy underestimates).
-  Check that field before trusting a number.
-- **Fill/drain dominates at small `M`.** With `num_microbatches = 2` the bubble is mostly
-  fill/drain and is not steady-state. Use `NUM_MICROBATCHES=8` (or more) for a meaningful
-  steady-state figure; the cross-check estimate for 1F1B is `(P-1)/(M+P-1)`.
+- **`backward_busy_timed` only means the wrapper is installed.** It does not prove the
+  intervals are non-zero; the Gantt script flags a record whose backward intervals are
+  all empty.
+- **Fill/drain is not the whole story at PP=8.** Measured 2026-11-18 (PP=8, 32 layers,
+  M=4): bubble 0.804 against `(P-1)/(M+P-1)` = 0.64, because stage 0 runs the whole
+  vision encoder for every microbatch (0.475 s of encoder, 0.754 s of backward in a
+  1.084 s step) and the other stages wait for it. Compare stages with the same encoder
+  placement before attributing a bubble to the schedule.
 - **Shared nodes.** Absolute timings depend on co-tenants; compare runs made in the same
   session and report per-step spread, not only the mean.
 - **No NVLink on rtx3090 nodes.** PP P2P goes over PCIe, which affects drain time.
@@ -83,6 +96,15 @@ Outputs under `runs/track_b_n2_pilot_measured_v1/`:
 | `pp_native_scale_pp{P}.json` | run config + final loss/grad norm |
 | `pp_native_scale_pp{P}.jsonl` | one line per measured step (raw metrics) |
 | `pp_native_scale_pp{P}_summary.json` | aggregated throughput, step p50/p95, peak mem, bubble |
+
+Plot one step's utilization diagram:
+
+```sh
+python3 track_b_cluster/scripts/plot_pipeline_gantt.py --input <jsonl> [--step 0] \
+  --output pp8_gantt.png
+```
+
+`docs/pp8_gantt_split_v1.png` is that diagram for the PP=8 / M=4 run (job 28700).
 
 `BENCH_STEPS=0` (default) keeps the original single-step equivalence gate behavior and
 writes no benchmark records.

@@ -20,7 +20,8 @@ NUM_LAYERS=${NUM_LAYERS:-28}
 BENCH_STEPS=${BENCH_STEPS:-0}
 WARMUP_STEPS=${WARMUP_STEPS:-2}
 NUM_MICROBATCHES=${NUM_MICROBATCHES:-2}
-LOG=$WS/containers/pp-native-pp${PP}.log
+RUN_TAG=${RUN_TAG:-}   # optional suffix so a re-run never overwrites earlier evidence
+LOG=$WS/containers/pp-native-pp${PP}${RUN_TAG:+-$RUN_TAG}.log
 exec > "$LOG" 2>&1
 set -x
 
@@ -28,7 +29,7 @@ SIF=$WS/containers/ngc-pytorch-25.03-py3.sif
 PMP=$WS/third_party/BigMac/third_party/Pai-Megatron-Patch
 BACKEND=$PMP/backends/megatron/Megatron-LM-250624
 HF=$WS/models/Qwen2-VL-2B-Instruct
-OUT=$PROJ/runs/track_b_n2_pilot_measured_v1/pp_native_scale_pp${PP}.json
+OUT=$PROJ/runs/track_b_n2_pilot_measured_v1/pp_native_scale_pp${PP}${RUN_TAG:+-$RUN_TAG}.json
 JSONL=${OUT%.json}.jsonl
 SUMMARY=${OUT%.json}_summary.json
 

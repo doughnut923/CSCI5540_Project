@@ -11,7 +11,9 @@ are seeded CPU init either way, so this stays a schedule-scaling test, not a fid
 Benchmark mode (BENCH_STEPS > 0) repeats the step and records, per step:
   step_time_s, samples, peak allocated bytes per rank, and the exact pipeline bubble
   (bubble_time_s = pp_size * step_time - sum of per-rank compute-busy time). See
-  docs/pipeline-bubble.md for the definition and its limits.
+  docs/pipeline-bubble.md for the definition and its limits. Busy time is split into
+  "enc" (vision encoder), "llm" (language model) and "bwd", and every interval is
+  written as busy_intervals so scripts/plot_pipeline_gantt.py can draw the schedule.
 
 Encoder nesting (LLMPPExecutorWithVE) is NOT exercised here; this is the text-side schedule.
 """
@@ -182,44 +184,68 @@ def main():
         tokens, grid, empty_video, target_mc, 0, ignore_index=-100)
 
     # --- bubble instrumentation -------------------------------------------------
-    # busy_events holds one (start, end) CUDA-event pair per forward and per backward
-    # call. Everything runs on the default stream, so the intervals are serial on a rank
-    # and can simply be summed. See docs/pipeline-bubble.md.
+    # busy_events holds one (kind, start, end) CUDA-event triple per measured interval.
+    # kind is "enc" (vision encoder), "llm" (language model onward), "fwd" (whole model
+    # call, no split available) or "bwd". Everything runs on the default stream, so the
+    # intervals are serial on a rank and can simply be summed. See docs/pipeline-bubble.md.
     busy_events = []
-    bwd_pre_events = []
+    fwd_marks = []
+    in_forward = [False]
     backward_timed = True
+
+    def _llm_pre_hook(module, inputs):
+        # Fires once per model forward, at the vision-encoder / language-model boundary.
+        # Guarded so activation-checkpoint recompute cannot add marks.
+        if in_forward[0]:
+            ev = torch.cuda.Event(enable_timing=True)
+            ev.record()
+            fwd_marks.append(ev)
 
     def _fwd_busy_call(fn):
         start = torch.cuda.Event(enable_timing=True)
         end = torch.cuda.Event(enable_timing=True)
         start.record()
-        result = fn()
+        fwd_marks.clear()
+        in_forward[0] = True
+        try:
+            result = fn()
+        finally:
+            in_forward[0] = False
         end.record()
-        busy_events.append((start, end))
+        if fwd_marks:
+            boundary = fwd_marks[0]
+            busy_events.append(("enc", start, boundary))
+            busy_events.append(("llm", boundary, end))
+        else:
+            busy_events.append(("fwd", start, end))
         return result
 
-    def _bwd_pre_hook(module, grad_output):
-        ev = torch.cuda.Event(enable_timing=True)
-        ev.record()
-        bwd_pre_events.append(ev)
-
-    def _bwd_hook(module, grad_input, grad_output):
-        if bwd_pre_events:
-            start = bwd_pre_events.pop(0)
-            end = torch.cuda.Event(enable_timing=True)
-            end.record()
-            busy_events.append((start, end))
-
     if bench_steps > 0:
-        # Full backward hooks make the module output a view, which trips MCore's
-        # deallocate_output_tensor assert. The pseudo-free is a memory-only optimisation.
+        # Time the schedule's own per-microbatch backward call. Module backward hooks
+        # cannot do it here: the stage activation enters the model through
+        # set_input_tensor(), not as a forward argument, so no forward input requires
+        # grad and the full-backward post-hook fires right after the pre-hook.
+        #
+        # deallocate_pipeline_outputs=False keeps MCore on torch.autograd.backward
+        # (schedules.backward_step); with it True MCore calls custom_backward instead.
         model.config.deallocate_pipeline_outputs = False
-        try:
-            model.register_full_backward_pre_hook(_bwd_pre_hook)
-            model.register_full_backward_hook(_bwd_hook)
-        except Exception as exc:  # measurement degrades, the run continues
-            backward_timed = False
-            print(f"WARN backward timing unavailable: {exc}", flush=True)
+        import torch.autograd as _autograd
+        _orig_backward = _autograd.backward
+
+        def _timed_backward(tensors, grad_tensors=None, **kwargs):
+            start = torch.cuda.Event(enable_timing=True)
+            end = torch.cuda.Event(enable_timing=True)
+            start.record()
+            try:
+                return _orig_backward(tensors, grad_tensors=grad_tensors, **kwargs)
+            finally:
+                end.record()
+                busy_events.append(("bwd", start, end))
+
+        _autograd.backward = _timed_backward
+        llm = getattr(model, "language_model", None)
+        if llm is not None:  # None only for a text-only build; then forwards stay whole
+            llm.register_forward_pre_hook(_llm_pre_hook)
 
     def forward_step(data_iterator, model):
         def _run():
@@ -275,7 +301,7 @@ def main():
             end_ev = torch.cuda.Event(enable_timing=True)
             start_ev.record()
         busy_events.clear()
-        bwd_pre_events.clear()
+        fwd_marks.clear()
         for param in model.parameters():
             grad = getattr(param, "main_grad", None)
             if grad is not None:
@@ -305,7 +331,7 @@ def main():
             torch.distributed.barrier()
             torch.cuda.synchronize()
             t_local = start_ev.elapsed_time(end_ev) / 1000.0
-            busy_local = sum(s.elapsed_time(e) for s, e in busy_events) / 1000.0
+            busy_local = sum(s.elapsed_time(e) for _, s, e in busy_events) / 1000.0
 
             t_t = torch.tensor([t_local], device=device)
             torch.distributed.all_reduce(t_t, op=torch.distributed.ReduceOp.MAX)
@@ -327,12 +353,22 @@ def main():
                 torch.cuda.reset_peak_memory_stats()
 
             if step_idx >= warmup_steps:
+                # Busy intervals relative to step start, gathered for the Gantt plot.
+                local_iv = [[pp_rank, kind,
+                             start_ev.elapsed_time(s) / 1000.0,
+                             start_ev.elapsed_time(e) / 1000.0]
+                            for kind, s, e in busy_events]
+                gathered_iv = [None] * pp_size
+                torch.distributed.all_gather_object(gathered_iv, local_iv)
+                intervals = [iv for rank_iv in gathered_iv for iv in rank_iv]
+
                 records.append({
                     "step": step_idx - warmup_steps,
                     "warmup": False,
                     "step_time_s": step_time,
                     "samples": num_microbatches,
                     "max_memory_allocated_bytes_by_rank": peak_by_rank,
+                    "busy_intervals": intervals,
                     "busy_time_s_total": busy_total,
                     "bubble_time_s": bubble_time,
                     "pipeline_bubble_ratio": bubble_ratio,
