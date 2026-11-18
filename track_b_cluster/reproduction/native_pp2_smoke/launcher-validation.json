@@ -1,0 +1,46 @@
+{
+  "recorded_on": "2026-11-18",
+  "launcher": "track_b_cluster/slurm/pp_scale_native.sbatch",
+  "launcher_sha256": "7cfcb182977ecc65a4d480c3451ebb835f20b44481674bba57a7b51fb8455f1d",
+  "settings": {
+    "PP": 2,
+    "NUM_LAYERS": 28,
+    "NUM_MICROBATCHES": 2,
+    "BENCH_STEPS": 0,
+    "WARMUP_STEPS": 0,
+    "manifest": "track_b_cluster/reproduction/native_pp2_smoke/manifest.json"
+  },
+  "launcher_exit_code": 0,
+  "result": {
+    "mode": "native",
+    "use_pp_executor_env": "0",
+    "pp_rank": 0,
+    "pp_size": 2,
+    "pp_size_env": "2",
+    "num_layers": "28",
+    "sample_id": "repository_photos_two_128",
+    "num_microbatches": 2,
+    "seq_length": 82,
+    "loss": 6.259978771209717,
+    "grad_norm": 852.1813920756542,
+    "finite": true,
+    "measured": [
+      "PP=2 forward+backward loss and grad norm"
+    ],
+    "unmeasured": [
+      "encoder nesting (VE executor)",
+      "training convergence"
+    ]
+  },
+  "comparison": "Loss and global gradient norm equal the recorded composed-runner result for this input.",
+  "other_checks": [
+    "Both native launchers pass bash -n and ShellCheck.",
+    "Additional PMP patch passes reverse-apply check against the executed patched source."
+  ],
+  "not_exercised": [
+    "MODE=1 / BigMac executor",
+    "PP=4 or PP=8",
+    "benchmark mode",
+    "pp2_equivalence.sbatch as an exact submitted script"
+  ]
+}
