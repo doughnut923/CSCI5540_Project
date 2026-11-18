@@ -1,0 +1,210 @@
+diff --git a/examples/qwen2_vl/pretrain_qwen.py b/examples/qwen2_vl/pretrain_qwen.py
+index f763b4b..71a2bb7 100644
+--- a/examples/qwen2_vl/pretrain_qwen.py
++++ b/examples/qwen2_vl/pretrain_qwen.py
+@@ -54,15 +54,19 @@ from megatron.core import mpu, tensor_parallel
+ from megatron.core.parallel_state import get_tensor_model_parallel_rank
+ from megatron_patch.data.multimodal_dataset_helper import TaskEncoder, print_error_handler
+ 
+-from megatron.energon import (
+-    LimitDataset,
+-    RepeatDataset,
+-    WorkerConfig,
+-    get_loader,
+-    get_savable_loader,
+-    get_train_dataset,
+-    get_val_datasets,
+-)
++try:
++    from megatron.energon import (
++        LimitDataset,
++        RepeatDataset,
++        WorkerConfig,
++        get_loader,
++        get_savable_loader,
++        get_train_dataset,
++        get_val_datasets,
++    )
++except ImportError:  # checkpoint conversion / model-only paths never build energon datasets
++    LimitDataset = RepeatDataset = WorkerConfig = None
++    get_loader = get_savable_loader = get_train_dataset = get_val_datasets = None
+ 
+ def model_provider(
+     pre_process=True, post_process=True, add_encoder=True, add_decoder=True
+diff --git a/megatron_patch/arguments.py b/megatron_patch/arguments.py
+index 87b4685..15e8e31 100644
+--- a/megatron_patch/arguments.py
++++ b/megatron_patch/arguments.py
+@@ -39,6 +39,18 @@ def patch_if_not_exist(
+ def get_patch_args(parser):
+     group = parser.add_argument_group(title="patch")
+ 
++    # MCore >= 0.15 already registers some of these flags; ignore duplicates instead of
++    # crashing argparse (patch repo targets older MCore).
++    _orig_add_argument = group.add_argument
++
++    def _add_argument(*args, **kwargs):
++        try:
++            return _orig_add_argument(*args, **kwargs)
++        except argparse.ArgumentError:
++            return None
++
++    group.add_argument = _add_argument
++
+     for action in vars(group)["_actions"]:
+         if isinstance(action, argparse._StoreAction):
+             if "--tokenizer-type" in action.option_strings:
+diff --git a/megatron_patch/data/multimodal_dataset.py b/megatron_patch/data/multimodal_dataset.py
+index ce52ae5..227dc97 100644
+--- a/megatron_patch/data/multimodal_dataset.py
++++ b/megatron_patch/data/multimodal_dataset.py
+@@ -5,7 +5,10 @@ import torch
+ import re
+ import io
+ import numpy as np
+-import torchaudio
++try:
++    import torchaudio
++except ImportError:  # audio samples only; image-only Track B runs do not need it
++    torchaudio = None
+ 
+ from dataclasses import dataclass
+ from typing import List, Union
+diff --git a/megatron_patch/data/multimodal_dataset_helper.py b/megatron_patch/data/multimodal_dataset_helper.py
+index c408084..5be248b 100644
+--- a/megatron_patch/data/multimodal_dataset_helper.py
++++ b/megatron_patch/data/multimodal_dataset_helper.py
+@@ -25,11 +25,14 @@ import json
+ 
+ from transformers import WhisperFeatureExtractor
+ from megatron.training import get_args
+-from megatron.energon import (
+-    Batch,
+-    DefaultTaskEncoder,
+-    VQASample,
+-)
++try:
++    from megatron.energon import (
++        Batch,
++        DefaultTaskEncoder,
++        VQASample,
++    )
++except ImportError:  # checkpoint conversion / model-only paths never build energon datasets
++    Batch = DefaultTaskEncoder = VQASample = None
+ 
+ from megatron_patch.data.image_processing import get_visual_transform
+ from megatron_patch.data.multimodal_dataset import ChatMLSample
+diff --git a/megatron_patch/model/qwen2_vl/attention.py b/megatron_patch/model/qwen2_vl/attention.py
+index 24bc130..34139a0 100644
+--- a/megatron_patch/model/qwen2_vl/attention.py
++++ b/megatron_patch/model/qwen2_vl/attention.py
+@@ -82,6 +82,7 @@ class Attention(MegatronModule, ABC):
+         attn_mask_type: AttnMaskType,
+         attention_type: str,
+         cp_comm_type: str = None,
++        **kwargs,
+     ):
+         super().__init__(config=config)
+ 
+@@ -494,6 +495,7 @@ class SelfAttention(Attention):
+         layer_number: int,
+         attn_mask_type=AttnMaskType.padding,
+         cp_comm_type: str = None,
++        **kwargs,
+     ):
+         super().__init__(
+             config=config,
+@@ -502,6 +504,7 @@ class SelfAttention(Attention):
+             attn_mask_type=attn_mask_type,
+             attention_type="self",
+             cp_comm_type=cp_comm_type,
++            **kwargs,
+         )
+ 
+         self.linear_qkv = build_module(
+diff --git a/megatron_patch/model/qwen2_vl/attention_vision.py b/megatron_patch/model/qwen2_vl/attention_vision.py
+index 2800fc1..b810626 100644
+--- a/megatron_patch/model/qwen2_vl/attention_vision.py
++++ b/megatron_patch/model/qwen2_vl/attention_vision.py
+@@ -82,6 +82,7 @@ class Attention(MegatronModule, ABC):
+         attn_mask_type: AttnMaskType,
+         attention_type: str,
+         cp_comm_type: str = None,
++        **kwargs,
+     ):
+         super().__init__(config=config)
+ 
+@@ -493,6 +494,7 @@ class SelfAttention(Attention):
+         layer_number: int,
+         attn_mask_type=AttnMaskType.padding,
+         cp_comm_type: str = None,
++        **kwargs,
+     ):
+         super().__init__(
+             config=config,
+@@ -501,6 +503,7 @@ class SelfAttention(Attention):
+             attn_mask_type=attn_mask_type,
+             attention_type="self",
+             cp_comm_type=cp_comm_type,
++            **kwargs,
+         )
+ 
+         self.linear_qkv = build_module(
+diff --git a/megatron_patch/model/qwen2_vl/gpt_model.py b/megatron_patch/model/qwen2_vl/gpt_model.py
+index 0cb3f30..6b8a2c2 100644
+--- a/megatron_patch/model/qwen2_vl/gpt_model.py
++++ b/megatron_patch/model/qwen2_vl/gpt_model.py
+@@ -91,6 +91,8 @@ class GPTModel(LanguageModule):
+                 seq_len_interpolation_factor=seq_len_interpolation_factor,
+                 rotary_base=rotary_base
+             )
++            if mrope_section is None:  # Qwen2-VL-2B/7B default; converter path does not pass it
++                mrope_section = [16, 24, 24]
+             assert mrope_section is not None, "mrope section should be provided for Qwen2VLRoPE!"
+             self.mrope_section = mrope_section
+ 
+diff --git a/megatron_patch/model/qwen2_vl/transformer_config.py b/megatron_patch/model/qwen2_vl/transformer_config.py
+index 8731c1c..d1c1f19 100644
+--- a/megatron_patch/model/qwen2_vl/transformer_config.py
++++ b/megatron_patch/model/qwen2_vl/transformer_config.py
+@@ -15,7 +15,10 @@ import torch
+ from typing import List
+ from dataclasses import dataclass, field
+ from megatron.core.transformer import TransformerConfig
+-from megatron.training.activations import quick_gelu
++try:
++    from megatron.training.activations import quick_gelu
++except ImportError:  # MCore >= 0.15 moved this
++    from megatron.core.activations import quick_gelu
+ from megatron.core import parallel_state
+ 
+ @dataclass
+diff --git a/megatron_patch/tokenizer/__init__.py b/megatron_patch/tokenizer/__init__.py
+index d06a512..62aa0fa 100644
+--- a/megatron_patch/tokenizer/__init__.py
++++ b/megatron_patch/tokenizer/__init__.py
+@@ -175,7 +175,11 @@ def build_tokenizer(args):
+         args.padded_vocab_size = tokenizer.vocab_size + args.extra_vocab_size
+ 
+     elif args.patch_tokenizer_type == 'Qwen2Tokenizer':
+-        from megatron.core.datasets.megatron_tokenizer import MegatronTokenizer
++        # MCore >= 0.15 moved this class and forbids direct instantiation; the wrapper below
++        # only needs a no-op base, so use a local shim instead of importing it.
++        class MegatronTokenizer:
++            def __init__(self, *args, **kwargs):
++                pass
+         class _Qwen2Tokenizer(MegatronTokenizer):
+             def __init__(self, tokenizer_path, extra_vocab_size, padded_vocab_size):
+                 super().__init__(tokenizer_path)
+diff --git a/toolkits/model_checkpoints_convertor/qwen/hf2mcore_qwen2_vl_convertor.sh b/toolkits/model_checkpoints_convertor/qwen/hf2mcore_qwen2_vl_convertor.sh
+index 29be194..fb967f0 100644
+--- a/toolkits/model_checkpoints_convertor/qwen/hf2mcore_qwen2_vl_convertor.sh
++++ b/toolkits/model_checkpoints_convertor/qwen/hf2mcore_qwen2_vl_convertor.sh
+@@ -171,7 +171,6 @@ cmd="torchrun ${DISTRIBUTED_ARGS} hf2mcore_qwen2_vl.py \
+     --num-attention-heads ${NUM_ATTN_HEADS} \
+     --max-position-embeddings ${MAX_POSITION_EMBEDDINGS} \
+     --seq-length 1 \
+-    --no-async-tensor-model-parallel-allreduce \
+     --patch-tokenizer-type Qwen2Tokenizer \
+     --extra-vocab-size ${EXTRA_VOCAB_SIZE} \
+     --no-bias-swiglu-fusion \

@@ -1,0 +1,23 @@
+{
+  "model_id": "Qwen/Qwen2-VL-2B-Instruct",
+  "revision": "895c3a49bc3fa70a340399125c650a463535e71c",
+  "group_repository": "https://github.com/doughnut923/CSCI5540_Project",
+  "group_commit": "047be401a7dfc37c8051660f9a883ea1de61d720",
+  "transformers_version": "4.49.0",
+  "seed": 55402026,
+  "visual_token_budget": 128,
+  "min_pixels": 3136,
+  "steps": 2,
+  "optimizer": "adamw",
+  "learning_rate": 0.0001,
+  "weight_decay": 0.0,
+  "betas": [0.9, 0.999],
+  "epsilon": 1e-8,
+  "trainable_scope": "all_parameters",
+  "attention_implementation": "eager",
+  "gradient_checkpointing": true,
+  "cases": [
+    {"name": "single_image", "photos": ["photos/imagenet_row_0000.jpg"], "answer": "The photo shows a fish."},
+    {"name": "two_images", "photos": ["photos/imagenet_row_0000.jpg", "photos/imagenet_row_2500.jpg"], "answer": "These photos show two animals."}
+  ]
+}

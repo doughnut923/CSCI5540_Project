@@ -1,0 +1,43 @@
+{
+  "repo": "Qwen/Qwen2-VL-2B-Instruct",
+  "revision": "895c3a49bc3fa70a340399125c650a463535e71c",
+  "status": "reference candidate, pending group confirmation",
+  "files": [
+    {
+      "name": "config.json",
+      "url": "https://huggingface.co/Qwen/Qwen2-VL-2B-Instruct/resolve/895c3a49bc3fa70a340399125c650a463535e71c/config.json",
+      "bytes": 1196,
+      "sha256": "422adefa19e62dd175961cec85bc0400344fe5bf9b22bd1182e05aaae78556e0"
+    },
+    {
+      "name": "preprocessor_config.json",
+      "url": "https://huggingface.co/Qwen/Qwen2-VL-2B-Instruct/resolve/895c3a49bc3fa70a340399125c650a463535e71c/preprocessor_config.json",
+      "bytes": 347,
+      "sha256": "b5eaad0c2815f07631535dcc58f3c462b0d73693638ad21d19f3c50820eae1cc"
+    },
+    {
+      "name": "tokenizer_config.json",
+      "url": "https://huggingface.co/Qwen/Qwen2-VL-2B-Instruct/resolve/895c3a49bc3fa70a340399125c650a463535e71c/tokenizer_config.json",
+      "bytes": 4190,
+      "sha256": "ff5c4fd898fe8c39591eb70e5d39d2782802d4204d6ae9ba1223252f354842a0"
+    },
+    {
+      "name": "tokenizer.json",
+      "url": "https://huggingface.co/Qwen/Qwen2-VL-2B-Instruct/resolve/895c3a49bc3fa70a340399125c650a463535e71c/tokenizer.json",
+      "bytes": 7029741,
+      "sha256": "cb63a0a23eef3d5b01063a9880a1925a65aaf4d1591d519910ee3527852950a0"
+    },
+    {
+      "name": "vocab.json",
+      "url": "https://huggingface.co/Qwen/Qwen2-VL-2B-Instruct/resolve/895c3a49bc3fa70a340399125c650a463535e71c/vocab.json",
+      "bytes": 2776833,
+      "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+    },
+    {
+      "name": "merges.txt",
+      "url": "https://huggingface.co/Qwen/Qwen2-VL-2B-Instruct/resolve/895c3a49bc3fa70a340399125c650a463535e71c/merges.txt",
+      "bytes": 1671839,
+      "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3"
+    }
+  ]
+}
