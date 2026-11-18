@@ -273,15 +273,15 @@ def main():
                 shm.touch("enc_done_%d.ok" % it)
         else:
             pending = {}
-            if rank == 0:
-                for mb in range(num_mb):
-                    shm.wait("emb_%d_%d.ok" % (it, mb))
-                    pending[mb] = shm.load("emb_%d_%d.pt" % (it, mb))
+            pending = {}
             emb_leaves = {}
 
             def _forward(data_iterator, model):
                 mb = next(data_iterator)["mb"]
                 if rank == 0:
+                    if mb not in pending:  # start the pipeline as soon as this mb lands
+                        shm.wait("emb_%d_%d.ok" % (it, mb))
+                        pending[mb] = shm.load("emb_%d_%d.pt" % (it, mb))
                     leaf = pending[mb].to(device=device, dtype=torch.bfloat16)
                     leaf.requires_grad_(True)
                     emb_leaves[mb] = leaf
@@ -321,11 +321,24 @@ def main():
 
             import torch.autograd as _ag
             _orig_backward = _ag.backward
+            bwd_count = [0]
 
             def _timed_backward(tensors, grad_tensors=None, **kw):
                 _, t = timed(lambda: _orig_backward(
                     tensors, grad_tensors=grad_tensors, **kw))
                 raw.append((rank, "bwd") + t)
+                # Stage 0 finishes the backward of each microbatch in order; hand its
+                # embedding gradient to the encoder unit immediately so the encoder's
+                # backward overlaps the rest of the LLM pipeline.
+                if rank == 0 and bwd_count[0] < num_mb:
+                    mb = bwd_count[0]
+                    bwd_count[0] += 1
+                    leaf = emb_leaves.get(mb)
+                    g = None if leaf is None else leaf.grad
+                    if g is None:
+                        g = torch.zeros(1)
+                    shm.save("gemb_%d_%d.pt" % (it, mb), g.float().cpu())
+                    shm.touch("gemb_%d_%d.ok" % (it, mb))
 
             _ag.backward = _timed_backward
             for p in model.parameters():
@@ -352,13 +365,6 @@ def main():
             loss_t = torch.tensor([local_loss], device=device)
             torch.distributed.broadcast(loss_t, src=llm_pp - 1)
             step_loss = float(loss_t.item())
-
-            if rank == 0:
-                for mb, leaf in emb_leaves.items():
-                    g = leaf.grad
-                    shm.save("gemb_%d_%d.pt" % (it, mb),
-                             (g if g is not None else torch.zeros_like(leaf)).float().cpu())
-                    shm.touch("gemb_%d_%d.ok" % (it, mb))
 
             torch.cuda.synchronize()
             step_time = time.monotonic() - t0
