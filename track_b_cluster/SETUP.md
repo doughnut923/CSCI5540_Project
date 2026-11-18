@@ -8,9 +8,10 @@ resolution-heterogeneity pilot, on the CSE cluster, with the option of toggling 
 GPU nodes can see will do. The examples below use a placeholder `$WS`; point it at your own
 directory and none of the commands change.
 
-Every command below has been run on this cluster (with `$WS=/research/d7/fyp26/lkchau3/workspaces/cyfok3`).
-Anything that looks odd is odd because the cluster requires it — see the troubleshooting table
-before "fixing" something.
+The original setup was verified on the CSE cluster. The native PP=2 additions are
+backed by the [recorded smoke test](reproduction/native_pp2_smoke/README.md). Hardware
+and storage can differ between nodes; inspect your allocation and consult the
+troubleshooting table before changing the pinned runtime.
 
 ---
 
@@ -122,6 +123,7 @@ git clone --depth 1 --branch core_v0.17.1 https://github.com/NVIDIA/Megatron-LM.
 ```bash
 cd "$WS/third_party/BigMac/third_party/Pai-Megatron-Patch"
 git apply -p1 "$PROJ/track_b_cluster/patches/pai-megatron-patch-mcore017.patch"
+git apply -p1 "$PROJ/track_b_cluster/patches/pai-megatron-patch-inference-context.patch"
 
 cd "$WS/third_party/BigMac/third_party/Pai-Megatron-Patch/backends/megatron/Megatron-LM-250624"
 git apply -p1 "$PROJ/track_b_cluster/patches/bigmac-mcore-250624-te2.patch"
@@ -154,7 +156,13 @@ ls -lh "$WS/models/Qwen2-VL-2B-Instruct"
 # model-00001-of-00002.safetensors  3.8G
 # model-00002-of-00002.safetensors  410M
 # config.json preprocessor_config.json tokenizer.json tokenizer_config.json vocab.json merges.txt
+# chat_template.json (required by AutoProcessor.apply_chat_template)
 ```
+
+The native PP=2 schedule gate uses seeded initialization and does not load the converted
+checkpoint. Its model directory still needs the seven configuration/tokenizer files above,
+including the official `chat_template.json` from the same pinned revision. See the
+[repository-photo smoke test](reproduction/native_pp2_smoke/README.md) for that smaller path.
 
 If HF is unreachable, the ModelScope mirror works for the small files but its `resolve/<sha>`
 URLs 404 for this revision, and `git clone` without `git-lfs` fails with
@@ -204,7 +212,16 @@ sbatch --account=gpu -p gpu_2h --gres=gpu:1 --constraint=rtx3090 --exclude=gpu54
     python -c "import torch,transformer_engine as te;print(torch.__version__,te.__version__,torch.cuda.is_available())"'
 ```
 
-`--nv` alone is not enough on these nodes; the two `--bind` lines are mandatory.
+`--nv` alone was insufficient for the tested Triton import. The two native PP
+launchers bind the host libraries, create private `libcuda.so` linker names under
+`$WS/libcuda`, and point `TRITON_LIBCUDA_PATH` there. They also use a writable
+`$WS/container-home`; this avoids relying on a login-home mount on the GPU node.
+
+`WS`, the project, model files and outputs must still be visible on the selected
+compute node. On the tested course nodes, the login-home path was absent: stage
+files in a node-local directory or use a confirmed shared filesystem. Override the
+launchers' default queue with `--partition=csci5540 --qos=csci5540` when using the
+course allocation.
 
 ---
 
@@ -213,37 +230,34 @@ sbatch --account=gpu -p gpu_2h --gres=gpu:1 --constraint=rtx3090 --exclude=gpu54
 The container already has torch, numpy, cv2, flash-attn. Only add what is missing, with
 `--no-deps`, into a directory that is put on `PYTHONPATH` at run time (never into the image):
 
+Use a fresh target directory for this model-only environment. The lock file records
+extra-package versions from the verified native PP=2 run; the container supplies PyTorch,
+Transformer Engine and NumPy.
+
 ```bash
 D=$WS/venvs/trackb_pydeps
-mkdir -p "$D"
+mkdir -p "$D" "$WS/tmp" "$WS/container-home"
 
-singularity exec --env PIP_NO_CACHE_DIR=1 --env TMPDIR=$WS/tmp \
-  -B "$BIND_ROOT:$BIND_ROOT" \
-  "$WS/containers/ngc-pytorch-25.03-py3.sif" \
-  python3 -m pip install --target "$D" --no-deps \
-    transformers==4.49.0 tokenizers==0.21.4 safetensors regex tqdm \
-    huggingface-hub==0.26.2 httpcore2 h11 certifi qwen-vl-utils av \
-    sentencepiece protobuf accelerate psutil einops matplotlib \
-    pyparsing contourpy cycler fonttools kiwisolver python-dateutil six \
-    datasets==3.2.0 pyarrow==17.0.0 megatron-energon webdataset braceexpand
+SINGULARITYENV_PIP_CONSTRAINT=/dev/null \
+SINGULARITYENV_TMPDIR="$WS/tmp" \
+  singularity exec --home "$WS/container-home" \
+    -B "$BIND_ROOT:$BIND_ROOT" \
+    "$WS/containers/ngc-pytorch-25.03-py3.sif" \
+    python3 -m pip install --target "$D" --no-deps --no-cache-dir \
+      -r "$PROJ/track_b_cluster/requirements-native-pp2.lock.txt"
+
+python3 "$PROJ/track_b_cluster/scripts/prepare_energon_stub.py" "$D"
 ```
 
-Three constraints that are not optional:
+NGC 25.03's global pip constraints pin PyArrow 19.0.1, which conflicts with this
+setup's PyArrow 17.0.0 requirement. The command disables that constraints file only
+inside this isolated installation; `--target` and `--no-deps` leave the container's
+packages intact. Keep the container's NumPy rather than installing another copy.
 
-- keep the container's **numpy 1.26** in front — `pip` will happily install numpy 2 and break
-  the container's `cv2`. Do not add numpy to the list; if a package drags it in, delete
-  `$D/numpy*` afterwards.
-- **`pyarrow==17.0.0`** — 18+ requires numpy 2.
-- `megatron.energon` needs `multistorageclient`, which is not installable here. Replace the
-  installed package with the local stub:
-
-```bash
-rm -rf "$D/megatron/energon"
-```
-
-then create the stub described in `track_b_cluster/patches/README.md` §"Extra runtime pieces"
-(~30 lines: `EPath`, `Sample`, placeholder factories). Without it, importing the Qwen2-VL model
-fails on `multistorageclient`.
+The Energon shim provides the import interfaces needed by the model-only harness.
+It refuses to replace different existing module files, and its dataset-loading
+functions raise errors. It is **not** a dataset implementation for a full training
+runner; use the real Energon dependency stack for that work.
 
 ---
 
