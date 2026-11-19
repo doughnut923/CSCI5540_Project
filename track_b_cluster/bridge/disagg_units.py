@@ -8,15 +8,20 @@ slurm/disagg_units.sbatch:
 
 They exchange per-microbatch vision embeddings and their gradients through
 /dev/shm and lock-step through flag files. Weights are seeded CPU init (no
-checkpoint) and encoder weight-gradients are NOT all-reduced, so this measures
-placement and schedule, not training fidelity.
+checkpoint) and encoder weight-gradients are all-reduced only when ENC_GRAD_SYNC
+is set and the encoder world is > 1, so the sync-free runs measure placement and
+schedule, not training fidelity.
+
+Microbatches come from the pilot manifest via ManifestBatches: step s draws its
+microbatches from one image-token group, so a step has a single sequence length.
+PLAN_ONLY=1 prints the plan and the per-step sequence length without touching GPUs.
 
 Every rank records CUDA-event intervals: "enc" (vision tower), "llm" (language
 model forward), "bwd" (backward). The LLM rank 0 merges both units into one JSONL
 record for scripts/plot_pipeline_gantt.py.
 
 Env: ROLE=enc|llm, DISAGG_SHM, TAG, NUM_MICROBATCHES, LLM_PP, BENCH_STEPS,
-WARMUP_STEPS, NUM_LAYERS, PROJ_ROOT, MANIFEST, QWEN2VL_HF_DIR.
+WARMUP_STEPS, NUM_LAYERS, PROJ_ROOT, MANIFEST, QWEN2VL_HF_DIR, PLAN_ONLY.
 """
 import json
 import math
@@ -28,7 +33,7 @@ from pathlib import Path
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from pp2_equivalence import build_batch  # noqa: E402  (same-directory helper)
+from pp2_equivalence import ManifestBatches  # noqa: E402  (same-directory helper)
 
 
 def env_int(name, default):
@@ -117,11 +122,21 @@ class Shm:
 
 
 def main():
+    num_mb = env_int("NUM_MICROBATCHES", 4)
+    batches = ManifestBatches(os.environ["QWEN2VL_HF_DIR"], os.environ["MANIFEST"],
+                              os.environ["PROJ_ROOT"])
+    if env_int("PLAN_ONLY", 0):
+        for step in range(env_int("PLAN_STEPS", 4)):
+            built = batches.build(step, num_mb)
+            print(json.dumps({"step": step,
+                              "sample_ids": [b["sample_id"] for b in built],
+                              "seq_length": built[0]["tokens"].shape[1]}), flush=True)
+        return
+
     role = os.environ["ROLE"]
     tag = os.environ.get("TAG", "v1")
     shm = Shm(os.environ["DISAGG_SHM"])
 
-    num_mb = env_int("NUM_MICROBATCHES", 4)
     llm_pp = env_int("LLM_PP", 4)
     bench_steps = env_int("BENCH_STEPS", 3)
     warmup_steps = env_int("WARMUP_STEPS", 2)
@@ -143,16 +158,25 @@ def main():
 
     args = get_args()
     device = torch.device("cuda", torch.cuda.current_device())
-    tokens, labels, grid, pixels, image_mask, sample_id = build_batch(
-        os.environ["QWEN2VL_HF_DIR"], os.environ["MANIFEST"],
-        os.environ["PROJ_ROOT"], device)
-
-    target_mc = labels.clone()
-    target_mc[:, :-1] = labels[:, 1:]
-    target_mc[:, -1] = -100
     empty_video = torch.zeros((0, 3), dtype=torch.long, device=device)
-    _, loss_mask, position_ids = get_ltor_masks_and_position_ids(
-        tokens, grid, empty_video, target_mc, 0, ignore_index=-100)
+
+    def step_batches(step):
+        """One step's microbatches on device, with next-token targets for MCore.
+
+        Built before the step's start time is published, so host preprocessing and the
+        host-to-device copies stay out of the measured step time.
+        """
+        prepared = []
+        for b in batches.build(step, num_mb):
+            b = {k: (v.to(device) if torch.is_tensor(v) else v) for k, v in b.items()}
+            target = b["labels"].clone()
+            target[:, :-1] = b["labels"][:, 1:]
+            target[:, -1] = -100
+            _, b["loss_mask"], b["position_ids"] = get_ltor_masks_and_position_ids(
+                b["tokens"], b["grid"], empty_video, target, 0, ignore_index=-100)
+            b["target"] = target
+            prepared.append(b)
+        return prepared
 
     def ev():
         return torch.cuda.Event(enable_timing=True)
@@ -207,6 +231,10 @@ def main():
     records = []
     for it in range(warmup_steps + bench_steps):
         measured = it >= warmup_steps
+        step_data = step_batches(it)
+        if rank == 0:
+            print("step %d %s samples %s" % (it, role, [b["sample_id"] for b in step_data]),
+                  flush=True)
         # llm rank 0 publishes the step t0 (CLOCK_MONOTONIC is host-wide).
         if role == "llm" and rank == 0:
             shm.write_json("cmd_%d.json" % it, {"t0": time.monotonic()})
@@ -225,9 +253,10 @@ def main():
                 elif p.grad is not None:
                     p.grad = None
             for mb in my_mbs:
+                b = step_data[mb]
                 with torch.autocast("cuda", dtype=torch.bfloat16):
                     emb, t_fwd = timed(
-                        lambda: vision(vision_data=pixels, grid_thw=grid))
+                        lambda: vision(vision_data=b["pixels"], grid_thw=b["grid"]))
                 raw.append((rank, "enc") + t_fwd)
                 shm.save("emb_%d_%d.pt" % (it, mb), emb.detach().float().cpu())
                 shm.touch("emb_%d_%d.ok" % (it, mb))
@@ -278,6 +307,7 @@ def main():
 
             def _forward(data_iterator, model):
                 mb = next(data_iterator)["mb"]
+                b = step_data[mb]
                 if rank == 0:
                     if mb not in pending:  # start the pipeline as soon as this mb lands
                         shm.wait("emb_%d_%d.ok" % (it, mb))
@@ -288,27 +318,27 @@ def main():
 
                     def _run():
                         combined = model.language_model.embedding(
-                            input_ids=tokens, position_ids=None,
-                            image_input_mask=image_mask.T, video_input_mask=None,
+                            input_ids=b["tokens"], position_ids=None,
+                            image_input_mask=b["image_mask"].T, video_input_mask=None,
                             image_embeds=leaf, video_embeds=None)
                         return model.language_model(
-                            input_ids=None, position_ids=position_ids,
+                            input_ids=None, position_ids=b["position_ids"],
                             attention_mask=None, decoder_input=combined,
-                            labels=target_mc)
+                            labels=b["target"])
                 else:
                     def _run():
                         return model(
-                            input_ids=tokens, position_ids=position_ids,
-                            vision_data=pixels, vision_grid_thw=grid,
-                            video_start_index=int(image_mask.sum().item()),
-                            image_input_mask=image_mask, video_input_mask=None,
-                            attention_mask=None, labels=target_mc)
+                            input_ids=b["tokens"], position_ids=b["position_ids"],
+                            vision_data=b["pixels"], vision_grid_thw=b["grid"],
+                            video_start_index=int(b["image_mask"].sum().item()),
+                            image_input_mask=b["image_mask"], video_input_mask=None,
+                            attention_mask=None, labels=b["target"])
 
                 out, t = timed(_run)
                 raw.append((rank, "llm") + t)
 
                 def loss_func(output_tensor):
-                    mask = loss_mask.view(-1).float()
+                    mask = b["loss_mask"].view(-1).float()
                     loss = (output_tensor.float().view(-1) * mask).sum() / mask.sum()
                     return loss, {"loss": loss.detach()}
 
@@ -350,7 +380,7 @@ def main():
                     data_iterator=_mb_iter(),
                     model=[model],
                     num_microbatches=num_mb,
-                    seq_length=tokens.shape[1],
+                    seq_length=step_data[0]["tokens"].shape[1],
                     micro_batch_size=1,
                     forward_only=False,
                 )
@@ -396,6 +426,7 @@ def main():
                             [(str(r), "enc %d" % r) for r in range(base)] +
                             [(str(base + r), "LLM %d" % r) for r in range(world)]),
                         "loss": step_loss,
+                        "sample_ids": [b["sample_id"] for b in step_data],
                         "skipped": not math.isfinite(step_loss),
                         "nan_or_inf": not math.isfinite(step_loss),
                         "pp_size": llm_pp,
