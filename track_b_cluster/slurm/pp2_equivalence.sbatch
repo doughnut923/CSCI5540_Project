@@ -15,6 +15,7 @@ PROJ=$WS/proj/csci5540
 MODE=${MODE:-0}
 : "${NUM_LAYERS:=28}"
 : "${NUM_MICROBATCHES:=2}"
+NPROC=${PP:-2}
 LOG=$WS/containers/pp2-equiv-${MODE}.log
 exec > "$LOG" 2>&1
 set -x
@@ -39,12 +40,13 @@ export SINGULARITYENV_MANIFEST=$PROJ/runs/track_b_n2_pilot_measured_v1/pilot_man
 export SINGULARITYENV_QWEN2VL_HF_DIR=$HF
 export SINGULARITYENV_NUM_LAYERS=$NUM_LAYERS
 export SINGULARITYENV_NUM_MICROBATCHES=$NUM_MICROBATCHES
+export SINGULARITYENV_PP_SIZE=$NPROC
 
 singularity exec --nv \
   --bind /lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 \
   --bind /lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1 \
   -B "$BIND_ROOT:$BIND_ROOT" \
   "$SIF" \
-  torchrun --standalone --tee 3 --nproc_per_node 2 --master_port 12666 \
+  torchrun --standalone --tee 3 --nproc_per_node "$NPROC" --master_port 12666 \
   "$PROJ/track_b_cluster/bridge/pp2_equivalence.py" "$OUT"
 echo "PP2_RC=$?"

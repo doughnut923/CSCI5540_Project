@@ -389,7 +389,14 @@ def main():
             )
 
         values = [v for v in (_loss_of(x) for x in (out or [])) if v is not None]
-        last_local_loss = (float(sum(float(v) for v in values) / len(values))
+        # Only the last pipeline stage produces losses; broadcast so every rank agrees.
+        # Per-microbatch losses are broadcast too, so every rank writes the same record.
+        mb_losses = torch.full((num_microbatches,), float("nan"), device=device)
+        for i, v in enumerate(values):
+            mb_losses[i] = float(v)
+        torch.distributed.broadcast(mb_losses, src=pp_size - 1)
+        last_mb_losses = mb_losses.tolist()
+        last_local_loss = (float(sum(last_mb_losses) / len(last_mb_losses))
                            if values else float("nan"))
         # Only the last pipeline stage produces losses; broadcast so every rank agrees.
         loss_t = torch.tensor([last_local_loss], device=device)
@@ -472,7 +479,7 @@ def main():
         "num_microbatches": num_microbatches,
         "seq_length": int(step_data[0]["tokens"].shape[1]),
         "loss": step_loss,
-        "microbatch_losses": [float(v) for v in values],
+        "microbatch_losses": last_mb_losses,
         "grad_norm": grad_norm,
         "finite": bool(math.isfinite(step_loss) and math.isfinite(grad_norm)),
         "measured": [f"PP={pp_size} forward+backward loss and grad norm"],
