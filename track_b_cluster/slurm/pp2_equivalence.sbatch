@@ -13,6 +13,8 @@ set -euo pipefail
 : "${BIND_ROOT:=/research}"                         # filesystem root that contains $WS
 PROJ=$WS/proj/csci5540
 MODE=${MODE:-0}
+: "${NUM_LAYERS:=28}"
+: "${NUM_MICROBATCHES:=2}"
 LOG=$WS/containers/pp2-equiv-${MODE}.log
 exec > "$LOG" 2>&1
 set -x
@@ -35,6 +37,8 @@ export SINGULARITYENV_USE_PP_EXECUTOR=$MODE
 export SINGULARITYENV_PROJ_ROOT=$PROJ
 export SINGULARITYENV_MANIFEST=$PROJ/runs/track_b_n2_pilot_measured_v1/pilot_manifest.json
 export SINGULARITYENV_QWEN2VL_HF_DIR=$HF
+export SINGULARITYENV_NUM_LAYERS=$NUM_LAYERS
+export SINGULARITYENV_NUM_MICROBATCHES=$NUM_MICROBATCHES
 
 singularity exec --nv \
   --bind /lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 \

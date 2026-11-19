@@ -1,8 +1,8 @@
 """PP equivalence check: native MCore pipeline schedule vs BigMac pp_executor.
 
-Both runs build the same model (identical seed, CPU init), consume the same sample, and
-execute the same two microbatches. Only the forward-backward function differs, so loss and
-gradient norm must match. This is the G2 gate before any timing is collected.
+Both runs build the same model (identical seed, CPU init), consume the same manifest
+microbatches, and execute the same pipeline. Only the forward-backward function differs, so
+loss and gradient norm must match. This is the G2 gate before any timing is collected.
 
 PP size and layer count come from PP_SIZE / NUM_LAYERS (default 2 / 28, the proven G2
 config). PP=8 cannot split 28 layers evenly, so scaling runs set NUM_LAYERS=32; weights
@@ -175,15 +175,23 @@ class ManifestBatches:
             "grouping does not match this manifest" % (step, sorted(lengths)))
         return batches
 
+    def step_tensors(self, step, num_mb, device, masks_fn, empty_video):
+        """One step's microbatches on device, with next-token targets for MCore.
 
-def build_batch(hf_dir, manifest_path, repo_root, device):
-    """Single-sample entry point: first 128px sample, else the first sample."""
-    batches = ManifestBatches(hf_dir, manifest_path, repo_root)
-    sample = next((s for s in batches.samples if s["images"][0]["resolution"] == 128),
-                  batches.samples[0])
-    b = build_sample(load_processor(hf_dir), sample, repo_root)
-    return (b["tokens"].to(device), b["labels"].to(device), b["grid"].to(device),
-            b["pixels"].to(device), b["image_mask"].to(device), b["sample_id"])
+        Built before the step's start time is published, so host preprocessing and the
+        host-to-device copies stay out of the measured step time.
+        """
+        prepared = []
+        for b in self.build(step, num_mb):
+            b = {k: (v.to(device) if torch.is_tensor(v) else v) for k, v in b.items()}
+            target = b["labels"].clone()
+            target[:, :-1] = b["labels"][:, 1:]
+            target[:, -1] = -100
+            _, b["loss_mask"], b["position_ids"] = masks_fn(
+                b["tokens"], b["grid"], empty_video, target, 0, ignore_index=-100)
+            b["target"] = target
+            prepared.append(b)
+        return prepared
 
 
 def main():
@@ -234,15 +242,10 @@ def main():
         if param.requires_grad and getattr(param, "main_grad", None) is None:
             param.main_grad = torch.zeros_like(param, dtype=torch.float32)
 
-    tokens, labels, grid, pixels, image_mask, sample_id = build_batch(
-        hf_dir, os.environ["MANIFEST"], repo_root, device)
-
-    target_mc = labels.clone()
-    target_mc[:, :-1] = labels[:, 1:]
-    target_mc[:, -1] = -100
+    batches = ManifestBatches(hf_dir, os.environ["MANIFEST"], repo_root)
     empty_video = torch.zeros((0, 3), dtype=torch.long, device=device)
-    _, loss_mask, position_ids = get_ltor_masks_and_position_ids(
-        tokens, grid, empty_video, target_mc, 0, ignore_index=-100)
+    step_data = batches.step_tensors(0, num_microbatches, device,
+                                     get_ltor_masks_and_position_ids, empty_video)
 
     # --- bubble instrumentation -------------------------------------------------
     # busy_events holds one (kind, start, end) CUDA-event triple per measured interval.
@@ -309,31 +312,35 @@ def main():
             llm.register_forward_pre_hook(_llm_pre_hook)
 
     def forward_step(data_iterator, model):
+        mb = next(data_iterator)["mb"]
+        b = step_data[mb]
+
         def _run():
             return model(
-                input_ids=tokens,
-                position_ids=position_ids,
-                vision_data=pixels,
-                vision_grid_thw=grid,
-                video_start_index=int(image_mask.sum().item()),
-                image_input_mask=image_mask,
+                input_ids=b["tokens"],
+                position_ids=b["position_ids"],
+                vision_data=b["pixels"],
+                vision_grid_thw=b["grid"],
+                video_start_index=int(b["image_mask"].sum().item()),
+                image_input_mask=b["image_mask"],
                 video_input_mask=None,
                 attention_mask=None,
-                labels=target_mc,
+                labels=b["target"],
             )
 
         losses = _fwd_busy_call(_run) if bench_steps > 0 else _run()
 
         def loss_func(output_tensor):
-            mask = loss_mask.view(-1).float()
+            mask = b["loss_mask"].view(-1).float()
             loss = (output_tensor.float().view(-1) * mask).sum() / mask.sum()
             return loss, {"loss": loss.detach()}
 
         return losses, loss_func
 
     def _endless():
-        while True:
-            yield {}  # forward_step ignores this; data is already on device
+        while True:  # data is already on device; the schedule only needs the mb index
+            for mb in range(num_microbatches):
+                yield {"mb": mb}
 
     data_iterator = _endless()
 
@@ -356,6 +363,8 @@ def main():
     last_local_loss = float("nan")
 
     for step_idx in range(steps):
+        step_data = batches.step_tensors(step_idx, num_microbatches, device,
+                                         get_ltor_masks_and_position_ids, empty_video)
         if bench_steps > 0:
             torch.distributed.barrier()
             start_ev = torch.cuda.Event(enable_timing=True)
@@ -374,7 +383,7 @@ def main():
                 data_iterator=data_iterator,
                 model=[model],
                 num_microbatches=num_microbatches,
-                seq_length=tokens.shape[1],
+                seq_length=step_data[0]["tokens"].shape[1],
                 micro_batch_size=1,
                 forward_only=False,
             )
@@ -459,9 +468,9 @@ def main():
         "pp_size": pp_size,
         "pp_size_env": pp_size_env,
         "num_layers": num_layers,
-        "sample_id": sample_id,
+        "sample_id": step_data[0]["sample_id"],
         "num_microbatches": num_microbatches,
-        "seq_length": int(tokens.shape[1]),
+        "seq_length": int(step_data[0]["tokens"].shape[1]),
         "loss": step_loss,
         "grad_norm": grad_norm,
         "finite": bool(math.isfinite(step_loss) and math.isfinite(grad_norm)),

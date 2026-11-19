@@ -200,22 +200,8 @@ def main():
     empty_video = torch.zeros((0, 3), dtype=torch.long, device=device)
 
     def step_batches(step):
-        """One step's microbatches on device, with next-token targets for MCore.
-
-        Built before the step's start time is published, so host preprocessing and the
-        host-to-device copies stay out of the measured step time.
-        """
-        prepared = []
-        for b in batches.build(step, num_mb):
-            b = {k: (v.to(device) if torch.is_tensor(v) else v) for k, v in b.items()}
-            target = b["labels"].clone()
-            target[:, :-1] = b["labels"][:, 1:]
-            target[:, -1] = -100
-            _, b["loss_mask"], b["position_ids"] = get_ltor_masks_and_position_ids(
-                b["tokens"], b["grid"], empty_video, target, 0, ignore_index=-100)
-            b["target"] = target
-            prepared.append(b)
-        return prepared
+        return batches.step_tensors(step, num_mb, device,
+                                    get_ltor_masks_and_position_ids, empty_video)
 
     def ev():
         return torch.cuda.Event(enable_timing=True)
@@ -273,6 +259,8 @@ def main():
     for it in range(warmup_steps + bench_steps):
         measured = it >= warmup_steps
         step_data = step_batches(it)
+        if it + 1 == warmup_steps:  # peak memory should describe the measured steps
+            torch.cuda.reset_peak_memory_stats()
         if rank == 0:
             print("step %d %s samples %s" % (it, role, [b["sample_id"] for b in step_data]),
                   flush=True)
@@ -346,7 +334,7 @@ def main():
             gathered = [None] * world
             torch.distributed.all_gather_object(
                 gathered, {"intervals": merged, "step_time_s": step_time,
-                           "opt": opt_stats})
+                           "opt": opt_stats, "peak": torch.cuda.max_memory_allocated()})
             torch.distributed.barrier()
             if rank == 0:
                 flat = []
@@ -356,7 +344,9 @@ def main():
                     worst = max(worst, chunk["step_time_s"])
                 shm.write_json("iv_%d.json" % it,
                                {"intervals": flat, "world": world, "step_time_s": worst,
-                                "opt": gathered[0]["opt"]})
+                                "opt": gathered[0]["opt"],
+                                "peak_by_rank": {str(r): int(gathered[r]["peak"])
+                                                 for r in range(world)}})
                 shm.touch("enc_done_%d.ok" % it)
         else:
             pending = {}
@@ -446,6 +436,9 @@ def main():
 
             opt_stats, t_opt = timed(step_opt.step)
             raw.append((rank, "opt") + t_opt)
+            # Per-stage params are disjoint, so squared norms add for a whole-model norm.
+            norm_sq = torch.tensor([opt_stats["grad_norm"] ** 2], device=device)
+            torch.distributed.all_reduce(norm_sq)
 
             values = []
             for item in out or []:
@@ -465,7 +458,8 @@ def main():
                 merged.append([r, k, off, off + s.elapsed_time(e) / 1000.0])
             gathered = [None] * world
             torch.distributed.all_gather_object(
-                gathered, {"intervals": merged, "step_time_s": step_time})
+                gathered, {"intervals": merged, "step_time_s": step_time,
+                           "peak": torch.cuda.max_memory_allocated()})
             if rank == 0:
                 shm.wait("enc_done_%d.ok" % it)
                 enc_side = shm.read_json("iv_%d.json" % it)
@@ -476,12 +470,24 @@ def main():
                     flat.extend([[base + r, k, s, e]
                                  for r, k, s, e in chunk["intervals"]])
                     worst = max(worst, chunk["step_time_s"])
+                peak_by_rank = {str(base + r): int(chunk["peak"])
+                                for r, chunk in enumerate(gathered)}
+                for r, v in (enc_side.get("peak_by_rank") or {}).items():
+                    peak_by_rank[str(int(r))] = v
+                busy_total = sum(e - s for _, _, s, e in flat)
+                capacity = (base + world) * worst
+                bubble_time = max(0.0, capacity - busy_total)
                 if measured:
                     records.append({
                         "step": it - warmup_steps,
                         "warmup": False,
                         "step_time_s": worst,
                         "samples": num_mb,
+                        "max_memory_allocated_bytes_by_rank": peak_by_rank,
+                        "busy_time_s_total": busy_total,
+                        "bubble_time_s": bubble_time,
+                        "pipeline_bubble_ratio": (bubble_time / capacity
+                                                  if capacity > 0 else None),
                         "busy_intervals": flat,
                         "rank_labels": dict(
                             [(str(r), "enc %d" % r) for r in range(base)] +
@@ -490,6 +496,9 @@ def main():
                         "sample_ids": [b["sample_id"] for b in step_data],
                         "lr": opt_stats["lr"],
                         "grad_norm": opt_stats["grad_norm"],
+                        "grad_norm_total": math.sqrt(
+                            float(norm_sq) + ((enc_side.get("opt") or {})
+                                              .get("grad_norm") or 0.0) ** 2),
                         "weight_norm": opt_stats["weight_norm"],
                         "enc_grad_norm": (enc_side.get("opt") or {}).get("grad_norm"),
                         "enc_weight_norm": (enc_side.get("opt") or {}).get("weight_norm"),
