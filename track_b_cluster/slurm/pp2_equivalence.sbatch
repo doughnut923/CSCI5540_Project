@@ -6,7 +6,7 @@
 #SBATCH --constraint=rtx3090
 #SBATCH --cpus-per-task=8
 #SBATCH --time=00:40:00
-#SBATCH --exclude=gpu54
+#SBATCH --exclude=gpu54,projgpu33
 # PP=2 equivalence: native schedule vs pp_executor, identical seed/weights/data.
 set -euo pipefail
 : "${WS:=/research/d7/fyp26/lkchau3/workspaces/cyfok3}"   # override for your account

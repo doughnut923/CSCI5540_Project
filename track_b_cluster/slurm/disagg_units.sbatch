@@ -7,7 +7,7 @@
 #SBATCH --constraint=rtx3090
 #SBATCH --cpus-per-task=12
 #SBATCH --time=00:40:00
-#SBATCH --exclude=gpu54
+#SBATCH --exclude=gpu54,projgpu33
 # Part B: disaggregated vision encoder (DP) + LLM pipeline (PP) as two worlds.
 #   submit: sbatch --export=ALL,ENC_GPUS=4,LLM_PP=4,NUM_MICROBATCHES=4,TAG=v1 \
 #             track_b_cluster/slurm/disagg_units.sbatch
