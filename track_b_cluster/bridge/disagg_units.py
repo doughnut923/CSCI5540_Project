@@ -256,7 +256,17 @@ def main():
     _norm0 = torch.zeros((), device=device)
     for p in model.parameters():
         _norm0 += p.detach().float().pow(2).sum()
-    param_norm0 = float(_norm0)
+    def _module_norms(module):
+        out = {}
+        if module is not None:
+            for name, child in module.named_children():
+                total = torch.zeros((), device=device)
+                for p in child.parameters():
+                    total += p.detach().float().pow(2).sum()
+                out[name] = float(total)
+        return out
+
+    param_norm0 = {"total": float(_norm0), "modules": _module_norms(model)}
 
     shm.wait("ready_enc")
     shm.wait("ready_llm")
@@ -353,8 +363,10 @@ def main():
                 shm.write_json("iv_%d.json" % it,
                                {"intervals": flat, "world": world, "step_time_s": worst,
                                 "opt": gathered[0]["opt"],
-                                "param_norm0_by_rank": {str(r): gathered[r]["param_norm0"]
+                                "param_norm0_by_rank": {str(r): gathered[r]["param_norm0"]["total"]
                                                         for r in range(world)},
+                                "module_norm0_by_rank": {str(r): gathered[r]["param_norm0"]["modules"]
+                                                         for r in range(world)},
                                 "peak_by_rank": {str(r): int(gathered[r]["peak"])
                                                  for r in range(world)}})
                 shm.touch("enc_done_%d.ok" % it)
@@ -487,10 +499,14 @@ def main():
                                 for r, chunk in enumerate(gathered)}
                 for r, v in (enc_side.get("peak_by_rank") or {}).items():
                     peak_by_rank[str(int(r))] = v
-                param_norm0_by_rank = {str(base + r): chunk["param_norm0"]
+                param_norm0_by_rank = {str(base + r): chunk["param_norm0"]["total"]
                                        for r, chunk in enumerate(gathered)}
+                module_norm0_by_rank = {str(base + r): chunk["param_norm0"]["modules"]
+                                        for r, chunk in enumerate(gathered)}
                 for r, v in (enc_side.get("param_norm0_by_rank") or {}).items():
                     param_norm0_by_rank[str(int(r))] = v
+                for r, v in (enc_side.get("module_norm0_by_rank") or {}).items():
+                    module_norm0_by_rank[str(int(r))] = v
                 busy_total = sum(e - s for _, _, s, e in flat)
                 capacity = (base + world) * worst
                 bubble_time = max(0.0, capacity - busy_total)
@@ -502,6 +518,7 @@ def main():
                         "samples": num_mb,
                         "max_memory_allocated_bytes_by_rank": peak_by_rank,
                         "param_norm0_by_rank": param_norm0_by_rank,
+                        "module_norm0_by_rank": module_norm0_by_rank,
                         "busy_time_s_total": busy_total,
                         "bubble_time_s": bubble_time,
                         "pipeline_bubble_ratio": (bubble_time / capacity

@@ -469,12 +469,27 @@ def main():
     grad_norm = math.sqrt(float(total))
 
     # Initial-weight fingerprint per rank, for comparing against the disaggregated split.
+    def _module_norms(module):
+        out = {}
+        if module is not None:
+            for name, child in module.named_children():
+                total = torch.zeros(1, device=device)
+                for p in child.parameters():
+                    total += p.detach().float().pow(2).sum()
+                out[name] = float(total)
+            total = torch.zeros(1, device=device)
+            for p in module.parameters():
+                total += p.detach().float().pow(2).sum()
+            out["_self"] = float(total)
+        return out
+
     norm0 = torch.zeros(1, device=device)
     for param in model.parameters():
         norm0 += param.detach().float().pow(2).sum()
     norm0_by_rank = [None] * pp_size
-    torch.distributed.all_gather_object(norm0_by_rank, float(norm0))
-    param_norm0_by_rank = {str(r): norm0_by_rank[r] for r in range(pp_size)}
+    torch.distributed.all_gather_object(
+        norm0_by_rank, {"total": float(norm0), "modules": _module_norms(model)})
+    param_norm0_by_rank = {str(r): norm0_by_rank[r]["total"] for r in range(pp_size)}
 
     result = {
         "mode": "pp_executor" if mode in ("1", "true", "yes", "on") else "native",
@@ -489,6 +504,7 @@ def main():
         "loss": step_loss,
         "microbatch_losses": last_mb_losses,
         "param_norm0_by_rank": param_norm0_by_rank,
+        "module_norm0_by_rank": {str(r): norm0_by_rank[r]["modules"] for r in range(pp_size)},
         "grad_norm": grad_norm,
         "finite": bool(math.isfinite(step_loss) and math.isfinite(grad_norm)),
         "measured": [f"PP={pp_size} forward+backward loss and grad norm"],
