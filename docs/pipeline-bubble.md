@@ -47,7 +47,8 @@ loss, skipped, nan_or_inf, pp_size, num_layers, num_microbatches, mode
 
 `busy_intervals` adds every busy interval as `[pp_rank, kind, start_s, end_s]`
 relative to the step start, with `kind` = `enc` (vision encoder), `llm` (language
-model) or `bwd`; `scripts/plot_pipeline_gantt.py` draws the utilization diagram
+model), `bwd` (backward), `sync` (encoder gradient all-reduce) or `opt` (optimizer
+step); `scripts/plot_pipeline_gantt.py` draws the utilization diagram
 (time on x, stage on y) from it.
 
 `samples` per step is `micro_batch_size * num_microbatches * data_parallel` = `num_microbatches`

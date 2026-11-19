@@ -22,12 +22,13 @@ import matplotlib.pyplot as plt
 
 COLORS = {"enc": "tab:red", "llm": "tab:blue", "enc_bwd": "tab:brown",
           "llm_bwd": "tab:orange", "bwd": "tab:orange", "sync": "tab:gray",
-          "fwd": "tab:gray"}
+          "opt": "tab:green", "fwd": "tab:gray"}
 NAMES = {"enc": "encoder fwd", "llm": "LLM fwd", "enc_bwd": "encoder bwd",
          "llm_bwd": "LLM bwd", "bwd": "backward", "sync": "grad all-reduce",
-         "fwd": "forward"}
-ORDER = ("enc", "llm", "fwd", "enc_bwd", "llm_bwd", "bwd", "sync")
+         "opt": "optimizer step", "fwd": "forward"}
+ORDER = ("enc", "llm", "fwd", "enc_bwd", "llm_bwd", "bwd", "sync", "opt")
 FORWARD = ("enc", "llm", "fwd")
+UNLABELLED = ("sync", "opt")
 
 
 def load_step(path, step):
@@ -62,7 +63,7 @@ def label_blocks(row, intervals):
     labelled = []
     for iv in sorted(intervals, key=lambda x: (int(x[0]), x[2])):
         rank, kind, start, end = int(iv[0]), iv[1], iv[2], iv[3]
-        if kind == "sync":  # not a microbatch block, no F/B label
+        if kind in UNLABELLED:  # not a microbatch block, no F/B label
             labelled.append([rank, kind, start, end, ""])
             continue
         mb = iv[4] if len(iv) > 4 else None

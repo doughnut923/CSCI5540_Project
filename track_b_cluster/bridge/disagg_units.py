@@ -8,9 +8,10 @@ slurm/disagg_units.sbatch:
 
 They exchange per-microbatch vision embeddings and their gradients through
 /dev/shm and lock-step through flag files. Weights are seeded CPU init (no
-checkpoint) and encoder weight-gradients are all-reduced only when ENC_GRAD_SYNC
-is set and the encoder world is > 1, so the sync-free runs measure placement and
-schedule, not training fidelity.
+checkpoint). Both units step AdamW over the fused fp32 `main_grad` buffers each
+step, so the loss curve is a real one; the encoder unit only steps when its
+gradients are complete (world 1, or ENC_GRAD_SYNC all-reduce), and otherwise the
+run stays placement-only.
 
 Microbatches come from the pilot manifest via ManifestBatches: step s draws its
 microbatches from one image-token group, so a step has a single sequence length.
@@ -121,6 +122,44 @@ class Shm:
         return json.loads((self.root / name).read_text())
 
 
+class MainGradAdamW:
+    """AdamW over MCore's fp32 main_grad buffers, with fp32 master weights.
+
+    The fused path accumulates into `param.main_grad` and never writes `.grad`, so the
+    fp32 masters take those buffers as their grads and are cast back into the bf16 params
+    after every update (the same split Megatron's mixed-precision optimizer uses).
+    """
+
+    def __init__(self, model, args, total_steps):
+        self.params = [p for p in model.parameters()
+                       if getattr(p, "main_grad", None) is not None]
+        self.masters = [p.detach().float().clone().requires_grad_(True) for p in self.params]
+        self.opt = torch.optim.AdamW(
+            self.masters, lr=args.lr, betas=(args.adam_beta1, args.adam_beta2),
+            eps=args.adam_eps, weight_decay=args.weight_decay)
+        self.lr, self.min_lr = args.lr, args.min_lr
+        self.clip = args.clip_grad
+        self.total = max(1, total_steps)
+        self.steps = 0
+
+    def step(self):
+        for master, p in zip(self.masters, self.params):
+            master.grad = p.main_grad
+        lr = self.min_lr + 0.5 * (self.lr - self.min_lr) * (
+            1.0 + math.cos(math.pi * self.steps / self.total))
+        for group in self.opt.param_groups:
+            group["lr"] = lr
+        grad_norm = float(torch.nn.utils.clip_grad_norm_(self.masters, self.clip))
+        self.opt.step()
+        self.opt.zero_grad(set_to_none=True)
+        with torch.no_grad():
+            for master, p in zip(self.masters, self.params):
+                p.data.copy_(master)
+        self.steps += 1
+        return {"lr": lr, "grad_norm": grad_norm,
+                "weight_norm": float(self.masters[0].norm())}
+
+
 def main():
     num_mb = env_int("NUM_MICROBATCHES", 4)
     batches = ManifestBatches(os.environ["QWEN2VL_HF_DIR"], os.environ["MANIFEST"],
@@ -224,6 +263,8 @@ def main():
         fwd_bwd = get_forward_backward_func()
         shm.touch("ready_llm")
 
+    step_opt = MainGradAdamW(model, args, warmup_steps + bench_steps)
+
     shm.wait("ready_enc")
     shm.wait("ready_llm")
     torch.distributed.barrier()
@@ -281,6 +322,21 @@ def main():
                 _, t_sync = timed(_all_reduce_grads)
                 raw.append((rank, "sync") + t_sync)
 
+            if world == 1 or env_int("ENC_GRAD_SYNC", 1):
+                def _update():
+                    if world > 1:  # the all-reduce summed, so average before stepping
+                        for p in vision.parameters():
+                            g = getattr(p, "main_grad", None)
+                            if g is not None:
+                                g.div_(world)
+                    return step_opt.step()
+                opt_stats, t_opt = timed(_update)
+                raw.append((rank, "opt") + t_opt)
+            else:
+                # Unsynchronised replicas only hold their own microbatches' gradients:
+                # stepping on them would be wrong, so this config stays placement-only.
+                opt_stats = None
+
             torch.cuda.synchronize()
             step_time = time.monotonic() - t0
             merged = []
@@ -289,7 +345,8 @@ def main():
                 merged.append([r, k, off, off + s.elapsed_time(e) / 1000.0])
             gathered = [None] * world
             torch.distributed.all_gather_object(
-                gathered, {"intervals": merged, "step_time_s": step_time})
+                gathered, {"intervals": merged, "step_time_s": step_time,
+                           "opt": opt_stats})
             torch.distributed.barrier()
             if rank == 0:
                 flat = []
@@ -298,7 +355,8 @@ def main():
                     flat.extend(chunk["intervals"])
                     worst = max(worst, chunk["step_time_s"])
                 shm.write_json("iv_%d.json" % it,
-                               {"intervals": flat, "world": world, "step_time_s": worst})
+                               {"intervals": flat, "world": world, "step_time_s": worst,
+                                "opt": gathered[0]["opt"]})
                 shm.touch("enc_done_%d.ok" % it)
         else:
             pending = {}
@@ -386,6 +444,9 @@ def main():
                 )
             _ag.backward = _orig_backward
 
+            opt_stats, t_opt = timed(step_opt.step)
+            raw.append((rank, "opt") + t_opt)
+
             values = []
             for item in out or []:
                 val = item.get("loss") if isinstance(item, dict) else item
@@ -427,6 +488,11 @@ def main():
                             [(str(base + r), "LLM %d" % r) for r in range(world)]),
                         "loss": step_loss,
                         "sample_ids": [b["sample_id"] for b in step_data],
+                        "lr": opt_stats["lr"],
+                        "grad_norm": opt_stats["grad_norm"],
+                        "weight_norm": opt_stats["weight_norm"],
+                        "enc_grad_norm": (enc_side.get("opt") or {}).get("grad_norm"),
+                        "enc_weight_norm": (enc_side.get("opt") or {}).get("weight_norm"),
                         "skipped": not math.isfinite(step_loss),
                         "nan_or_inf": not math.isfinite(step_loss),
                         "pp_size": llm_pp,
