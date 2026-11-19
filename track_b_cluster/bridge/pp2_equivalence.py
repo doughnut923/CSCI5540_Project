@@ -468,6 +468,14 @@ def main():
     torch.distributed.all_reduce(total, op=torch.distributed.ReduceOp.SUM)
     grad_norm = math.sqrt(float(total))
 
+    # Initial-weight fingerprint per rank, for comparing against the disaggregated split.
+    norm0 = torch.zeros(1, device=device)
+    for param in model.parameters():
+        norm0 += param.detach().float().pow(2).sum()
+    norm0_by_rank = [None] * pp_size
+    torch.distributed.all_gather_object(norm0_by_rank, float(norm0))
+    param_norm0_by_rank = {str(r): norm0_by_rank[r] for r in range(pp_size)}
+
     result = {
         "mode": "pp_executor" if mode in ("1", "true", "yes", "on") else "native",
         "use_pp_executor_env": mode,
@@ -480,6 +488,7 @@ def main():
         "seq_length": int(step_data[0]["tokens"].shape[1]),
         "loss": step_loss,
         "microbatch_losses": last_mb_losses,
+        "param_norm0_by_rank": param_norm0_by_rank,
         "grad_norm": grad_norm,
         "finite": bool(math.isfinite(step_loss) and math.isfinite(grad_norm)),
         "measured": [f"PP={pp_size} forward+backward loss and grad norm"],

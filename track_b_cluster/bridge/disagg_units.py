@@ -251,6 +251,13 @@ def main():
 
     step_opt = MainGradAdamW(model, args, warmup_steps + bench_steps)
 
+    # Fingerprint of the initial weights, before any optimizer step. Equal fingerprints
+    # across arms mean any loss difference comes from the computation, not the init.
+    _norm0 = torch.zeros((), device=device)
+    for p in model.parameters():
+        _norm0 += p.detach().float().pow(2).sum()
+    param_norm0 = float(_norm0)
+
     shm.wait("ready_enc")
     shm.wait("ready_llm")
     torch.distributed.barrier()
@@ -334,7 +341,8 @@ def main():
             gathered = [None] * world
             torch.distributed.all_gather_object(
                 gathered, {"intervals": merged, "step_time_s": step_time,
-                           "opt": opt_stats, "peak": torch.cuda.max_memory_allocated()})
+                           "opt": opt_stats, "peak": torch.cuda.max_memory_allocated(),
+                           "param_norm0": param_norm0})
             torch.distributed.barrier()
             if rank == 0:
                 flat = []
@@ -345,6 +353,8 @@ def main():
                 shm.write_json("iv_%d.json" % it,
                                {"intervals": flat, "world": world, "step_time_s": worst,
                                 "opt": gathered[0]["opt"],
+                                "param_norm0_by_rank": {str(r): gathered[r]["param_norm0"]
+                                                        for r in range(world)},
                                 "peak_by_rank": {str(r): int(gathered[r]["peak"])
                                                  for r in range(world)}})
                 shm.touch("enc_done_%d.ok" % it)
@@ -445,10 +455,12 @@ def main():
                 val = item.get("loss") if isinstance(item, dict) else item
                 if val is not None:
                     values.append(float(val))
-            local_loss = sum(values) / len(values) if values else float("nan")
-            loss_t = torch.tensor([local_loss], device=device)
-            torch.distributed.broadcast(loss_t, src=llm_pp - 1)
-            step_loss = float(loss_t.item())
+            mb_losses = torch.full((num_mb,), float("nan"), device=device)
+            for i, val in enumerate(values):
+                mb_losses[i] = float(val)
+            torch.distributed.broadcast(mb_losses, src=llm_pp - 1)
+            mb_list = mb_losses.tolist()
+            step_loss = float(sum(mb_list) / len(mb_list))
 
             torch.cuda.synchronize()
             step_time = time.monotonic() - t0
@@ -459,7 +471,8 @@ def main():
             gathered = [None] * world
             torch.distributed.all_gather_object(
                 gathered, {"intervals": merged, "step_time_s": step_time,
-                           "peak": torch.cuda.max_memory_allocated()})
+                           "peak": torch.cuda.max_memory_allocated(),
+                           "param_norm0": param_norm0})
             if rank == 0:
                 shm.wait("enc_done_%d.ok" % it)
                 enc_side = shm.read_json("iv_%d.json" % it)
@@ -474,6 +487,10 @@ def main():
                                 for r, chunk in enumerate(gathered)}
                 for r, v in (enc_side.get("peak_by_rank") or {}).items():
                     peak_by_rank[str(int(r))] = v
+                param_norm0_by_rank = {str(base + r): chunk["param_norm0"]
+                                       for r, chunk in enumerate(gathered)}
+                for r, v in (enc_side.get("param_norm0_by_rank") or {}).items():
+                    param_norm0_by_rank[str(int(r))] = v
                 busy_total = sum(e - s for _, _, s, e in flat)
                 capacity = (base + world) * worst
                 bubble_time = max(0.0, capacity - busy_total)
@@ -484,6 +501,7 @@ def main():
                         "step_time_s": worst,
                         "samples": num_mb,
                         "max_memory_allocated_bytes_by_rank": peak_by_rank,
+                        "param_norm0_by_rank": param_norm0_by_rank,
                         "busy_time_s_total": busy_total,
                         "bubble_time_s": bubble_time,
                         "pipeline_bubble_ratio": (bubble_time / capacity
@@ -493,7 +511,7 @@ def main():
                             [(str(r), "enc %d" % r) for r in range(base)] +
                             [(str(base + r), "LLM %d" % r) for r in range(world)]),
                         "loss": step_loss,
-                        "microbatch_losses": values,
+                        "microbatch_losses": mb_list,
                         "sample_ids": [b["sample_id"] for b in step_data],
                         "lr": opt_stats["lr"],
                         "grad_norm": opt_stats["grad_norm"],
