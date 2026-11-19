@@ -149,7 +149,9 @@ class ManifestBatches:
             total = s.get("derived_visual_tokens_total") or sum(
                 i["derived_visual_tokens"] for i in s["images"])
             groups.setdefault(total, []).append(s)
-        self.groups = [groups[k] for k in sorted(groups, reverse=True)]
+        # Largest group first, so steps draw distinct samples before any group repeats.
+        self.groups = [g for _, g in sorted(
+            groups.items(), key=lambda kv: (-len(kv[1]), -kv[0]))]
         self.processor = None
         self.cache = {}
 
