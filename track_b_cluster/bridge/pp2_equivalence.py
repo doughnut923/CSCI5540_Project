@@ -472,6 +472,7 @@ def main():
         "num_microbatches": num_microbatches,
         "seq_length": int(step_data[0]["tokens"].shape[1]),
         "loss": step_loss,
+        "microbatch_losses": [float(v) for v in values],
         "grad_norm": grad_norm,
         "finite": bool(math.isfinite(step_loss) and math.isfinite(grad_norm)),
         "measured": [f"PP={pp_size} forward+backward loss and grad norm"],

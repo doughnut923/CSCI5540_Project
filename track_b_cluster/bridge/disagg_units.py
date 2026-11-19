@@ -493,6 +493,7 @@ def main():
                             [(str(r), "enc %d" % r) for r in range(base)] +
                             [(str(base + r), "LLM %d" % r) for r in range(world)]),
                         "loss": step_loss,
+                        "microbatch_losses": values,
                         "sample_ids": [b["sample_id"] for b in step_data],
                         "lr": opt_stats["lr"],
                         "grad_norm": opt_stats["grad_norm"],
