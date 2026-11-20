@@ -12,6 +12,14 @@ import torch.distributed as dist
 from optimus_schedule import rank_tasks, validate_plan
 
 
+def sample_indices(length, count, device):
+    """Integer arithmetic avoids FP32 rounding beyond a large tensor's end."""
+    count = min(length, count)
+    if length < 1 or count < 1:
+        return torch.empty(0, dtype=torch.int64, device=device)
+    return torch.arange(count, dtype=torch.int64, device=device) * (length - 1) // max(1, count - 1)
+
+
 class Transport:
     def __init__(self, world, device):
         self.device = device

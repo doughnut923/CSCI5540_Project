@@ -13,7 +13,7 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 
 from optimus_runtime import (PlanExecutor, Transport, collect_main_grads,
-                             global_grad_norm, sync_encoder_grads, zero_grads)
+                             global_grad_norm, sample_indices, sync_encoder_grads, zero_grads)
 from optimus_schedule import choose_plan, make_plan, validate_plan
 from training_common import MainGradAdamW
 from manifest_data import ManifestBatches
@@ -109,6 +109,13 @@ def worker(rank, path, result_dir, world):
 
 
 class PlanTests(unittest.TestCase):
+    def test_large_parameter_sample_indices(self):
+        length = 151936 * 1536
+        indices = sample_indices(length, 16, "cpu")
+        self.assertEqual(int(indices[0]), 0)
+        self.assertEqual(int(indices[-1]), length - 1)
+        self.assertTrue(bool((indices < length).all()))
+
     def test_shared_manifest_smoke_without_derived_counts(self):
         fixture = {"samples": [{"sample_id": "photo", "images": [{"resolution": 128}]}]}
         batch = {"tokens": torch.tensor([[5, 7, 9, 2]]),

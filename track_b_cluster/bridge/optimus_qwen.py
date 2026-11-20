@@ -19,7 +19,7 @@ import torch.distributed as dist
 
 from manifest_data import ManifestBatches
 from optimus_runtime import (PlanExecutor, Transport, collect_main_grads,
-                             global_grad_norm, sync_encoder_grads, zero_grads)
+                             global_grad_norm, sample_indices, sync_encoder_grads, zero_grads)
 from optimus_schedule import choose_plan, make_plan
 from pp2_equivalence import mcore_argv
 from training_common import MainGradAdamW
@@ -248,7 +248,7 @@ def main():
                 if not param.requires_grad:
                     continue
                 count = min(opts.validation_samples, param.numel())
-                idx = torch.linspace(0, param.numel() - 1, count, device=device).long()
+                idx = sample_indices(param.numel(), count, device)
                 sampled[name] = {"shape": list(param.shape),
                                  "parameter": param.detach().flatten()[idx].float().cpu().tolist(),
                                  "used_gradient": param.main_grad.flatten()[idx].float().cpu().tolist()}
