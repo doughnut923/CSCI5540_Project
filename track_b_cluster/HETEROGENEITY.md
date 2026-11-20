@@ -83,6 +83,33 @@ smoke passing. Those results are not promoted to validated equivalence. The
 profiled placement mode remains separately selectable, and needs its own
 numerical/performance evaluation before broader claims.
 
+## Verified controlled pilot (2026-11-20)
+
+The [GPU validation record](reproduction/heterogeneity/validation.json) contains
+all six completed case pairs. On two RTX 3090s, each arm performed one warmup
+and six measured optimizer steps, using the 28-layer random-initialized model,
+M=2 and CPU-offloaded AdamW. Both arms used round-robin encoder ownership and
+deterministic execution. Executed source commit: `0a79f175775c12eb43027cba245a3b3937db6509`.
+
+- All six pairs matched exactly in loss, global gradient norm, **659,232 sampled
+  parameter values and 659,232 sampled used-gradient values**, including warmup.
+- All expected image counts, sequence lengths and mean token budgets were
+  observed during training. All **306 measured per-image gradient checks** were
+  finite and positive, including the eight-image samples.
+- The [processor audit](reproduction/heterogeneity/processor-summary.json) covers
+  72 manifest entries built from eight repeated photographs. CPU input generation
+  and GPU training have separate recorded software versions and were checked
+  against the same observed token/sequence budgets.
+- Resolution-series encoder forward means in the serial arm were **71.39, 123.43
+  and 93.85 ms**. Their max/min spread was **72.9%**, so the report marks the mean
+  workload as unmatched. These brief, instrumented measurements guide later
+  calibration; they do not establish a speedup or a variance-only effect.
+
+Earlier cross-layout validation failed after the FP32 accumulation fix, with
+maximum absolute differences of 0.07148 in loss and 0.0003281 in sampled
+parameters. The validation record retains this negative result separately.
+The fixed-layout success above does not establish cross-layout equivalence.
+
 ## What remains for the proposal's final comparison
 
 - Review and agree whether this PP-only implementation is an acceptable explicitly

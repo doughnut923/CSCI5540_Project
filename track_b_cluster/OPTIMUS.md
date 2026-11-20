@@ -2,7 +2,9 @@
 
 This branch builds on the team's `distrain-integration` commit
 `3760175772c5952b7cfca2203558edb778c11bc7`, plus the native smoke environment fixes
-from PR #4. It does not change the team's remote branches.
+from PR #4. It now also includes the team's later DistTrain result/launcher commits
+through `2660a47707c017cc42e81af47fb8faab83591168`. It does not change the team's
+remote branches.
 
 ## Reuse and ownership
 
@@ -148,3 +150,16 @@ To compare an independent pair of evidence directories:
 python track_b_cluster/scripts/compare_optimus_validation.py <parent-of-both-runs> \
   --output <parent-of-both-runs>/comparison.json
 ```
+
+## Six-case heterogeneous-input follow-up
+
+The [controlled B/C pilot](HETEROGENEITY.md#verified-controlled-pilot-2026-11-20)
+passed all six case pairs, with exact sampled parameter/gradient agreement and
+per-image gradient coverage. Its fixed-placement, deterministic scope is narrower
+than general profiled-placement equivalence. The record also preserves the earlier
+cross-layout failure and flags unmatched mean encoder work in the resolution axis.
+
+The team's [latest DistTrain results](../docs/distrain-results.md) use different
+GPU counts, a 32-layer synthetic depth and M=4. Their fused baseline omits optimizer
+updates. Those measurements must not be placed beside this 28-layer, M=2,
+CPU-offloaded pilot as a controlled training-throughput comparison.
