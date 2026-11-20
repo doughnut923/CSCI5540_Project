@@ -23,6 +23,10 @@ def summarise(rows):
     times = [r["step_time_s"] for r in rows]
     ordered = sorted(times)
     observations = [o for r in rows for o in (r.get("input_observations") or [])]
+    by_length = {}
+    for row in rows:
+        length = max(o["sequence_length"] for o in row["input_observations"])
+        by_length.setdefault(length, []).append(row["step_time_s"])
     encoder_ms = []
     for row in rows:
         for rank, kind, start, end in row["busy_intervals"]:
@@ -41,6 +45,10 @@ def summarise(rows):
             r["pipeline_bubble_ratio"] for r in rows),
         "peak_allocated_gib": max(peaks) / 2 ** 30,
         "encoder_forward_ms_mean": (statistics.mean(encoder_ms) if encoder_ms else None),
+        # A bucketed step has one length, so this is the cost per length the case exercised.
+        "step_time_s_by_sequence_length": {
+            str(length): {"steps": len(values), "p50": percentile(sorted(values), 50)}
+            for length, values in sorted(by_length.items())},
         "inputs": {
             "image_counts": sorted({o["image_count"] for o in observations}),
             "sequence_lengths": sorted({o["sequence_length"] for o in observations}),
@@ -67,7 +75,7 @@ def report(suite_root, runs_root):
     for case in suite["cases"]:
         audit_path = suite_root / Path(case["manifest"]).parent / "input_audit.json"
         audit = json.loads(audit_path.read_text())
-        found = sorted(runs_root.glob("disagg_m*_bc_%s.jsonl" % case["name"]))
+        found = sorted(runs_root.glob("disagg_m*_*%s.jsonl" % case["name"]))
         if len(found) != 1:
             raise SystemExit("%s: expected one jsonl in %s, found %d"
                              % (case["name"], runs_root, len(found)))
