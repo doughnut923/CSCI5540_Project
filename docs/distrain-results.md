@@ -41,7 +41,32 @@ Figures: `docs/disagg_m4_a2run20_step10.png` (`ENC=1+PP=2`, step 10),
 (30 % -> 58 %). With one encoder rank feeding the pipeline, every added stage adds a place to
 wait for the encoder. That is the bubble DistTrain is meant to remove, reproduced here.
 
-## 2. Placement-only configurations (no training step)
+## 2. Fused baseline on the same plan (no optimizer step)
+
+`pp2_equivalence.py` now consumes the same `ManifestBatches` plan, so this is the same data,
+same M=4, same 32 layers as section 1 — but the harness never steps an optimizer, so the loss
+sits at its initial ~3.0. Compare the timing columns only.
+
+| config | GPUs | measured steps | step time mean / p50 / p95 (s) | samples/s | bubble |
+| --- | --- | --- | --- | --- | --- |
+| fused PP=4 (encoder in stage 0) | 4 | 10 | 0.792 / 0.770 / 0.922 | 5.05 | 60.1 % |
+| DistTrain `ENC=1 + LLM_PP=4` (section 1) | 5 | 10 | 0.837 / 0.830 / 0.960 | 4.78 | 57.9 % |
+
+Figure: `docs/fused_pp4_step5.png` (step 5, 0.756 s, busy 39.5 %, bubble 60.5 %).
+
+The fused row is faster in wall clock and uses one GPU fewer, but it is **not** a like-for-like
+training number: it has no optimizer step. The measured optimizer cost in the DistTrain arm is
+83 ms on the encoder unit and 46-75 ms per LLM stage at PP=4, so a fused step that also stepped
+AdamW would land near 0.92-0.95 s (**derived, not measured**). Giving the fused harness the same
+`MainGradAdamW` is the smallest remaining change needed before the two rows can be quoted side by
+side.
+
+What *is* directly comparable and measured is the bubble: 60.1 % fused vs 57.9 % disaggregated.
+The fused pipeline leaves more capacity idle because stage 0 must run the whole vision tower
+before it can start the next microbatch, while the disaggregated run overlaps encoder backwards
+with LLM work.
+
+## 3. Earlier placement-only configurations (no training step)
 
 Seeded CPU init, one fixed sample, forward+backward only, no optimizer, and (unless stated)
 **no encoder gradient exchange**. Useful for topology comparison only.
@@ -64,7 +89,7 @@ collectives, no P2P between these 3090s (~5.3 GB/s host-staged), i.e. 1.13 s at 
 N=4. Sync-free disaggregation is 2x faster than the fused baseline; with the naive exchange it
 is 2x slower. Bucketed-bf16 exchange is the cheapest untried fix (workpackage B2).
 
-## 3. Not measured
+## 4. Not measured
 
 | arm | status |
 | --- | --- |
@@ -72,7 +97,7 @@ is 2x slower. Bucketed-bf16 exchange is the cheapest untried fix (workpackage B2
 | Optimus | no code in this repository (only a mention in `AGENTS.md`) |
 | encoder-as-pipeline-stages | not implemented (needs the ViT layer split); est. 0.28-0.36 s |
 
-## 4. Caveats that apply to any table built from this
+## 5. Caveats that apply to any table built from this
 
 1. **Placement-only rows are not training results.** They have no optimizer step and, where
    marked, no encoder gradient exchange, so they are not a valid training configuration.
@@ -84,8 +109,9 @@ is 2x slower. Bucketed-bf16 exchange is the cheapest untried fix (workpackage B2
    the same checkpoint.
 3. **Step time tracks sequence length**, not just topology: 424-token steps are ~25 % slower than
    82-token steps. Every arm must use the same `ManifestBatches` plan or the comparison is noise.
-4. **Bubble is instrumented for this harness only.** BigMac and Optimus cannot produce it, so it
-   is "measured for DistTrain, unavailable for the others", never a three-way column.
+4. **Bubble is instrumented for the fused Megatron baseline and DistTrain, not for BigMac or
+   Optimus.** The two measured rows in section 2 are therefore comparable; a three-way bubble
+   column is not available, and must not be invented.
 5. **Peak memory is per rank, max over ranks.** At `PP=4` the encoder unit is the peak
    (16.0 -> 19.8 GiB across a run) and the LLM stages are 7.7-13.0 GiB. At `PP=2` the LLM unit
    reaches 20.7 GiB, which is within ~3 GiB of the card limit.
@@ -95,7 +121,7 @@ is 2x slower. Bucketed-bf16 exchange is the cheapest untried fix (workpackage B2
 8. **24-sample dataset**, repeated within a run. These are efficiency measurements, not a
    convergence result.
 
-## 5. Reproduce
+## 6. Reproduce
 
 ```sh
 # training-valid DistTrain, 5 GPUs
