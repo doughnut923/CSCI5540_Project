@@ -34,7 +34,7 @@ from pathlib import Path
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from pp2_equivalence import ManifestBatches  # noqa: E402  (same-directory helper)
+from manifest_data import ManifestBatches  # noqa: E402  (same-directory helper)
 
 
 def env_int(name, default):
