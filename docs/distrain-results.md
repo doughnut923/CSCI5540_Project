@@ -21,6 +21,7 @@ Both units step AdamW over MCore's fp32 `main_grad`; see `bridge/disagg_units.py
 | config | GPUs | measured steps | step time mean / p50 / p95 (s) | samples/s | bubble | peak GPU mem | skipped / non-finite |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `ENC=1 + LLM_PP=2` | 3 | 30 (3 runs x 10) | 0.926 / 0.932 / 1.022 | 4.32 | 30.0 % | 20.68 GiB | 0 / 0 |
+| `ENC=2 + LLM_PP=2` (encoder DP=2, grads exchanged) | 4 | 10 | 1.115 / 1.103 / 1.167 | 3.59 | 41.8 % | 20.68 GiB | 0 / 0 |
 | `ENC=1 + LLM_PP=4` | 5 | 10 | **0.837 / 0.830 / 0.960** | **4.78** | 57.9 % | 19.76 GiB | 0 / 0 |
 
 - Source records: `runs/track_b_n2_pilot_measured_v1/disagg_m4_a3all.jsonl` (+ `_summary.json`),
@@ -35,7 +36,15 @@ Both units step AdamW over MCore's fp32 `main_grad`; see `bridge/disagg_units.py
   move.
 
 Figures: `docs/disagg_m4_a2run20_step10.png` (`ENC=1+PP=2`, step 10),
+`docs/disagg_m4_d2pp2_step2.png` (`ENC=2+PP=2`, step 2, with the gradient all-reduce),
 `docs/disagg_m4_b1pp4_step5.png` (`ENC=1+PP=4`, step 5).
+
+**Encoder DP=2 is a net loss here.** Same PP, same data, one extra GPU: p50 1.103 s vs 0.932 s
+(+18 %) and 3.59 vs 4.32 samples/s. The measured all-reduce is 0.41-0.47 s per step, i.e. 40 % of
+the step, and the Gantt shows both encoder ranks sitting in the grey bar while the LLM pipeline
+is already finished. That is the 2.6 GB of fp32 vision gradients crossing a link with no P2P.
+Note this run measured 0.41-0.47 s, not the 1.13 s recorded in section 3 on a busier node — same
+config, different node load, so quote the range rather than a single exchange cost.
 
 **Reading the two rows together:** two extra stages cut step time 10 % but double the bubble
 (30 % -> 58 %). With one encoder rank feeding the pipeline, every added stage adds a place to
@@ -85,9 +94,11 @@ Figures: `docs/pp8_gantt_split_v1.png` (fused PP=8), `docs/disagg_pp4_enc4.png` 
 `docs/disagg_overlap_4gpu_nosync.png` (2 encoder ranks, streamed).
 
 Encoder DP does not pay on this hardware: 2.6 GB of fp32 vision gradients, ~300 small
-collectives, no P2P between these 3090s (~5.3 GB/s host-staged), i.e. 1.13 s at N=2 and 1.72 s at
-N=4. Sync-free disaggregation is 2x faster than the fused baseline; with the naive exchange it
-is 2x slower. Bucketed-bf16 exchange is the cheapest untried fix (workpackage B2).
+collectives, no P2P between these 3090s (~5.3 GB/s host-staged). The exchange measured 1.13 s at
+N=2 in the older run below and 0.41-0.47 s at N=2 in the training run of section 1, depending on
+node load; either way the sync-free disaggregation is 2x faster than the fused baseline while
+with the naive exchange it is 1.4-2x slower. Bucketed-bf16 exchange is the cheapest untried fix
+(workpackage B2).
 
 ## 4. Not measured
 
