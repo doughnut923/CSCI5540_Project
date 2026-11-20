@@ -118,6 +118,8 @@ def main():
     p.add_argument("--microbatches", type=int, default=4)
     p.add_argument("--layers", type=int, default=28)
     p.add_argument("--memory-headroom-gb", type=float, default=2.0)
+    p.add_argument("--optimizer-device", choices=("cuda", "cpu"), default="cuda",
+                   help="CPU offloads FP32 master weights and AdamW states for the two-GPU quota")
     p.add_argument("--validation-samples", type=int, default=0,
                    help="Save evenly spaced parameter/used-gradient samples after timing")
     p.add_argument("--schedule", choices=("serial-reference", "optimus-pp"), default="optimus-pp")
@@ -155,7 +157,7 @@ def main():
     # AdamW needs FP32 masters and two moments in addition to the model and
     # main_grad already allocated. Check every rank before any starts training.
     parameter_count = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    extra_bytes = parameter_count * 12
+    extra_bytes = parameter_count * 12 if opts.optimizer_device == "cuda" else 0
     free_bytes, _ = torch.cuda.mem_get_info()
     memory = {"rank": rank, "parameters": parameter_count,
               "free_bytes_before_optimizer": free_bytes,
@@ -166,7 +168,8 @@ def main():
     if not all(item["fits_with_headroom"] for item in memory_by_rank):
         raise RuntimeError("Colocated full-AdamW state needs more memory; use more PP GPUs "
                            "or a shared memory optimization. Per-rank estimates: " + str(memory_by_rank))
-    optimizer = MainGradAdamW(model, args, opts.warmup_steps + opts.steps)
+    optimizer = MainGradAdamW(model, args, opts.warmup_steps + opts.steps,
+                             master_device=opts.optimizer_device)
     batches = ManifestBatches(str(opts.model_dir), str(opts.manifest), os.environ["PROJ_ROOT"])
     empty_video = torch.zeros((0, 3), dtype=torch.long, device=device)
     profiles = {}

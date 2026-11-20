@@ -55,4 +55,5 @@ singularity exec --nv --home "$WS/container-home" \
   --schedule "$MODE" --layers "${NUM_LAYERS:-28}" \
   --microbatches "${NUM_MICROBATCHES:-4}" \
   --warmup-steps "${WARMUP_STEPS:-1}" --steps "${BENCH_STEPS:-3}" \
-  --validation-samples "${VALIDATION_SAMPLES:-0}"
+  --validation-samples "${VALIDATION_SAMPLES:-0}" \
+  --optimizer-device "${OPTIMIZER_DEVICE:-cpu}"

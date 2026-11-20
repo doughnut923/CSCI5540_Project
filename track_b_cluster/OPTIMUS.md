@@ -69,14 +69,19 @@ python -m unittest -v test_optimus
 ## GPU smoke test
 
 Use the existing pinned native environment (SETUP.md plus the PR #4 corrections).
-The course queue verified for this account is `csci5540`; older `gpu_2h` examples
+The course queue verified for this account is `csci5540`, with a per-user limit
+of **two GPUs** (`sacctmgr show qos csci5540`, 2026-11-20). Older `gpu_2h` examples
 in the team documentation refer to another account/environment.
 
 Full AdamW needs BF16 model parameters + FP32 gradients/masters/moments. A
-replicated vision encoder can make two 24GB GPUs insufficient even though the
-earlier forward/backward-only native test fit. The runner checks remaining
-optimizer-state memory before training; the launcher starts with **4 GPUs** and
-28 unchanged language layers. This is still a small single-node experiment.
+replicated vision encoder makes full GPU AdamW infeasible on two 24GB GPUs:
+the measured build has about 1.554 billion trainable parameters on each rank,
+with 15.1GB free but 18.6GB additional optimizer allocation needed per rank.
+The launcher therefore uses **2 GPUs with CPU optimizer offload**, retaining
+28 unchanged language layers. Both comparison arms must use this same setting.
+The shared optimizer also exposes this as `OPTIMIZER_DEVICE=cpu` to DistTrain.
+This is a functional check, not an all-GPU Optimus throughput comparison. On a
+larger GPU allocation use `OPTIMIZER_DEVICE=cuda` consistently across all arms.
 
 ```bash
 export SLURM_CONF=/opt1/slurm/gpu-slurm.conf

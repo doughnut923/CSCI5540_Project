@@ -213,7 +213,8 @@ def main():
         fwd_bwd = get_forward_backward_func()
         shm.touch("ready_llm")
 
-    step_opt = MainGradAdamW(model, args, warmup_steps + bench_steps)
+    step_opt = MainGradAdamW(model, args, warmup_steps + bench_steps,
+                            master_device=os.environ.get("OPTIMIZER_DEVICE"))
 
     # Fingerprint of the initial weights, before any optimizer step. Equal fingerprints
     # across arms mean any loss difference comes from the computation, not the init.

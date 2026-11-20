@@ -16,10 +16,11 @@ class MainGradAdamW:
     after every update (the same split Megatron's mixed-precision optimizer uses).
     """
 
-    def __init__(self, model, args, total_steps):
+    def __init__(self, model, args, total_steps, master_device=None):
         self.params = [p for p in model.parameters()
                        if getattr(p, "main_grad", None) is not None]
-        self.masters = [p.detach().float().clone().requires_grad_(True) for p in self.params]
+        self.masters = [p.detach().to(device=master_device or p.device, dtype=torch.float32)
+                        .clone().requires_grad_(True) for p in self.params]
         self.opt = torch.optim.AdamW(
             self.masters, lr=args.lr, betas=(args.adam_beta1, args.adam_beta2),
             eps=args.adam_eps, weight_decay=args.weight_decay)
@@ -30,7 +31,7 @@ class MainGradAdamW:
 
     def step(self, global_grad_norm=None):
         for master, p in zip(self.masters, self.params):
-            master.grad = p.main_grad
+            master.grad = p.main_grad.to(master.device)
         lr = self.min_lr + 0.5 * (self.lr - self.min_lr) * (
             1.0 + math.cos(math.pi * self.steps / self.total))
         for group in self.opt.param_groups:
@@ -44,8 +45,12 @@ class MainGradAdamW:
             if not math.isfinite(grad_norm):
                 raise FloatingPointError("non-finite global gradient norm")
             scale = min(1.0, self.clip / (grad_norm + 1e-6))
-            for master in self.masters:
+            for master, param in zip(self.masters, self.params):
                 master.grad.mul_(scale)
+                if master.device != param.main_grad.device:
+                    # Keep the recorded used-gradient samples consistent with
+                    # the clipped CPU gradient actually passed to AdamW.
+                    param.main_grad.mul_(scale)
         self.opt.step()
         self.opt.zero_grad(set_to_none=True)
         with torch.no_grad():

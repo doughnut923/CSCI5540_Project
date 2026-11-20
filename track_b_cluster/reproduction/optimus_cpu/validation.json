@@ -24,11 +24,11 @@
   "gpu_validated": false,
   "full_optimus_reproduction": false,
   "source_sha256": {
-    "track_b_cluster/bridge/optimus_qwen.py": "55c0b6c6ecad95848cd80847e36b165e680d903df13fa4a92a4a393b9c80ed79",
+    "track_b_cluster/bridge/optimus_qwen.py": "f00594551a6a7b6e233e715f8b5ff9d643253bcb6f078fe79941d389d6db14fc",
     "track_b_cluster/bridge/optimus_schedule.py": "28592cb83afc6a23864c79fdc2ff52c11d9e998cc7881c352cf0175b30489aea",
     "track_b_cluster/bridge/optimus_runtime.py": "42f6afc57355703a11cbc5635a9dbee7740754a5f39e65ff0d614322a45eaeb2",
     "track_b_cluster/bridge/manifest_data.py": "1e5afd12f37a484ef72f8406b2d52c368e73e971bafb2b3276ab434da00d969d",
-    "track_b_cluster/bridge/training_common.py": "77e6d394f33b7af8c58e469b19e46bb1558acb128e050fd32cea1ac76d427f12",
+    "track_b_cluster/bridge/training_common.py": "146b201f337cb0bf6f303eff2fc5751562a656c8029c8579bd145281cb8a3e8b",
     "track_b_cluster/bridge/test_optimus.py": "3f934c0160eef66eea2e45083a4e90de78cf8918974a64f0382af8d5ec2a5f7c"
   }
 }
