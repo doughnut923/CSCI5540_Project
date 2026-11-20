@@ -100,7 +100,27 @@ node load; either way the sync-free disaggregation is 2x faster than the fused b
 with the naive exchange it is 1.4-2x slower. Bucketed-bf16 exchange is the cheapest untried fix
 (workpackage B2).
 
-## 4. Not measured
+## 4. B/C workload suite (six cases)
+
+The six Part B/C cases, run on this arm at 3 GPUs, 28 layers, M=2. Table, probe and caveats live in
+`docs/distrain/distrain-bc-suite.md`; the headline is that the arm buckets samples by length — the
+MCore/PMP path rejects a step that carries two lengths — so step time follows sequence length, not
+image count.
+
+| case | seq lengths | step p50 | samples/s | bubble |
+| --- | --- | --- | --- | --- |
+| resolution_low | 195 | 0.504 s | 3.96 | 40.4 % |
+| resolution_medium | 139, 195, 254 | 0.507 s | 3.09 | 42.9 % |
+| resolution_high | 83, 254 | 0.520 s | 2.94 | 43.8 % |
+| image_count_low | 607 | 0.764 s | 2.62 | 46.1 % |
+| image_count_medium | 607, 609, 611 | 0.737 s | 2.45 | 46.6 % |
+| image_count_high | 607, 609, 613, 621 | 0.715 s | 2.52 | 46.0 % |
+
+All six rows train: no skipped or non-finite step and both weight norms move. Not comparable with
+the Optimus pilot's numbers or with sections 1-2 — different GPU count, optimizer placement and
+batching.
+
+## 5. Not measured
 
 | arm | status |
 | --- | --- |
@@ -108,7 +128,7 @@ with the naive exchange it is 1.4-2x slower. Bucketed-bf16 exchange is the cheap
 | Optimus | no code in this repository (only a mention in `AGENTS.md`) |
 | encoder-as-pipeline-stages | not implemented (needs the ViT layer split); est. 0.28-0.36 s |
 
-## 5. Caveats that apply to any table built from this
+## 6. Caveats that apply to any table built from this
 
 1. **Placement-only rows are not training results.** They have no optimizer step and, where
    marked, no encoder gradient exchange, so they are not a valid training configuration.
@@ -139,7 +159,7 @@ with the naive exchange it is 1.4-2x slower. Bucketed-bf16 exchange is the cheap
    labels only; timings, losses and gradient norms are the runs' own measurements. Runs recorded
    from the B/C suite onward log the plan they consumed.
 
-## 6. Reproduce
+## 7. Reproduce
 
 ```sh
 # training-valid DistTrain, 5 GPUs

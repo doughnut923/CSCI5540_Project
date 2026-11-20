@@ -111,8 +111,10 @@ Plot one step with `track_b_cluster/scripts/plot_pipeline_gantt.py --input <json
 | `track_b_cluster/slurm/disagg_units.sbatch` | launch both units in one allocation |
 | `track_b_cluster/slurm/pp2_equivalence.sbatch` | launch the fused baseline |
 | `track_b_cluster/scripts/collect_step_metrics.py` | JSONL → p50/p95 summary |
+| `track_b_cluster/scripts/report_bc_suite_distrain.py` | six-case B/C suite summary + gates |
 | `track_b_cluster/scripts/plot_pipeline_gantt.py` | JSONL → Gantt figure |
 | `docs/distrain/distrain-results.md` | measured numbers, caveats, what is not measured |
+| `docs/distrain/distrain-bc-suite.md` | the six B/C cases on this arm (3 GPUs, bucketed) |
 | `docs/pipeline-bubble.md` | how the bubble number is defined |
 
 ## Still open
