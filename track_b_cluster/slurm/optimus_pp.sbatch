@@ -5,7 +5,7 @@
 #SBATCH --qos=csci5540
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --gres=gpu:4
+#SBATCH --gres=gpu:2
 #SBATCH --cpus-per-task=8
 #SBATCH --time=00:30:00
 #SBATCH --chdir=/tmp
@@ -17,7 +17,7 @@ set -euo pipefail
 : "${OUTPUT_DIR:?Set a NEW evidence directory}"
 : "${BIND_ROOT:=$WS}"
 MODE=${MODE:-optimus-pp}
-PP=${SLURM_GPUS_ON_NODE:-4}
+PP=${PP:-${SLURM_GPUS_ON_NODE:-2}}
 [[ "$PP" =~ ^[0-9]+$ ]] || { echo "Expected integer GPU count, got $PP" >&2; exit 2; }
 test ! -e "$OUTPUT_DIR"
 mkdir -p "$(dirname "$OUTPUT_DIR")" "$WS/container-home" "$WS/libcuda"
