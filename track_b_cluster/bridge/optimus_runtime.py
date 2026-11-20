@@ -133,6 +133,8 @@ class PlanExecutor:
                     grad = self.transport.recv(outputs[m].shape, outputs[m].dtype,
                                                self.rank + 1, "backward")
                     compute(task, lambda: torch.autograd.backward(outputs[m], grad))
+                if hasattr(self.adapter, "accumulate_parameter_grads"):
+                    self.adapter.accumulate_parameter_grads("B")
                 if self.rank > 0:
                     if inputs[m].grad is None:
                         raise RuntimeError("missing pipeline input gradient")
@@ -156,6 +158,8 @@ class PlanExecutor:
                     encoded[m].shape, encoded[m].dtype, 0, "encoder_grad"))
                 output = encoded.pop(m)
                 compute(task, lambda: torch.autograd.backward(output, grad))
+                if hasattr(self.adapter, "accumulate_parameter_grads"):
+                    self.adapter.accumulate_parameter_grads("EB")
             else:
                 raise ValueError("unknown task kind " + kind)
             end = torch.cuda.Event(enable_timing=True) if cuda else time.monotonic()

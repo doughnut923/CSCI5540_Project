@@ -48,6 +48,9 @@ class ToyAdapter:
     def encoder_gradient_ranges(self, m):
         return [(i, i + 1) for i in range(self.data[m][0].shape[0])]
 
+    def accumulate_parameter_grads(self, kind):
+        collect_main_grads(self.encoder if kind == "EB" else self.language)
+
     def encoder_forward(self, m):
         return self.encoder(self.data[m][0])
 
@@ -115,6 +118,16 @@ def worker(rank, path, result_dir, world):
 
 
 class PlanTests(unittest.TestCase):
+    def test_ordinary_bf16_gradients_accumulate_in_fp32(self):
+        module = torch.nn.Linear(1, 1, bias=False, dtype=torch.bfloat16)
+        p = module.weight
+        p.main_grad = torch.zeros_like(p, dtype=torch.float32)
+        for value in (1.0, .002, -1.0):
+            p.grad = torch.full_like(p, value)
+            collect_main_grads(module)
+        self.assertAlmostEqual(float(p.main_grad), float(torch.tensor(.002, dtype=torch.bfloat16)), places=7)
+        self.assertIsNone(p.grad)
+
     def test_mixed_lengths_preserve_manifest_order(self):
         fixture = {"samples": [{"sample_id": str(i), "images": [],
                                  "derived_visual_tokens_total": 10} for i in range(2)]}

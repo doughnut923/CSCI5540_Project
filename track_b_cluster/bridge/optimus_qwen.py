@@ -42,6 +42,12 @@ class QwenAdapter:
             offset += count
         return ranges
 
+    def accumulate_parameter_grads(self, kind):
+        # Ordinary BF16 .grad buffers must not accumulate multiple microbatches
+        # before conversion: that makes rounding depend on replica placement.
+        module = self.model.vision_model if kind == "EB" else self.model.language_model
+        collect_main_grads(module)
+
     def hidden_shape(self, m):
         return (self.data[m]["tokens"].shape[1], 1, self.model.config.hidden_size)
 

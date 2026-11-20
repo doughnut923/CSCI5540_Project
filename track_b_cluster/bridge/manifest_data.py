@@ -84,10 +84,10 @@ def build_sample(processor, sample, repo_root):
 class ManifestBatches:
     """Deterministic (step, microbatch) -> sample plan over a manifest.
 
-    Microbatches of one step must share a sequence length, so samples are grouped by
-    derived image-token total (equal totals give equal lengths for the fixed prompt) and
-    each step draws its microbatches from one group. The plan is a pure function of
-    (step, microbatch), so both units and every rank derive identical batches.
+    Legacy bucket mode groups by derived visual-token total and requires equal
+    actual sequence lengths (suitable for fixed image counts). Manifest mode keeps
+    mixed-length samples in their original order for a runtime with per-microbatch
+    tensor shapes. Both modes are deterministic functions of (step, microbatch).
 
     Samples are built once and cached; builds happen before a step is timed.
     """

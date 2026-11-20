@@ -27,5 +27,8 @@ for ((repeat=0; repeat<REPEATS; repeat++)); do
       export MODE OUTPUT_DIR="$OUTPUT_ROOT/$case_name/repeat-$repeat/$MODE"
       bash "$PROJ_ROOT/track_b_cluster/slurm/optimus_pp.sbatch"
     done
+    python3 "$PROJ_ROOT/track_b_cluster/scripts/compare_optimus_validation.py" \
+      "$OUTPUT_ROOT/$case_name/repeat-$repeat" \
+      --output "$OUTPUT_ROOT/$case_name/repeat-$repeat/comparison.json"
   done < "$OUTPUT_ROOT/cases.tsv"
 done

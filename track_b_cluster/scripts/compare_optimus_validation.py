@@ -33,6 +33,11 @@ def compare(root, rtol=1e-3, atol=1e-5):
         if a.get("input_observations") != b.get("input_observations"):
             errors.append("processed input metadata differs")
         for record in (a, b):
+            if record.get("input_observations") and configs[0].get("validation_samples", 0):
+                observed = record.get("image_embedding_grad_norms", {})
+                for mb, sample in enumerate(record["input_observations"]):
+                    if len(observed.get(str(mb), [])) != sample["image_count"]:
+                        errors.append("missing per-image gradients in microbatch " + str(mb))
             for mb, norms in record.get("image_embedding_grad_norms", {}).items():
                 if any(not math.isfinite(x) or x <= 0 for x in norms):
                     errors.append("missing/nonfinite image gradient in microbatch " + mb)
