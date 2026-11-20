@@ -56,17 +56,20 @@ SHM=${TMPDIR:-/tmp}/disagg-${SLURM_JOB_ID:-$$}
 rm -rf "$SHM"; mkdir -p "$SHM"
 export SINGULARITYENV_DISAGG_SHM=$SHM
 
+# Two jobs can share a node, so the rendezvous ports must not be job-invariant.
+PORT=$((12000 + (${SLURM_JOB_ID:-$$} % 2000)))
+
 SING="singularity exec --nv --bind /lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 --bind /lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1 -B $BIND_ROOT:$BIND_ROOT -B /tmp:/tmp $SIF"
 
 # Both units run at once, each in its own process group and GPU slice.
 SINGULARITYENV_ROLE=enc SINGULARITYENV_CUDA_VISIBLE_DEVICES=$(seq -s, 0 $((ENC_GPUS - 1))) \
-  $SING torchrun --standalone --nproc_per_node "$ENC_GPUS" --master_port 12690 \
+  $SING torchrun --standalone --nproc_per_node "$ENC_GPUS" --master_port "$PORT" \
   "$PROJ/track_b_cluster/bridge/disagg_units.py" > "$WS/containers/disagg-enc-${TAG}.log" 2>&1 &
 ENC_PID=$!
 
 set +e
 SINGULARITYENV_ROLE=llm SINGULARITYENV_CUDA_VISIBLE_DEVICES=$(seq -s, "$ENC_GPUS" $((ENC_GPUS + LLM_PP - 1))) \
-  $SING torchrun --standalone --nproc_per_node "$LLM_PP" --master_port 12691 \
+  $SING torchrun --standalone --nproc_per_node "$LLM_PP" --master_port "$((PORT + 1))" \
   "$PROJ/track_b_cluster/bridge/disagg_units.py" > "$WS/containers/disagg-llm-${TAG}.log" 2>&1
 LLM_RC=$?
 wait $ENC_PID
