@@ -82,7 +82,7 @@ Plot one step with `track_b_cluster/scripts/plot_pipeline_gantt.py --input <json
 
 1. Same manifest, same `NUM_MICROBATCHES`, same `NUM_LAYERS`, same seed, same container image,
    same commit.
-2. Same sample plan. The plan is `ManifestBatches` in `bridge/pp2_equivalence.py` — a pure
+2. Same sample plan. The plan is `ManifestBatches` in `bridge/manifest_data.py` — a pure
    function of (step, microbatch), so your arm can just import it.
 3. Sequence length changes per step (194/82/253/309/424/138 tokens) and step time follows it.
    Mixing plans makes the comparison noise.
@@ -106,7 +106,8 @@ Plot one step with `track_b_cluster/scripts/plot_pipeline_gantt.py --input <json
 | path | what |
 | --- | --- |
 | `track_b_cluster/bridge/disagg_units.py` | the two-unit harness |
-| `track_b_cluster/bridge/pp2_equivalence.py` | fused baseline + `ManifestBatches` (shared plan) |
+| `track_b_cluster/bridge/manifest_data.py` | `ManifestBatches` — the shared sample plan and input builder |
+| `track_b_cluster/bridge/pp2_equivalence.py` | fused baseline; re-exports the plan for old launchers |
 | `track_b_cluster/slurm/disagg_units.sbatch` | launch both units in one allocation |
 | `track_b_cluster/slurm/pp2_equivalence.sbatch` | launch the fused baseline |
 | `track_b_cluster/scripts/collect_step_metrics.py` | JSONL → p50/p95 summary |

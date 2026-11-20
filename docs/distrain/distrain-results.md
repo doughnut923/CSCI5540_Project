@@ -131,6 +131,13 @@ with the naive exchange it is 1.4-2x slower. Bucketed-bf16 exchange is the cheap
    interconnect, not of the design.
 8. **24-sample dataset**, repeated within a run. These are efficiency measurements, not a
    convergence result.
+9. **The recorded rows' `sample_ids` do not line up with the plan the code prints today.** They match
+   `ManifestBatches.plan(step + 2)` exactly for all ten steps of `disagg_m4_d2pp2.jsonl` — the offset
+   equals those runs' two warmup steps. The plan code is unchanged since `f983355` and prints the
+   same 20-step plan at every commit behind these rows, so the shift came from the run-time
+   environment and is unexplained. The rows do not record a sequence length, so this affects sample
+   labels only; timings, losses and gradient norms are the runs' own measurements. Runs recorded
+   from the B/C suite onward log the plan they consumed.
 
 ## 6. Reproduce
 
