@@ -1,0 +1,12 @@
+test_corrupt_plans_rejected (test_optimus.PlanTests.test_corrupt_plans_rejected) ... ok
+test_fused_gradient_is_not_counted_twice (test_optimus.PlanTests.test_fused_gradient_is_not_counted_twice) ... ok
+test_shared_manifest_smoke_without_derived_counts (test_optimus.PlanTests.test_shared_manifest_smoke_without_derived_counts) ... ok
+test_two_process_training_matches_unpartitioned_reference (test_optimus.PlanTests.test_two_process_training_matches_unpartitioned_reference) ... world=2: three updates match unpartitioned reference
+ok
+test_varied_worlds_and_unequal_work (test_optimus.PlanTests.test_varied_worlds_and_unequal_work) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 2.215s
+
+OK
+world=4: three updates match unpartitioned reference

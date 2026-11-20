@@ -1,0 +1,179 @@
+"""CPU correctness tests; these do not measure CUDA/3090 performance."""
+from copy import deepcopy
+import json
+from pathlib import Path
+import tempfile
+from datetime import timedelta
+from types import SimpleNamespace
+import unittest
+from unittest.mock import patch
+
+import torch
+import torch.distributed as dist
+import torch.multiprocessing as mp
+
+from optimus_runtime import (PlanExecutor, Transport, collect_main_grads,
+                             global_grad_norm, sync_encoder_grads, zero_grads)
+from optimus_schedule import choose_plan, make_plan, validate_plan
+from training_common import MainGradAdamW
+from manifest_data import ManifestBatches
+
+
+def costs(world, count):
+    return {k: [[float((m % 3) + 1) if k.startswith("E") else 2.0
+                 for m in range(count)] for _ in range(world)]
+            for k in ("EF", "EB", "F", "B")}
+
+
+def modules(world):
+    torch.manual_seed(31)
+    return (torch.nn.Sequential(torch.nn.Linear(4, 7), torch.nn.Tanh(), torch.nn.Linear(7, 4)),
+            [torch.nn.Sequential(torch.nn.Linear(4, 6), torch.nn.Tanh())]
+            + [torch.nn.Sequential(torch.nn.Linear(6, 6), torch.nn.Tanh()) for _ in range(world - 2)]
+            + [torch.nn.Linear(6, 3)])
+
+
+class ToyAdapter:
+    dtype = torch.float32
+
+    def __init__(self, encoder, language, rank, data):
+        self.encoder, self.language, self.rank, self.data = encoder, language, rank, data
+
+    def encoder_shape(self, m):
+        return (1, 4)
+
+    def hidden_shape(self, m):
+        return (1, 6)
+
+    def encoder_forward(self, m):
+        return self.encoder(self.data[m][0])
+
+    def llm_forward(self, m, hidden, embedding):
+        return self.language(embedding if self.rank == 0 else hidden)
+
+    def loss(self, m, output):
+        return (output - self.data[m][1]).square().mean()
+
+
+def worker(rank, path, result_dir, world):
+    torch.set_num_threads(1)
+    dist.init_process_group("gloo", init_method="file://" + path, rank=rank,
+                            world_size=world, timeout=timedelta(seconds=60))
+    transport = Transport(world, torch.device("cpu"))
+    enc, stages = modules(world)
+    ref_enc, ref_stages = deepcopy(enc), deepcopy(stages)
+    joint = torch.nn.ModuleList([enc, stages[rank]])
+    reference = torch.nn.ModuleList([ref_enc] + ref_stages)
+    for module in (joint, reference):
+        for p in module.parameters():
+            p.main_grad = torch.zeros_like(p)
+    args = SimpleNamespace(lr=.01, min_lr=.001, adam_beta1=.9, adam_beta2=.95,
+                           adam_eps=1e-8, weight_decay=.01, clip_grad=.3)
+    optimizer = MainGradAdamW(joint, args, 3)
+    ref_opt = MainGradAdamW(reference, args, 3)
+    torch.manual_seed(64)
+    data = [(torch.randn(1, 4), torch.randn(1, 3)) for _ in range(5)]
+    # Unequal ownership, a rank with no encoder work, and profile-selected work.
+    plans = [make_plan(world, [0] * 5, costs(world, 5), "serial"),
+             make_plan(world, [0] + [world - 1] * 4, costs(world, 5)),
+             choose_plan(world, 5, costs(world, 5))]
+    max_error = 0.0
+    for plan in plans:
+        zero_grads(joint)
+        zero_grads(reference)
+        reference_network = torch.nn.Sequential(ref_enc, *ref_stages)
+        expected = sum((reference_network(x) - y).square().mean() for x, y in data) / len(data)
+        expected.backward()
+        collect_main_grads(reference)
+        adapter = ToyAdapter(enc, stages[rank], rank, data)
+        result = PlanExecutor(adapter, transport, torch.device("cpu")).run(plan)
+        collect_main_grads(joint)
+        sync_encoder_grads(enc)
+        assert abs(result["loss"] - float(expected)) < 1e-6
+        for actual, wanted in zip(enc.parameters(), ref_enc.parameters()):
+            torch.testing.assert_close(actual.main_grad, wanted.main_grad, rtol=2e-5, atol=1e-6)
+        for actual, wanted in zip(stages[rank].parameters(), ref_stages[rank].parameters()):
+            torch.testing.assert_close(actual.main_grad, wanted.main_grad, rtol=2e-5, atol=1e-6)
+        norm = global_grad_norm(enc, stages[rank])
+        expected_norm = sum(p.main_grad.double().square().sum() for p in reference.parameters()).sqrt()
+        assert abs(norm - float(expected_norm)) < 1e-6
+        optimizer.step(global_grad_norm=norm)
+        ref_opt.step(global_grad_norm=float(expected_norm))
+        for actual_module, wanted_module in ((enc, ref_enc), (stages[rank], ref_stages[rank])):
+            for actual, wanted in zip(actual_module.parameters(), wanted_module.parameters()):
+                torch.testing.assert_close(actual, wanted, rtol=2e-5, atol=1e-6)
+                max_error = max(max_error, float((actual - wanted).abs().max()))
+    Path(result_dir, "rank%d.json" % rank).write_text(json.dumps(
+        {"rank": rank, "optimizer_updates": optimizer.steps, "max_parameter_error": max_error}))
+    dist.destroy_process_group()
+
+
+class PlanTests(unittest.TestCase):
+    def test_shared_manifest_smoke_without_derived_counts(self):
+        fixture = {"samples": [{"sample_id": "photo", "images": [{"resolution": 128}]}]}
+        batch = {"tokens": torch.tensor([[5, 7, 9, 2]]),
+                 "labels": torch.tensor([[-100, -100, 9, 2]]),
+                 "image_mask": torch.tensor([[False, True, False, False]]),
+                 "grid": torch.tensor([[1, 2, 2]])}
+        seen_targets = []
+        def masks(tokens, grid, video, targets, *args, **kwargs):
+            seen_targets.append(targets.clone())
+            return None, targets != -100, torch.zeros((3, 1, 4), dtype=torch.long)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "manifest.json")
+            path.write_text(json.dumps(fixture))
+            with patch("manifest_data.load_processor", return_value=object()), \
+                    patch("manifest_data.build_sample", return_value=batch) as build:
+                source = ManifestBatches("unused", path, tmp)
+                prepared = source.step_tensors(0, 2, "cpu", masks, None)
+                self.assertEqual(build.call_count, 1)  # Cached across repeated microbatches.
+                self.assertEqual(len(prepared), 2)
+                torch.testing.assert_close(seen_targets[0], torch.tensor([[-100, 9, 2, -100]]))
+
+    def test_varied_worlds_and_unequal_work(self):
+        for world in (2, 3, 4):
+            for count in (1, 5, 8):
+                best = choose_plan(world, count, costs(world, count))
+                validate_plan(best)
+                serial = make_plan(world, [0] * count, costs(world, count), "serial")
+                self.assertLessEqual(best["estimated_time_ms"], serial["estimated_time_ms"])
+
+    def test_corrupt_plans_rejected(self):
+        plan = make_plan(2, [0, 1], costs(2, 2))
+        bad = deepcopy(plan)
+        bad["events"].pop()
+        with self.assertRaisesRegex(ValueError, "missing"):
+            validate_plan(bad)
+        bad = deepcopy(plan)
+        event = next(e for e in bad["events"] if e["kind"] == "EB")
+        event.update(start=0.0, end=.1)
+        with self.assertRaisesRegex(ValueError, "dependency"):
+            validate_plan(bad)
+        with self.assertRaises(ValueError):
+            make_plan(2, [2], costs(2, 1))
+
+    def test_two_process_training_matches_unpartitioned_reference(self):
+        for world in (2, 4):
+            with self.subTest(world=world), tempfile.TemporaryDirectory(prefix="optimus-test-") as tmp:
+                mp.spawn(worker, args=(str(Path(tmp, "rendezvous")), tmp, world),
+                         nprocs=world, join=True)
+                for rank in range(world):
+                    result = json.loads(Path(tmp, "rank%d.json" % rank).read_text())
+                    self.assertEqual(result["optimizer_updates"], 3)
+                    self.assertLess(result["max_parameter_error"], 1e-6)
+                print("world=%d: three updates match unpartitioned reference" % world)
+
+    def test_fused_gradient_is_not_counted_twice(self):
+        module = torch.nn.Linear(2, 2, bias=False)
+        p = module.weight
+        p.main_grad = torch.full_like(p, 3.)
+        p.grad = torch.full_like(p, 99.)  # TE's dummy gradient must be ignored
+        p.grad_added_to_main_grad = True
+        collect_main_grads(module)
+        torch.testing.assert_close(p.main_grad, torch.full_like(p, 3.))
+        zero_grads(module)
+        self.assertFalse(p.grad_added_to_main_grad)
+
+
+if __name__ == "__main__":
+    unittest.main()

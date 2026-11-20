@@ -34,7 +34,8 @@ from pathlib import Path
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from pp2_equivalence import ManifestBatches  # noqa: E402  (same-directory helper)
+from manifest_data import ManifestBatches
+from training_common import MainGradAdamW  # noqa: E402  (same-directory helper)
 
 
 def env_int(name, default):
@@ -83,7 +84,7 @@ def mcore_argv(num_layers, pp_size, num_microbatches):
         "--adam-beta1", "0.9",
         "--adam-beta2", "0.95",
         "--transformer-impl", "transformer_engine",
-        "--patch-tokenizer-type", "Qwen2Tokenizer",
+        "--patch-tokenizer-type", "Qwen2VLTokenizer",
         "--extra-vocab-size", "293",
         "--spatial-merge-size", "2",
         "--load", os.environ["QWEN2VL_HF_DIR"],
@@ -121,43 +122,6 @@ class Shm:
     def read_json(self, name):
         return json.loads((self.root / name).read_text())
 
-
-class MainGradAdamW:
-    """AdamW over MCore's fp32 main_grad buffers, with fp32 master weights.
-
-    The fused path accumulates into `param.main_grad` and never writes `.grad`, so the
-    fp32 masters take those buffers as their grads and are cast back into the bf16 params
-    after every update (the same split Megatron's mixed-precision optimizer uses).
-    """
-
-    def __init__(self, model, args, total_steps):
-        self.params = [p for p in model.parameters()
-                       if getattr(p, "main_grad", None) is not None]
-        self.masters = [p.detach().float().clone().requires_grad_(True) for p in self.params]
-        self.opt = torch.optim.AdamW(
-            self.masters, lr=args.lr, betas=(args.adam_beta1, args.adam_beta2),
-            eps=args.adam_eps, weight_decay=args.weight_decay)
-        self.lr, self.min_lr = args.lr, args.min_lr
-        self.clip = args.clip_grad
-        self.total = max(1, total_steps)
-        self.steps = 0
-
-    def step(self):
-        for master, p in zip(self.masters, self.params):
-            master.grad = p.main_grad
-        lr = self.min_lr + 0.5 * (self.lr - self.min_lr) * (
-            1.0 + math.cos(math.pi * self.steps / self.total))
-        for group in self.opt.param_groups:
-            group["lr"] = lr
-        grad_norm = float(torch.nn.utils.clip_grad_norm_(self.masters, self.clip))
-        self.opt.step()
-        self.opt.zero_grad(set_to_none=True)
-        with torch.no_grad():
-            for master, p in zip(self.masters, self.params):
-                p.data.copy_(master)
-        self.steps += 1
-        return {"lr": lr, "grad_norm": grad_norm,
-                "weight_norm": float(self.masters[0].norm())}
 
 
 def main():
