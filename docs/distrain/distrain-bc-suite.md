@@ -140,7 +140,7 @@ run.
    only in encoder tokens.
 5. **Bubble here is defined over three ranks** (1 encoder + 2 stages). It is not the same quantity
    as the 4-5 GPU rows in `distrain-results.md`; do not put them in one column.
-6. **Six measured steps for the pilot, 375 for the datasets.** p50 is the number to quote among the
+6. **Eight measured steps for the pilot, 375 for the datasets.** p50 is the number to quote among the
    pilot rows; p95 moves with which lengths the row pools. Repeating `image_count_high` on a second
    allocation gave p50 0.717 s against 0.725 s (-1.1 %) and a mean 0.8 % higher, with the same 12
    distinct samples, so the plan and the timing are stable.
