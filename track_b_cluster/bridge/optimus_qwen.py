@@ -139,6 +139,9 @@ def main():
     p.add_argument("--schedule", choices=("serial-reference", "optimus-pp"), default="optimus-pp")
     p.add_argument("--batching", choices=("bucket", "manifest"), default="manifest",
                    help="Manifest order preserves mixed sizes/counts within each step")
+    p.add_argument("--encoder-placement", choices=("profiled", "round-robin"), default="profiled",
+                   help="Use round-robin in both arms to isolate scheduling from placement arithmetic")
+    p.add_argument("--deterministic", action="store_true")
     opts = p.parse_args()
     if opts.steps < 1 or opts.warmup_steps < 0 or opts.microbatches < 1 or opts.validation_samples < 0:
         p.error("steps/microbatches must be positive; warmup must be nonnegative")
@@ -154,7 +157,12 @@ def main():
                       NUM_LAYERS=str(opts.layers), NUM_MICROBATCHES=str(opts.microbatches))
     # The colocated executor owns scheduling; never install a second PP executor.
     os.environ.update(USE_PP_EXECUTOR="0", MEGATRON_USE_PP_EXECUTOR="0")
+    if opts.deterministic:
+        os.environ.update(NCCL_ALGO="Ring", NVTE_ALLOW_NONDETERMINISTIC_ALGO="0",
+                          CUBLAS_WORKSPACE_CONFIG=":4096:8")
     sys.argv = ["optimus_qwen"] + mcore_argv(512)
+    if opts.deterministic:
+        sys.argv.append("--deterministic-mode")
     from megatron.training.initialize import initialize_megatron
     from megatron_patch.arguments import get_patch_args
     initialize_megatron(extra_args_provider=get_patch_args)
@@ -229,9 +237,13 @@ def main():
                 measured = executor.run(calibration)
             profiles[signature] = profile_costs(measured, world, opts.microbatches)
         costs = profiles[signature]
-        plan = (make_plan(world, [0] * opts.microbatches, costs, "serial")
-                if opts.schedule == "serial-reference" else
-                choose_plan(world, opts.microbatches, costs))
+        if opts.encoder_placement == "round-robin":
+            plan = make_plan(world, [m % world for m in range(opts.microbatches)], costs,
+                             "serial" if opts.schedule == "serial-reference" else "bubble")
+        else:
+            plan = (make_plan(world, [0] * opts.microbatches, costs, "serial")
+                    if opts.schedule == "serial-reference" else
+                    choose_plan(world, opts.microbatches, costs))
         zero_grads(model)
         torch.cuda.reset_peak_memory_stats()
         dist.barrier()

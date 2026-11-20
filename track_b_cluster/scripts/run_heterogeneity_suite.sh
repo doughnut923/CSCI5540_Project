@@ -12,12 +12,19 @@ export WARMUP_STEPS=${WARMUP_STEPS:-1}
 export BENCH_STEPS=${BENCH_STEPS:-2}
 export VALIDATION_SAMPLES=${VALIDATION_SAMPLES:-16}
 export OPTIMIZER_DEVICE=${OPTIMIZER_DEVICE:-cpu}
+export ENCODER_PLACEMENT=${ENCODER_PLACEMENT:-round-robin}
+export DETERMINISTIC=${DETERMINISTIC:-1}
 REPEATS=${REPEATS:-1}
+[[ "$REPEATS" =~ ^[1-9][0-9]*$ ]] || { echo "REPEATS must be positive" >&2; exit 2; }
 python3 - "$SUITE_ROOT" > "$OUTPUT_ROOT/cases.tsv" <<'PY'
-import json,sys
+import json,sys,os
 from pathlib import Path
 root=Path(sys.argv[1])
-for case in json.loads((root/'suite.json').read_text())['cases']:
+cases=json.loads((root/'suite.json').read_text())['cases']
+selected=set(filter(None,os.environ.get('SUITE_CASES','').split(',')))
+if selected and not selected <= {c['name'] for c in cases}:raise ValueError('unknown SUITE_CASES')
+for case in cases:
+    if selected and case['name'] not in selected:continue
     print(case['name']+'\t'+str(root/case['manifest']))
 PY
 for ((repeat=0; repeat<REPEATS; repeat++)); do

@@ -13,8 +13,9 @@ def compare(root, rtol=1e-3, atol=1e-5):
                 "optimizer_device", "llm_parallelism", "microbatches", "layers", "steps"):
         if configs[0][key] != configs[1][key]:
             errors.append("configuration mismatch: " + key)
-    if configs[0].get("batching") != configs[1].get("batching"):
-        errors.append("configuration mismatch: batching")
+    for key in ("batching", "encoder_placement", "deterministic"):
+        if configs[0].get(key) != configs[1].get(key):
+            errors.append("configuration mismatch: " + key)
     rows = [[json.loads(s) for s in (p / "metrics.jsonl").read_text().splitlines()]
             for p in (reference, candidate)]
     if len(rows[0]) != len(rows[1]) or not rows[0]:
