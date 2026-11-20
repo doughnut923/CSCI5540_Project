@@ -1,0 +1,731 @@
+{
+  "pass": true,
+  "case_count": 6,
+  "paired_runs": 6,
+  "results": [
+    {
+      "case": "resolution_low",
+      "axis": "resolution",
+      "repeat": "repeat-0",
+      "parity": {
+        "pass": true,
+        "rtol": 0.001,
+        "atol": 1e-05,
+        "comparison_scope": "loss, global gradient norm and sampled parameters/used gradients",
+        "max_abs_difference": {
+          "loss": 0.0,
+          "grad_norm": 0.0,
+          "parameter": 0.0,
+          "used_gradient": 0.0
+        },
+        "values_checked": {
+          "parameter": 109872,
+          "used_gradient": 109872
+        },
+        "steps": 7,
+        "encoder_owners": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "optimizer_device": "cpu",
+        "full_optimus_reproduction": false,
+        "errors": []
+      },
+      "input_coverage_pass": true,
+      "input_budget_pass": true,
+      "input_sequence_coverage_pass": true,
+      "runs": {
+        "serial-reference": {
+          "steps": 6,
+          "step_time_s_mean": 12.808262650156394,
+          "step_time_s_stdev": 0.12646415382432663,
+          "throughput_samples_per_s": 0.1561492026380002,
+          "peak_allocated_bytes": 12006892544,
+          "encoder_forward_ms_mean": 71.3930241043369,
+          "encoder_forward_ms_stdev": 1.0790685461509433,
+          "visual_tokens_mean": 162,
+          "image_counts_exercised": [
+            2
+          ],
+          "sequence_lengths_exercised": [
+            195
+          ],
+          "image_gradient_checks": 24
+        },
+        "optimus-pp": {
+          "steps": 6,
+          "step_time_s_mean": 12.8762455341639,
+          "step_time_s_stdev": 0.2189170386520216,
+          "throughput_samples_per_s": 0.15532477962566804,
+          "peak_allocated_bytes": 12006892544,
+          "encoder_forward_ms_mean": 71.4137600765874,
+          "encoder_forward_ms_stdev": 1.4255791679632908,
+          "visual_tokens_mean": 162,
+          "image_counts_exercised": [
+            2
+          ],
+          "sequence_lengths_exercised": [
+            195
+          ],
+          "image_gradient_checks": 24
+        }
+      }
+    },
+    {
+      "case": "resolution_medium",
+      "axis": "resolution",
+      "repeat": "repeat-0",
+      "parity": {
+        "pass": true,
+        "rtol": 0.001,
+        "atol": 1e-05,
+        "comparison_scope": "loss, global gradient norm and sampled parameters/used gradients",
+        "max_abs_difference": {
+          "loss": 0.0,
+          "grad_norm": 0.0,
+          "parameter": 0.0,
+          "used_gradient": 0.0
+        },
+        "values_checked": {
+          "parameter": 109872,
+          "used_gradient": 109872
+        },
+        "steps": 7,
+        "encoder_owners": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "optimizer_device": "cpu",
+        "full_optimus_reproduction": false,
+        "errors": []
+      },
+      "input_coverage_pass": true,
+      "input_budget_pass": true,
+      "input_sequence_coverage_pass": true,
+      "runs": {
+        "serial-reference": {
+          "steps": 6,
+          "step_time_s_mean": 12.935468740295619,
+          "step_time_s_stdev": 0.3717868170925398,
+          "throughput_samples_per_s": 0.15461364718618564,
+          "peak_allocated_bytes": 12290245120,
+          "encoder_forward_ms_mean": 123.4279250468438,
+          "encoder_forward_ms_stdev": 172.6279056428588,
+          "visual_tokens_mean": 163,
+          "image_counts_exercised": [
+            2
+          ],
+          "sequence_lengths_exercised": [
+            139,
+            195,
+            254
+          ],
+          "image_gradient_checks": 24
+        },
+        "optimus-pp": {
+          "steps": 6,
+          "step_time_s_mean": 12.762894701367864,
+          "step_time_s_stdev": 0.20898363016233762,
+          "throughput_samples_per_s": 0.15670426237910196,
+          "peak_allocated_bytes": 12290245120,
+          "encoder_forward_ms_mean": 90.65574307957044,
+          "encoder_forward_ms_stdev": 59.90331365339994,
+          "visual_tokens_mean": 163,
+          "image_counts_exercised": [
+            2
+          ],
+          "sequence_lengths_exercised": [
+            139,
+            195,
+            254
+          ],
+          "image_gradient_checks": 24
+        }
+      }
+    },
+    {
+      "case": "resolution_high",
+      "axis": "resolution",
+      "repeat": "repeat-0",
+      "parity": {
+        "pass": true,
+        "rtol": 0.001,
+        "atol": 1e-05,
+        "comparison_scope": "loss, global gradient norm and sampled parameters/used gradients",
+        "max_abs_difference": {
+          "loss": 0.0,
+          "grad_norm": 0.0,
+          "parameter": 0.0,
+          "used_gradient": 0.0
+        },
+        "values_checked": {
+          "parameter": 109872,
+          "used_gradient": 109872
+        },
+        "steps": 7,
+        "encoder_owners": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "optimizer_device": "cpu",
+        "full_optimus_reproduction": false,
+        "errors": []
+      },
+      "input_coverage_pass": true,
+      "input_budget_pass": true,
+      "input_sequence_coverage_pass": true,
+      "runs": {
+        "serial-reference": {
+          "steps": 6,
+          "step_time_s_mean": 12.832103322803354,
+          "step_time_s_stdev": 0.21812078632187318,
+          "throughput_samples_per_s": 0.15585909415535099,
+          "peak_allocated_bytes": 12432146944,
+          "encoder_forward_ms_mean": 93.85301555506885,
+          "encoder_forward_ms_stdev": 62.64479699652002,
+          "visual_tokens_mean": 164,
+          "image_counts_exercised": [
+            2
+          ],
+          "sequence_lengths_exercised": [
+            83,
+            254
+          ],
+          "image_gradient_checks": 24
+        },
+        "optimus-pp": {
+          "steps": 6,
+          "step_time_s_mean": 12.879643685378445,
+          "step_time_s_stdev": 0.2248020209475462,
+          "throughput_samples_per_s": 0.15528379890435096,
+          "peak_allocated_bytes": 12432146944,
+          "encoder_forward_ms_mean": 93.79746178537607,
+          "encoder_forward_ms_stdev": 69.4062169679006,
+          "visual_tokens_mean": 164,
+          "image_counts_exercised": [
+            2
+          ],
+          "sequence_lengths_exercised": [
+            83,
+            254
+          ],
+          "image_gradient_checks": 24
+        }
+      }
+    },
+    {
+      "case": "image_count_low",
+      "axis": "image_count",
+      "repeat": "repeat-0",
+      "parity": {
+        "pass": true,
+        "rtol": 0.001,
+        "atol": 1e-05,
+        "comparison_scope": "loss, global gradient norm and sampled parameters/used gradients",
+        "max_abs_difference": {
+          "loss": 0.0,
+          "grad_norm": 0.0,
+          "parameter": 0.0,
+          "used_gradient": 0.0
+        },
+        "values_checked": {
+          "parameter": 109872,
+          "used_gradient": 109872
+        },
+        "steps": 7,
+        "encoder_owners": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "optimizer_device": "cpu",
+        "full_optimus_reproduction": false,
+        "errors": []
+      },
+      "input_coverage_pass": true,
+      "input_budget_pass": true,
+      "input_sequence_coverage_pass": true,
+      "runs": {
+        "serial-reference": {
+          "steps": 6,
+          "step_time_s_mean": 13.654425797673563,
+          "step_time_s_stdev": 0.1789888635643567,
+          "throughput_samples_per_s": 0.14647265506695709,
+          "peak_allocated_bytes": 14928834560,
+          "encoder_forward_ms_mean": 114.8051673049728,
+          "encoder_forward_ms_stdev": 5.849256052641361,
+          "visual_tokens_mean": 576,
+          "image_counts_exercised": [
+            1
+          ],
+          "sequence_lengths_exercised": [
+            607
+          ],
+          "image_gradient_checks": 12
+        },
+        "optimus-pp": {
+          "steps": 6,
+          "step_time_s_mean": 13.451477598864585,
+          "step_time_s_stdev": 0.20434747009135323,
+          "throughput_samples_per_s": 0.14868255069382239,
+          "peak_allocated_bytes": 14928834560,
+          "encoder_forward_ms_mean": 115.66463911316048,
+          "encoder_forward_ms_stdev": 5.333877673608391,
+          "visual_tokens_mean": 576,
+          "image_counts_exercised": [
+            1
+          ],
+          "sequence_lengths_exercised": [
+            607
+          ],
+          "image_gradient_checks": 12
+        }
+      }
+    },
+    {
+      "case": "image_count_medium",
+      "axis": "image_count",
+      "repeat": "repeat-0",
+      "parity": {
+        "pass": true,
+        "rtol": 0.001,
+        "atol": 1e-05,
+        "comparison_scope": "loss, global gradient norm and sampled parameters/used gradients",
+        "max_abs_difference": {
+          "loss": 0.0,
+          "grad_norm": 0.0,
+          "parameter": 0.0,
+          "used_gradient": 0.0
+        },
+        "values_checked": {
+          "parameter": 109872,
+          "used_gradient": 109872
+        },
+        "steps": 7,
+        "encoder_owners": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "optimizer_device": "cpu",
+        "full_optimus_reproduction": false,
+        "errors": []
+      },
+      "input_coverage_pass": true,
+      "input_budget_pass": true,
+      "input_sequence_coverage_pass": true,
+      "runs": {
+        "serial-reference": {
+          "steps": 6,
+          "step_time_s_mean": 12.853063097495275,
+          "step_time_s_stdev": 0.23630700688732836,
+          "throughput_samples_per_s": 0.1556049312781906,
+          "peak_allocated_bytes": 14932367360,
+          "encoder_forward_ms_mean": 106.64473530370742,
+          "encoder_forward_ms_stdev": 6.465083339699711,
+          "visual_tokens_mean": 576,
+          "image_counts_exercised": [
+            1,
+            2,
+            3
+          ],
+          "sequence_lengths_exercised": [
+            607,
+            609,
+            611
+          ],
+          "image_gradient_checks": 24
+        },
+        "optimus-pp": {
+          "steps": 6,
+          "step_time_s_mean": 12.926224397417778,
+          "step_time_s_stdev": 0.14911291184179565,
+          "throughput_samples_per_s": 0.1547242209720212,
+          "peak_allocated_bytes": 14932367360,
+          "encoder_forward_ms_mean": 106.01164839137346,
+          "encoder_forward_ms_stdev": 5.427672955408906,
+          "visual_tokens_mean": 576,
+          "image_counts_exercised": [
+            1,
+            2,
+            3
+          ],
+          "sequence_lengths_exercised": [
+            607,
+            609,
+            611
+          ],
+          "image_gradient_checks": 24
+        }
+      }
+    },
+    {
+      "case": "image_count_high",
+      "axis": "image_count",
+      "repeat": "repeat-0",
+      "parity": {
+        "pass": true,
+        "rtol": 0.001,
+        "atol": 1e-05,
+        "comparison_scope": "loss, global gradient norm and sampled parameters/used gradients",
+        "max_abs_difference": {
+          "loss": 0.0,
+          "grad_norm": 0.0,
+          "parameter": 0.0,
+          "used_gradient": 0.0
+        },
+        "values_checked": {
+          "parameter": 109872,
+          "used_gradient": 109872
+        },
+        "steps": 7,
+        "encoder_owners": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "optimizer_device": "cpu",
+        "full_optimus_reproduction": false,
+        "errors": []
+      },
+      "input_coverage_pass": true,
+      "input_budget_pass": true,
+      "input_sequence_coverage_pass": true,
+      "runs": {
+        "serial-reference": {
+          "steps": 6,
+          "step_time_s_mean": 13.34058047097642,
+          "step_time_s_stdev": 0.18334574565234474,
+          "throughput_samples_per_s": 0.14991851399203895,
+          "peak_allocated_bytes": 14954293248,
+          "encoder_forward_ms_mean": 108.15718317963183,
+          "encoder_forward_ms_stdev": 6.407033360700517,
+          "visual_tokens_mean": 576,
+          "image_counts_exercised": [
+            1,
+            2,
+            4,
+            8
+          ],
+          "sequence_lengths_exercised": [
+            607,
+            609,
+            613,
+            621
+          ],
+          "image_gradient_checks": 45
+        },
+        "optimus-pp": {
+          "steps": 6,
+          "step_time_s_mean": 13.507047099255336,
+          "step_time_s_stdev": 0.14621004890994707,
+          "throughput_samples_per_s": 0.14807085407366818,
+          "peak_allocated_bytes": 14954293248,
+          "encoder_forward_ms_mean": 109.95899649057537,
+          "encoder_forward_ms_stdev": 6.567199407853035,
+          "visual_tokens_mean": 576,
+          "image_counts_exercised": [
+            1,
+            2,
+            4,
+            8
+          ],
+          "sequence_lengths_exercised": [
+            607,
+            609,
+            613,
+            621
+          ],
+          "image_gradient_checks": 45
+        }
+      }
+    }
+  ],
+  "resolution_encoder_mean_relative_spread": 0.7288513352013328,
+  "resolution_mean_workload_matched_within_5_percent": false,
+  "scope": "six-case engineering pilot using the team's eight-photo pool",
+  "performance_claim": false,
+  "remaining": [
+    "independent repeats and more measured steps",
+    "calibrate resolution mixtures against encoder runtime",
+    "match training/memory settings with actual BigMac and DistTrain backends"
+  ],
+  "date": "2026-11-20",
+  "source_commit": "0a79f175775c12eb43027cba245a3b3937db6509",
+  "gpu": "2 x NVIDIA GeForce RTX 3090, 24 GiB each",
+  "driver": "610.57.04",
+  "allocation": 29310,
+  "node": "gpu33",
+  "exit_code": 0,
+  "torch": "2.7.0a0+7c8ec84dab.nv25.03",
+  "pmp_commit": "3413f297e9666aa75c681bb588a7a61d92a33e5b",
+  "mcore_commit": "2220aa0d4a63dd6bb221d438152f05c2dd7e9a9e",
+  "code_sha256": {
+    "optimus_qwen.py": "06dfe40a6a09785fb160ad3013d954743ded5077d80858b00531500d30b82310",
+    "optimus_runtime.py": "b9d1ffa0f3e46c77eb0d17d40637a0069a22bd0af2c8defd2dcab8db8a0ac8ef",
+    "optimus_schedule.py": "28592cb83afc6a23864c79fdc2ff52c11d9e998cc7881c352cf0175b30489aea",
+    "manifest_data.py": "c502c3ed7fdf9d04b674dfde3ecfcc3367736876336a4a098c331c5d95a5ea7e",
+    "training_common.py": "146b201f337cb0bf6f303eff2fc5751562a656c8029c8579bd145281cb8a3e8b",
+    "pp2_equivalence.py": "480e941d8245d01b3b69f732559520a67425c28bdc2bf681bc2d91c5ed5a8076"
+  },
+  "model_config_sha256": "422adefa19e62dd175961cec85bc0400344fe5bf9b22bd1182e05aaae78556e0",
+  "model_layers": 28,
+  "initialization": "seeded-random; config/tokenizer from model-dir",
+  "llm_parallelism": {
+    "pp": 2,
+    "tp": 1,
+    "dp": 1
+  },
+  "encoder_parallelism": {
+    "pp": 1,
+    "tp": 1,
+    "dp": 2
+  },
+  "optimizer": {
+    "name": "AdamW",
+    "lr": 0.0001,
+    "min_lr": 1e-05,
+    "betas": [
+      0.9,
+      0.95
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.01,
+    "clip_grad": 1.0,
+    "loss_reduction": "mean-of-microbatch-means"
+  },
+  "optimizer_device": "cpu",
+  "encoder_placement": "round-robin",
+  "deterministic": true,
+  "microbatches_per_step": 2,
+  "warmup_steps_per_arm": 1,
+  "measured_steps_per_arm": 6,
+  "repeats": 1,
+  "source_pool_size": 8,
+  "source_pool_repeated": true,
+  "raw_evidence": "project/optimus-heterogeneity/controlled-evidence (local project directory)",
+  "evidence_archive_sha256": "787e8c7e95d4aceeb94545bb760c90bb1d3f6c553ea218892199f678d927cb62",
+  "full_optimus_reproduction": false,
+  "reference_scope": "colocated serial correctness control; not native Megatron/BigMac",
+  "prior_failed_cross_layout_check": {
+    "source_commit": "f4d5724",
+    "case": "resolution_low",
+    "configuration": "single-encoder serial reference versus profiled encoder ownership",
+    "after_fp32_microbatch_accumulation_fix": true,
+    "result": {
+      "pass": false,
+      "rtol": 0.001,
+      "atol": 1e-05,
+      "comparison_scope": "loss, global gradient norm and sampled parameters/used gradients",
+      "max_abs_difference": {
+        "loss": 0.07147979736328125,
+        "grad_norm": 1.0138104962529582,
+        "parameter": 0.00032806396484375,
+        "used_gradient": 4.286738112568855e-05
+      },
+      "values_checked": {
+        "parameter": 109872,
+        "used_gradient": 109872
+      },
+      "steps": 7,
+      "encoder_owners": [
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ],
+        [
+          1,
+          0
+        ]
+      ],
+      "optimizer_device": "cpu",
+      "full_optimus_reproduction": false,
+      "errors": [
+        "validation-step000-rank0.json/vision_model.patch_embed.proj.weight: parameter differs (-0.00849476 vs -0.00859226)",
+        "validation-step000-rank0.json/vision_model.decoder.layers.1.self_attention.linear_qkv.layer_norm_bias: parameter differs (0 vs -9.34601e-05)",
+        "validation-step000-rank0.json/vision_model.decoder.layers.1.self_attention.linear_qkv.bias: parameter differs (-1.32322e-05 vs 0)"
+      ]
+    },
+    "note": "Numerical equivalence is not claimed across these layouts. Error list is truncated to its first three entries."
+  },
+  "prepared_environment_record": "../native_pp2_smoke/environment.json",
+  "gpu_input_packages": {
+    "transformers": "4.49.0",
+    "Pillow": "11.1.0",
+    "numpy": "1.26.4",
+    "tokenizers": "0.21.4"
+  }
+}

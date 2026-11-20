@@ -89,12 +89,12 @@ collectives, no P2P between these 3090s (~5.3 GB/s host-staged), i.e. 1.13 s at 
 N=4. Sync-free disaggregation is 2x faster than the fused baseline; with the naive exchange it
 is 2x slower. Bucketed-bf16 exchange is the cheapest untried fix (workpackage B2).
 
-## 4. Not measured
+## 4. Other arms and integration status
 
 | arm | status |
 | --- | --- |
 | BigMac VE executor (`MODE=1`, `pp_executor`) | fails with no output; no BigMac number exists |
-| Optimus | no code in this repository (only a mention in `AGENTS.md`) |
+| Optimus-inspired PP prototype | Now implemented on this integration branch; six-case matched-placement correctness pilot passed. See [protocol and limitations](../track_b_cluster/HETEROGENEITY.md). Its 28 layers, M=2, two GPUs and CPU optimizer offload differ from the tables above; no cross-system throughput comparison is claimed. |
 | encoder-as-pipeline-stages | not implemented (needs the ViT layer split); est. 0.28-0.36 s |
 
 ## 5. Caveats that apply to any table built from this

@@ -18,7 +18,12 @@ MODE=${MODE:-0}
 BENCH_STEPS=${BENCH_STEPS:-0}
 WARMUP_STEPS=${WARMUP_STEPS:-2}
 NPROC=${PP:-2}
-LOG=$WS/containers/pp2-equiv-${MODE}.log
+RUN_TAG=${RUN_TAG:-}
+# Private writable paths also work when the node has no mounted login home.
+mkdir -p "$WS/containers" "$WS/container-home" "$WS/libcuda"
+ln -sfn /usr/lib/x86_64-linux-gnu/libcuda.so.1 "$WS/libcuda/libcuda.so"
+ln -sfn /usr/lib/x86_64-linux-gnu/libcuda.so.1 "$WS/libcuda/libcuda.so.1"
+LOG=$WS/containers/pp2-equiv-${MODE}${RUN_TAG:+-$RUN_TAG}.log
 exec > "$LOG" 2>&1
 set -x
 
@@ -26,19 +31,20 @@ SIF=$WS/containers/ngc-pytorch-25.03-py3.sif
 PMP=$WS/third_party/BigMac/third_party/Pai-Megatron-Patch
 BACKEND=$PMP/backends/megatron/Megatron-LM-250624
 HF=$WS/models/Qwen2-VL-2B-Instruct
-OUT=$PROJ/runs/track_b_n2_pilot_measured_v1/pp2_equivalence_${TAG:-mode${MODE}}.json
+# TAG is the shared benchmark label; retain RUN_TAG for the earlier smoke runs.
+OUT=$PROJ/runs/track_b_n2_pilot_measured_v1/pp2_equivalence_${TAG:-mode${MODE}${RUN_TAG:+-$RUN_TAG}}.json
 
 export PYTHONPATH="$BACKEND:$PMP/examples:$PMP/examples/qwen2_vl:$PMP:$WS/third_party/BigMac:$WS/venvs/trackb_pydeps"
-export SINGULARITYENV_LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
+export SINGULARITYENV_LD_LIBRARY_PATH="$WS/libcuda:/.singularity.d/libs:/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu"
 export SINGULARITYENV_PATH=/sbin:/usr/sbin:/usr/local/bin:/usr/bin:/bin
 export SINGULARITYENV_PYTHONPATH="$PYTHONPATH"
 export SINGULARITYENV_HF_HOME=$WS/caches/hf
-export SINGULARITYENV_TRITON_LIBCUDA_PATH=/usr/lib/x86_64-linux-gnu
+export SINGULARITYENV_TRITON_LIBCUDA_PATH="$WS/libcuda"
 export SINGULARITYENV_TOKENIZERS_PARALLELISM=false
 export SINGULARITYENV_PYTHONUNBUFFERED=1
 export SINGULARITYENV_USE_PP_EXECUTOR=$MODE
 export SINGULARITYENV_PROJ_ROOT=$PROJ
-export SINGULARITYENV_MANIFEST=$PROJ/runs/track_b_n2_pilot_measured_v1/pilot_manifest.json
+export SINGULARITYENV_MANIFEST="${MANIFEST:-$PROJ/runs/track_b_n2_pilot_measured_v1/pilot_manifest.json}"
 export SINGULARITYENV_QWEN2VL_HF_DIR=$HF
 export SINGULARITYENV_NUM_LAYERS=$NUM_LAYERS
 export SINGULARITYENV_NUM_MICROBATCHES=$NUM_MICROBATCHES
@@ -46,7 +52,7 @@ export SINGULARITYENV_PP_SIZE=$NPROC
 export SINGULARITYENV_BENCH_STEPS=$BENCH_STEPS
 export SINGULARITYENV_WARMUP_STEPS=$WARMUP_STEPS
 
-singularity exec --nv \
+singularity exec --nv --home "$WS/container-home" \
   --bind /lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 \
   --bind /lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1 \
   -B "$BIND_ROOT:$BIND_ROOT" \

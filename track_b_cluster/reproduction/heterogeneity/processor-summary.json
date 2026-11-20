@@ -1,0 +1,103 @@
+{
+  "date": "2026-11-20",
+  "pass": true,
+  "scope": "processor audit of six small-pool real-photo workloads",
+  "samples_per_case": 12,
+  "source_pool_size": 8,
+  "source_pool_repeated": true,
+  "python": "3.12.7",
+  "packages": {
+    "torch": "2.6.0",
+    "transformers": "4.49.0",
+    "Pillow": "12.3.0",
+    "numpy": "2.3.5"
+  },
+  "photo_manifest_sha256": "0b9bae77a798913d6d0a96055b5756389b65c8a8f4564a2d587b4998de986444",
+  "cases": {
+    "resolution_low": {
+      "passed": true,
+      "visual_tokens_mean": 162,
+      "visual_tokens_population_variance": 0,
+      "sequence_lengths": [
+        195
+      ],
+      "image_counts": [
+        2
+      ],
+      "manifest_sha256": "8e3cdf207379fb445923aa78c430447c55d3b9a94bb4583c6fc56fdf1ca6739f"
+    },
+    "resolution_medium": {
+      "passed": true,
+      "visual_tokens_mean": 163,
+      "visual_tokens_population_variance": 2204.6666666666665,
+      "sequence_lengths": [
+        139,
+        195,
+        254
+      ],
+      "image_counts": [
+        2
+      ],
+      "manifest_sha256": "d0ea9f88ee8b1ab1c1bdea466317ccef777019bf00bd2130484ff8b5fecfe321"
+    },
+    "resolution_high": {
+      "passed": true,
+      "visual_tokens_mean": 164,
+      "visual_tokens_population_variance": 6498,
+      "sequence_lengths": [
+        83,
+        254
+      ],
+      "image_counts": [
+        2
+      ],
+      "manifest_sha256": "7674ab20d81e7f36334d26ab949a5ec3319d888da6c4b93388cf828b577f2946"
+    },
+    "image_count_low": {
+      "passed": true,
+      "visual_tokens_mean": 576,
+      "visual_tokens_population_variance": 0,
+      "sequence_lengths": [
+        607
+      ],
+      "image_counts": [
+        1
+      ],
+      "manifest_sha256": "2c0560253ce45ffb1776c90ed312260674746d8505392cf7a4e5cdb39b1066c4"
+    },
+    "image_count_medium": {
+      "passed": true,
+      "visual_tokens_mean": 576,
+      "visual_tokens_population_variance": 0,
+      "sequence_lengths": [
+        607,
+        609,
+        611
+      ],
+      "image_counts": [
+        1,
+        2,
+        3
+      ],
+      "manifest_sha256": "bf61cc9c17a73fbdf52ae0d5aa2e4893f2511c7f7c8b98e9033703243d62ce67"
+    },
+    "image_count_high": {
+      "passed": true,
+      "visual_tokens_mean": 576,
+      "visual_tokens_population_variance": 0,
+      "sequence_lengths": [
+        607,
+        609,
+        613,
+        621
+      ],
+      "image_counts": [
+        1,
+        2,
+        4,
+        8
+      ],
+      "manifest_sha256": "bd58357cb313dc3da892849d802a0f5e004fd8b94ea57e13bd498ab23600e1d1"
+    }
+  }
+}
