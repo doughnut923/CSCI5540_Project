@@ -9,23 +9,30 @@ matches its recorded audit) — so the inputs are shared. The numbers below are 
 
 ## What ran
 
-- Six cases, 12 samples each, from `$WS/runs/bc_suite_v1/` (untracked, together with the
-  `input_audit.json` per case; PR #5 carries the same audit as a committed record).
-- `ENC_GPUS=1 + LLM_PP=2` = **3 GPUs**, **28 layers**, **M=2**, 1 warmup + **8 measured steps**,
-  seeded init, AdamW on GPU. Depth, microbatch count and warmup are matched to the Optimus pilot;
-  the step count (eight, not six), the placement and the optimizer device are not (see caveats).
+- **Resolution axis: the full Part B datasets** — 750 images each, 375 two-image samples per case,
+  all images used once (`$WS/runs/partb_suite_v1/`).
+- **Image-count axis: a 12-sample pilot** from the eight-photo Part C pool. Scaling it repeats the
+  same eight photographs, so it adds samples, not information.
+- `ENC_GPUS=1 + LLM_PP=2` = **3 GPUs**, **28 layers**, **M=2**, 1 warmup, seeded init, AdamW on GPU.
+  Depth, microbatch count and warmup are matched to the Optimus pilot; the placement, the optimizer
+  device and the step budget are not (see caveats).
 - Samples are bucketed by `(visual tokens, image count)`, so every step has one sequence length.
-- **Every case consumes all 12 of its samples.** Eight steps × M=2 is 16 draws, which covers all
-  twelve and repeats four. At six steps two cases reached only 10 of 12, because the plan advances
-  one bucket per step and five of the six cases have three or four buckets.
+- **Every sample of every case is consumed**: 375/375 for the resolution datasets (375 steps) and
+  12/12 for the image-count pilot (8 steps). At six steps two pilot cases reached only 10 of 12,
+  because the plan advances one bucket per step and five of the six cases have three or four
+  buckets.
 
-## Results
+## Results: six-case suite (12 samples per case)
+
+The three `resolution_*` rows are ratio-matched pilots: 12 two-image samples that reproduce Part B's
+image-level resolution ratios on 24 of its 750 images. The full datasets are measured separately
+below, and those numbers supersede these three rows.
 
 | case | images | seq lengths | step mean / p50 / p95 (s) | samples/s | bubble | peak | encoder fwd | samples |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| resolution_low | 2 | 195 | 0.496 / 0.498 / 0.510 | 4.03 | 41.2 % | 18.7 GiB | 81 ms | 12 / 12 |
-| resolution_medium | 2 | 139, 195, 254 | 0.664 / 0.543 / 1.136 | 3.01 | 44.6 % | 18.7 GiB | 114 ms | 12 / 12 |
-| resolution_high | 2 | 83, 254 | 0.626 / 0.513 / 1.067 | 3.19 | 43.4 % | 18.7 GiB | 109 ms | 12 / 12 |
+| resolution_low *(pilot)* | 2 | 195 | 0.496 / 0.498 / 0.510 | 4.03 | 41.2 % | 18.7 GiB | 81 ms | 12 / 12 |
+| resolution_medium *(pilot)* | 2 | 139, 195, 254 | 0.664 / 0.543 / 1.136 | 3.01 | 44.6 % | 18.7 GiB | 114 ms | 12 / 12 |
+| resolution_high *(pilot)* | 2 | 83, 254 | 0.626 / 0.513 / 1.067 | 3.19 | 43.4 % | 18.7 GiB | 109 ms | 12 / 12 |
 | image_count_low | 1 | 607 | 0.783 / 0.753 / 0.928 | 2.55 | 46.7 % | 18.7 GiB | 119 ms | 12 / 12 |
 | image_count_medium | 1, 2, 3 | 607, 609, 611 | 0.823 / 0.765 / 1.123 | 2.43 | 46.9 % | 18.7 GiB | 114 ms | 12 / 12 |
 | image_count_high | 1, 2, 4, 8 | 607, 609, 613, 621 | 0.808 / 0.719 / 1.115 | 2.47 | 46.4 % | 18.7 GiB | 116 ms | 12 / 12 |
@@ -38,6 +45,44 @@ case regresses.
 Records: `$WS/runs/bc_suite_v1/runs_s8/disagg_m2_bc_<case>.jsonl`, summary
 `$WS/runs/bc_suite_v1/summary_s8.json`. The earlier six-step run is kept in `runs/` as the
 superseded record; its p50s are within 3 % of these.
+
+## Results: Part B resolution datasets, full size
+
+The real experiment: `part_b_image_res/variance_datasets/dataset_{Low,Medium,High}.json` — **750
+images each**, equal mean token cost, different variance. Consecutive images are paired into
+two-image samples, so every case has **375 samples that use all 750 images exactly once**; the
+builder refuses a pairing that would change the image-level resolution mix.
+
+| dataset | resolutions | per-sample tokens mean / var | step mean / p50 / p95 (s) | tokens/s | samples/s | bubble | encoder fwd |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Low | 750 × 256 | 162.0 / 0 | 0.511 / 0.510 / 0.534 | **634** | 3.91 | 40.3 % | 80 ms |
+| Medium | 250 × 128, 375 × 256, 125 × 384 | 163.0 / 6 785 | 0.544 / 0.528 / 0.610 | 599 | 3.67 | 41.4 % | 83 ms |
+| High | 500 × 128, 250 × 384 | 164.0 / 13 516 | 0.550 / 0.526 / 0.613 | 596 | 3.64 | 41.4 % | 84 ms |
+
+375 measured steps per case — the bucket plan needs 188 (Low), 372 (Medium) and 255 (High) to reach
+every sample, so one budget covers all three. All three pass: no skipped or non-finite step, both
+weight norms move, 375 / 375 distinct samples consumed.
+
+Cost per step length, pooled over the three cases:
+
+| step length | 83 | 139 | 195 | 254 | 310 | 425 |
+| --- | --- | --- | --- | --- | --- | --- |
+| step p50 (s) | 0.516-0.521 | 0.520 | 0.510-0.515 | 0.517-0.523 | 0.548 | 0.604-0.606 |
+
+**Reading.** At equal mean visual tokens (162 / 163 / 164 per sample), the high-variance dataset is
+**7.6 % slower per step** than the uniform one (0.550 vs 0.511 s) and delivers **6 % fewer tokens per
+second**. The per-length table says why: step cost is flat from 83 to 254 tokens — the fixed
+per-step floor, about 0.51 s, dominates — and only rises at 310 (+7 %) and 425 (+18 %). So a mixture
+pays full price for its long steps and saves almost nothing on its short ones. The same length costs
+the same in every case (195 tokens: 0.510 s Low, 0.515 s Medium), which is the control that the
+difference comes from the length mix, not from the dataset.
+
+This is a *long-tail* penalty: the variance shows up across steps because the arm buckets. A batch
+that mixes lengths inside one step — what PR #5's Optimus runtime does — would price the same
+variance differently, and is the remaining measurement for that arm, not this one.
+
+Records: `$WS/runs/partb_suite_v1/runs/disagg_m2_partb_resolution_full_<level>.jsonl`, summary
+`$WS/runs/partb_suite_v1/summary.json`.
 
 ## What the numbers say
 
@@ -78,32 +123,39 @@ run.
 
 ## Caveats
 
-1. **Eight repeated photographs** behind 12 samples per case. An integration pilot, not an
-   independent dataset and not a caption dataset — the target text is a fixed sentence.
+1. **Eight repeated photographs** behind the 12-sample pilot cases. The resolution datasets use 750
+   ImageNet previews but reuse source files above 250 images per resolution (Part B's own
+   convention), and every target text is a fixed sentence — these are system checks, not a
+   caption dataset.
 2. **Seeded random init, no checkpoint.** Loss is not comparable across cases, or with the Optimus
    pilot's losses. Only timing, memory and input coverage are.
 3. **Not like-for-like with PR #5's Optimus rows.** Ours: 3 GPUs, GPU-resident AdamW, MCore pipeline,
-   bucketed order, 8 measured steps. Theirs: 2 GPUs, CPU-offloaded AdamW, their own executor,
-   manifest order, 6 measured steps. Depths (28), microbatch count (2) and the warmup are matched;
-   the rest is not, so no cross-arm throughput claim is made here.
-4. **The resolution cases cannot support a variance-only conclusion.** Their own measurement found a
-   72.9 % spread in mean encoder runtime across the three resolution mixtures, and the token means
-   are close by construction. We report the measured encoder cost; we do not attribute the
-   differences to variance.
+   bucketed order, 375 steps. Theirs: 2 GPUs, CPU-offloaded AdamW, their own executor, manifest
+   order, 6 steps on 12 samples. Depths (28), microbatch count (2) and the warmup are matched; the
+   rest is not, so no cross-arm throughput claim is made here.
+4. **The variance result is a long-tail result.** It is measured on steps, because this arm cannot
+   mix lengths inside a step (see the probe below). A runtime that batches the mixture differently
+   would price it differently; the Optimus arm is where that comparison belongs. Part B's own
+   encoder-runtime spread (72.9 %) also means the three mixtures are not matched in encoder work,
+   only in encoder tokens.
 5. **Bubble here is defined over three ranks** (1 encoder + 2 stages). It is not the same quantity
    as the 4-5 GPU rows in `distrain-results.md`; do not put them in one column.
-6. **Eight measured steps, one repeat.** p50 is the number to quote; p95 moves with which lengths the
-   row pools. Repeating `image_count_high` on a second allocation gave p50 0.717 s against 0.725 s
-   (-1.1 %) and a mean 0.8 % higher, with the same 12 distinct samples, so the plan and the timing
-   are stable.
+6. **Six measured steps for the pilot, 375 for the datasets.** p50 is the number to quote among the
+   pilot rows; p95 moves with which lengths the row pools. Repeating `image_count_high` on a second
+   allocation gave p50 0.717 s against 0.725 s (-1.1 %) and a mean 0.8 % higher, with the same 12
+   distinct samples, so the plan and the timing are stable.
 
 ## Reproduce
 
 ```sh
-# once: build the six manifests and audit them (container CPU, no GPU)
+# once: the six-case pilot manifests, then the full Part B datasets (container CPU, no GPU)
 singularity exec -B /research:/research -B /tmp:/tmp $WS/containers/ngc-pytorch-25.03-py3.sif \
   python3 track_b_cluster/scripts/build_heterogeneity_suite.py \
     --output-dir $WS/runs/bc_suite_v1 --samples-per-case 12 \
+    --model-dir $WS/models/Qwen2-VL-2B-Instruct
+singularity exec -B /research:/research -B /tmp:/tmp $WS/containers/ngc-pytorch-25.03-py3.sif \
+  python3 track_b_cluster/scripts/build_part_b_suite.py \
+    --output-dir $WS/runs/partb_suite_v1 --images-per-sample 2 \
     --model-dir $WS/models/Qwen2-VL-2B-Instruct
 
 # one job per case (three GPUs each; the QOS allows four jobs at a time)
@@ -115,13 +167,20 @@ BENCH_STEPS=8,WARMUP_STEPS=1,TAG=bc_$case,MANIFEST_BATCHING=bucket,\
 MANIFEST=$WS/runs/bc_suite_v1/$case/manifest.json,OUT_DIR=$WS/runs/bc_suite_v1/runs_s8 \
     track_b_cluster/slurm/disagg_units.sbatch
 done
+for level in low medium high; do
+  sbatch --gres=gpu:3 --export=ALL,ENC_GPUS=1,LLM_PP=2,NUM_LAYERS=28,NUM_MICROBATCHES=2,\
+BENCH_STEPS=375,WARMUP_STEPS=1,TAG=partb_resolution_full_$level,MANIFEST_BATCHING=bucket,\
+MANIFEST=$WS/runs/partb_suite_v1/resolution_full_$level/manifest.json,\
+OUT_DIR=$WS/runs/partb_suite_v1/runs track_b_cluster/slurm/disagg_units.sbatch
+done
 
 # summary + gates
 singularity exec -B /research:/research -B /tmp:/tmp $WS/containers/ngc-pytorch-25.03-py3.sif \
   python3 track_b_cluster/scripts/report_bc_suite_distrain.py \
-    --suite-root $WS/runs/bc_suite_v1 --runs-root $WS/runs/bc_suite_v1/runs_s8 \
-    --output $WS/runs/bc_suite_v1/summary_s8.json
+    --suite-root $WS/runs/partb_suite_v1 --runs-root $WS/runs/partb_suite_v1/runs \
+    --output $WS/runs/partb_suite_v1/summary.json
 ```
 
-Run pairs fit on one 8-GPU node (3 GPUs each) and the launcher now draws per-job rendezvous ports,
-so several cases can share a node.
+Every job fits on one node (3 GPUs of the 8) and the launcher draws per-job rendezvous ports, so
+several cases can share a node. 375 steps is about five minutes of measured time plus one minute of
+initialisation per case.

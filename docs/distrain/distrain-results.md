@@ -100,24 +100,39 @@ node load; either way the sync-free disaggregation is 2x faster than the fused b
 with the naive exchange it is 1.4-2x slower. Bucketed-bf16 exchange is the cheapest untried fix
 (workpackage B2).
 
-## 4. B/C workload suite (six cases)
+## 4. B/C workloads
 
-The six Part B/C cases, run on this arm at 3 GPUs, 28 layers, M=2, 1 warmup + 8 measured steps (all
-12 samples of every case). Table, probe and caveats live in `docs/distrain/distrain-bc-suite.md`;
-the headline is that the arm buckets samples by length — the MCore/PMP path rejects a step that
-carries two lengths — so step time follows sequence length, not image count.
+Run on this arm at 3 GPUs, 28 layers, M=2. Full tables, the mixed-length probe and the caveats live
+in `docs/distrain/distrain-bc-suite.md`. Two facts shape every row: the arm buckets samples by
+length (the MCore/PMP path rejects a step that carries two lengths), and step cost is flat up to
+about 254 tokens, so it tracks sequence length rather than image count.
+
+Part B resolution datasets, **full size** — 750 images each, 375 two-image samples, all samples
+consumed:
+
+| dataset | per-sample tokens mean / var | step mean / p50 / p95 (s) | tokens/s | bubble |
+| --- | --- | --- | --- | --- |
+| Low (750 × 256) | 162.0 / 0 | 0.511 / 0.510 / 0.534 | **634** | 40.3 % |
+| Medium (128/256/384) | 163.0 / 6 785 | 0.544 / 0.528 / 0.610 | 599 | 41.4 % |
+| High (128/384) | 164.0 / 13 516 | 0.550 / 0.526 / 0.613 | 596 | 41.4 % |
+
+Equal mean tokens, 7.6 % slower per step at high variance, 6 % fewer tokens per second — the mixture
+pays for its 425-token steps (+18 % over 195 tokens) and saves nothing at 83 tokens.
+
+Six-case suite, 12-sample pilot cases (the resolution rows reproduce Part B's ratios on 24 of its
+750 images and are superseded by the full run above):
 
 | case | seq lengths | step p50 | samples/s | bubble |
 | --- | --- | --- | --- | --- |
-| resolution_low | 195 | 0.498 s | 4.03 | 41.2 % |
-| resolution_medium | 139, 195, 254 | 0.543 s | 3.01 | 44.6 % |
-| resolution_high | 83, 254 | 0.513 s | 3.19 | 43.4 % |
+| resolution_low *(pilot)* | 195 | 0.498 s | 4.03 | 41.2 % |
+| resolution_medium *(pilot)* | 139, 195, 254 | 0.543 s | 3.01 | 44.6 % |
+| resolution_high *(pilot)* | 83, 254 | 0.513 s | 3.19 | 43.4 % |
 | image_count_low | 607 | 0.753 s | 2.55 | 46.7 % |
 | image_count_medium | 607, 609, 611 | 0.765 s | 2.43 | 46.9 % |
 | image_count_high | 607, 609, 613, 621 | 0.719 s | 2.47 | 46.4 % |
 
-All six rows train: no skipped or non-finite step and both weight norms move. Not comparable with
-the Optimus pilot's numbers or with sections 1-2 — different GPU count, optimizer placement and
+Every row trains: no skipped or non-finite step and both weight norms move. Not comparable with the
+Optimus pilot's numbers or with sections 1-2 — different GPU count, optimizer placement and
 batching.
 
 ## 5. Not measured
