@@ -122,10 +122,12 @@ class ManifestBatches:
                 b = build_sample(self.processor, s, self.repo_root)
                 self.cache[s["sample_id"]] = b
                 total = int(b["image_mask"].sum())
-            groups.setdefault(total, []).append(s)
+            groups.setdefault((total, len(s["images"])), []).append(s)
         # Largest group first, so steps draw distinct samples before any group repeats.
+        # Equal visual tokens do not imply equal length: image markers add tokens, so
+        # samples with a different image count must never share a bucket.
         self.groups = [g for _, g in sorted(
-            groups.items(), key=lambda kv: (-len(kv[1]), -kv[0]))]
+            groups.items(), key=lambda kv: (-len(kv[1]), -kv[0][0], -kv[0][1]))]
 
     def plan(self, step, num_mb):
         group = self.groups[step % len(self.groups)]

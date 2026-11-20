@@ -50,7 +50,8 @@ def mcore_argv(num_layers, pp_size, num_microbatches):
         "--num-query-groups", "2",
         "--group-query-attention",
         "--max-position-embeddings", "32768",
-        "--seq-length", "512",
+        # 1024: the Part C image-count cases are 607-621 tokens, above the old 512.
+        "--seq-length", "1024",
         "--micro-batch-size", "1",
         "--global-batch-size", str(num_microbatches),
         "--pipeline-model-parallel-size", str(pp_size),
@@ -163,7 +164,8 @@ class MainGradAdamW:
 def main():
     num_mb = env_int("NUM_MICROBATCHES", 4)
     batches = ManifestBatches(os.environ["QWEN2VL_HF_DIR"], os.environ["MANIFEST"],
-                              os.environ["PROJ_ROOT"])
+                              os.environ["PROJ_ROOT"],
+                              batching=os.environ.get("MANIFEST_BATCHING", "bucket"))
     if env_int("PLAN_ONLY", 0):
         for step in range(env_int("PLAN_STEPS", 4)):
             built = batches.build(step, num_mb)
@@ -450,7 +452,7 @@ def main():
                     data_iterator=_mb_iter(),
                     model=[model],
                     num_microbatches=num_mb,
-                    seq_length=step_data[0]["tokens"].shape[1],
+                    seq_length=max(b["tokens"].shape[1] for b in step_data),
                     micro_batch_size=1,
                     forward_only=False,
                 )
@@ -530,6 +532,7 @@ def main():
                         "loss": step_loss,
                         "microbatch_losses": mb_list,
                         "sample_ids": [b["sample_id"] for b in step_data],
+                        "input_observations": [b["input_observation"] for b in step_data],
                         "lr": opt_stats["lr"],
                         "grad_norm": opt_stats["grad_norm"],
                         "grad_norm_total": math.sqrt(
@@ -554,8 +557,10 @@ def main():
             shm.wait("llm_done_%d.ok" % it)
 
     if role == "llm" and rank == 0:
-        out_path = (Path(os.environ["PROJ_ROOT"]) / "runs" /
-                    "track_b_n2_pilot_measured_v1" / ("disagg_m%d_%s.jsonl" % (num_mb, tag)))
+        out_dir = Path(os.environ.get("OUT_DIR")
+                       or Path(os.environ["PROJ_ROOT"]) / "runs" /
+                       "track_b_n2_pilot_measured_v1")
+        out_path = out_dir / ("disagg_m%d_%s.jsonl" % (num_mb, tag))
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text("".join(json.dumps(r) + "\n" for r in records))
         print(json.dumps({"wrote": str(out_path), "records": len(records)}), flush=True)
