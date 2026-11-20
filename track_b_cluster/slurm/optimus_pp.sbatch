@@ -54,4 +54,5 @@ singularity exec --nv --home "$WS/container-home" \
   --manifest "$MANIFEST" --model-dir "$MODEL_DIR" --output-dir "$OUTPUT_DIR" \
   --schedule "$MODE" --layers "${NUM_LAYERS:-28}" \
   --microbatches "${NUM_MICROBATCHES:-4}" \
-  --warmup-steps "${WARMUP_STEPS:-1}" --steps "${BENCH_STEPS:-3}"
+  --warmup-steps "${WARMUP_STEPS:-1}" --steps "${BENCH_STEPS:-3}" \
+  --validation-samples "${VALIDATION_SAMPLES:-0}"

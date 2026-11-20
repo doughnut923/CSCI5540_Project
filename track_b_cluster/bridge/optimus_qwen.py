@@ -118,9 +118,11 @@ def main():
     p.add_argument("--microbatches", type=int, default=4)
     p.add_argument("--layers", type=int, default=28)
     p.add_argument("--memory-headroom-gb", type=float, default=2.0)
+    p.add_argument("--validation-samples", type=int, default=0,
+                   help="Save evenly spaced parameter/used-gradient samples after timing")
     p.add_argument("--schedule", choices=("serial-reference", "optimus-pp"), default="optimus-pp")
     opts = p.parse_args()
-    if opts.steps < 1 or opts.warmup_steps < 0 or opts.microbatches < 1:
+    if opts.steps < 1 or opts.warmup_steps < 0 or opts.microbatches < 1 or opts.validation_samples < 0:
         p.error("steps/microbatches must be positive; warmup must be nonnegative")
     if not math.isfinite(opts.memory_headroom_gb) or opts.memory_headroom_gb < 0:
         p.error("memory headroom must be finite and nonnegative")
@@ -237,6 +239,18 @@ def main():
                       sample_ids=[b["sample_id"] for b in data],
                       skipped=False, nan_or_inf=False,
                       optimizer_updates=optimizer.steps)
+        if opts.validation_samples:
+            sampled = {}
+            for name, param in model.named_parameters():
+                if not param.requires_grad:
+                    continue
+                count = min(opts.validation_samples, param.numel())
+                idx = torch.linspace(0, param.numel() - 1, count, device=device).long()
+                sampled[name] = {"shape": list(param.shape),
+                                 "parameter": param.detach().flatten()[idx].float().cpu().tolist(),
+                                 "used_gradient": param.main_grad.flatten()[idx].float().cpu().tolist()}
+            (out / ("validation-step%03d-rank%d.json" % (step, rank))).write_text(
+                json.dumps(sampled) + "\n")
         if rank == 0:
             (out / ("plan-%03d.json" % step)).write_text(json.dumps(plan, indent=2) + "\n")
             (out / ("profile-%03d.json" % step)).write_text(json.dumps(
