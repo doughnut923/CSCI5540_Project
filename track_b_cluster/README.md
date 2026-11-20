@@ -1,8 +1,9 @@
 # Track B cluster implementation (Megatron + BigMac)
 
 The experimental colocated Optimus PP path and shared input/optimizer extraction
-are documented in [OPTIMUS.md](OPTIMUS.md). It builds on `distrain-integration`;
-its CPU correctness checks do not establish Qwen GPU performance or full Optimus fidelity.
+are documented in [OPTIMUS.md](OPTIMUS.md), with the six-case input protocol in
+[HETEROGENEITY.md](HETEROGENEITY.md). It builds on `distrain-integration`; validation
+records explicitly separate CPU/GPU correctness from performance and full-paper fidelity.
 
 Execution layer for Track B: run the same Qwen2-VL-2B N=2 pilot under Megatron-Core with
 BigMac's `pp_executor` on and off, and compare.

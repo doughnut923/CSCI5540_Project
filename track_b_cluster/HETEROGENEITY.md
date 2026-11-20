@@ -61,6 +61,7 @@ under both the serial correctness reference and Optimus PP:
 export SUITE_ROOT=<suite-directory> OUTPUT_ROOT=<new-results-directory>
 export PP=2 NUM_MICROBATCHES=2 OPTIMIZER_DEVICE=cpu
 export WARMUP_STEPS=1 BENCH_STEPS=6 REPEATS=1 VALIDATION_SAMPLES=16
+export ENCODER_PLACEMENT=round-robin DETERMINISTIC=1
 bash track_b_cluster/scripts/run_heterogeneity_suite.sh
 python track_b_cluster/scripts/report_heterogeneity_suite.py \
   --suite-root "$SUITE_ROOT" --runs-root "$OUTPUT_ROOT" \
@@ -72,6 +73,15 @@ regardless of the warmup offset. One repeat is an integration pilot. For later
 statistics, agree on repeated runs, warmup, step budget and memory policy across
 the actual backends. Keep validation sampling off during a dedicated performance
 run; it introduces synchronization outside and inside the measured step.
+
+The paired suite fixes encoder ownership in both arms and enables deterministic
+execution. It isolates scheduling with identical placement and arithmetic, rather
+than changing placement at the same time. Broader BF16 comparisons between the
+single-encoder reference and profiled ownership exceeded strict multi-step
+parameter/loss tolerances on real photos, despite the earlier repeated-photo
+smoke passing. Those results are not promoted to validated equivalence. The
+profiled placement mode remains separately selectable, and needs its own
+numerical/performance evaluation before broader claims.
 
 ## What remains for the proposal's final comparison
 

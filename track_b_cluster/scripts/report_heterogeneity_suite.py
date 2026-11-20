@@ -44,12 +44,19 @@ def report(suite_root, runs_root):
             summaries = {mode: summarize_run(repeat / mode) for mode in ("serial-reference", "optimus-pp")}
             expected_counts = audit["image_counts"]
             coverage = all(s["image_counts_exercised"] == expected_counts for s in summaries.values())
+            budget = all(abs(s["visual_tokens_mean"] - audit["visual_tokens_mean"]) < 1e-9
+                         for s in summaries.values())
+            sequences = all(s["sequence_lengths_exercised"] == audit["sequence_lengths"]
+                            for s in summaries.values())
             results.append({"case": case["name"], "axis": case["axis"], "repeat": repeat.name,
-                            "parity": checked, "input_coverage_pass": coverage, "runs": summaries})
+                            "parity": checked, "input_coverage_pass": coverage,
+                            "input_budget_pass": budget, "input_sequence_coverage_pass": sequences,
+                            "runs": summaries})
     resolution_means = [r["runs"]["serial-reference"]["encoder_forward_ms_mean"]
                         for r in results if r["axis"] == "resolution"]
     spread = max(resolution_means) / min(resolution_means) - 1
-    return {"pass": all(r["parity"]["pass"] and r["input_coverage_pass"] for r in results),
+    return {"pass": all(r["parity"]["pass"] and r["input_coverage_pass"] and r["input_budget_pass"]
+                        and r["input_sequence_coverage_pass"] for r in results),
             "case_count": len(suite["cases"]), "paired_runs": len(results), "results": results,
             "resolution_encoder_mean_relative_spread": spread,
             "resolution_mean_workload_matched_within_5_percent": spread <= .05,

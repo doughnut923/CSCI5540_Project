@@ -46,7 +46,7 @@ export SINGULARITYENV_NCCL_DEBUG=WARN
 hostname
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv
 extra_args=()
-if [[ ${DETERMINISTIC:-0} == 1 ]]; then extra_args+=(--deterministic); fi
+if [[ ${DETERMINISTIC:-1} == 1 ]]; then extra_args+=(--deterministic); fi
 singularity exec --nv --home "$WS/container-home" \
   --bind "$BIND_ROOT:$BIND_ROOT" \
   --bind /lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1 \
@@ -60,4 +60,4 @@ singularity exec --nv --home "$WS/container-home" \
   --validation-samples "${VALIDATION_SAMPLES:-0}" \
   --optimizer-device "${OPTIMIZER_DEVICE:-cpu}" \
   --batching "${MANIFEST_BATCHING:-manifest}" \
-  --encoder-placement "${ENCODER_PLACEMENT:-profiled}" "${extra_args[@]}"
+  --encoder-placement "${ENCODER_PLACEMENT:-round-robin}" "${extra_args[@]}"

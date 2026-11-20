@@ -59,8 +59,10 @@ unequal microbatch ownership, zero-work encoder replicas, gradient transfer,
 three AdamW updates, and full gradient/parameter parity with an unpartitioned
 small model. CPU tests are correctness evidence, not GPU performance evidence.
 The recorded [CPU validation](reproduction/optimus_cpu/validation.json) covers
-two- and four-process training on PyTorch 2.6.0. Six tests also cover large
-parameter sampling, where FP32 linspace indices can round out of bounds.
+two- and four-process training on PyTorch 2.6.0. Eight tests also cover mixed
+sequence lengths, FP32 accumulation of ordinary BF16 gradients after each
+microbatch, and large parameter sampling where floating-point indices can
+round out of bounds.
 
 ```bash
 cd track_b_cluster/bridge
@@ -96,6 +98,10 @@ sbatch --export=ALL track_b_cluster/slurm/optimus_pp.sbatch
 For the reference arm, use a different new output directory and `MODE=serial-reference`.
 It is a correctness/control arm with the same colocated model, not the team's
 native Megatron performance baseline. Both arms use the same input/optimizer.
+The launcher now defaults to matched round-robin ownership and deterministic
+execution. Use `ENCODER_PLACEMENT=profiled DETERMINISTIC=0` only as a separately
+labelled placement experiment; multi-step cross-layout BF16 equivalence is not
+claimed. See [the heterogeneous-input protocol](HETEROGENEITY.md).
 
 Each run retains config, input hash, per-step measured profiles and estimated
 plans, optimizer-step metrics, operation intervals and final completion status.
@@ -111,8 +117,9 @@ python track_b_cluster/scripts/collect_step_metrics.py \
   --run-label optimus-inspired-pp-whole-encoder
 ```
 
-The proposal's final two axes × three levels are a later experiment matrix,
-after Qwen GPU parity and actual colocation/communication behavior are verified.
+The proposal's two axes × three levels are implemented as an integration pilot
+in [HETEROGENEITY.md](HETEROGENEITY.md). A final controlled performance matrix
+requires workload calibration and agreement on the actual comparison backends.
 
 ## Verified GPU result (2026-11-20)
 
