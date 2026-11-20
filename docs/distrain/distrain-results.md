@@ -102,19 +102,19 @@ with the naive exchange it is 1.4-2x slower. Bucketed-bf16 exchange is the cheap
 
 ## 4. B/C workload suite (six cases)
 
-The six Part B/C cases, run on this arm at 3 GPUs, 28 layers, M=2. Table, probe and caveats live in
-`docs/distrain/distrain-bc-suite.md`; the headline is that the arm buckets samples by length — the
-MCore/PMP path rejects a step that carries two lengths — so step time follows sequence length, not
-image count.
+The six Part B/C cases, run on this arm at 3 GPUs, 28 layers, M=2, 1 warmup + 8 measured steps (all
+12 samples of every case). Table, probe and caveats live in `docs/distrain/distrain-bc-suite.md`;
+the headline is that the arm buckets samples by length — the MCore/PMP path rejects a step that
+carries two lengths — so step time follows sequence length, not image count.
 
 | case | seq lengths | step p50 | samples/s | bubble |
 | --- | --- | --- | --- | --- |
-| resolution_low | 195 | 0.504 s | 3.96 | 40.4 % |
-| resolution_medium | 139, 195, 254 | 0.507 s | 3.09 | 42.9 % |
-| resolution_high | 83, 254 | 0.520 s | 2.94 | 43.8 % |
-| image_count_low | 607 | 0.764 s | 2.62 | 46.1 % |
-| image_count_medium | 607, 609, 611 | 0.737 s | 2.45 | 46.6 % |
-| image_count_high | 607, 609, 613, 621 | 0.715 s | 2.52 | 46.0 % |
+| resolution_low | 195 | 0.498 s | 4.03 | 41.2 % |
+| resolution_medium | 139, 195, 254 | 0.543 s | 3.01 | 44.6 % |
+| resolution_high | 83, 254 | 0.513 s | 3.19 | 43.4 % |
+| image_count_low | 607 | 0.753 s | 2.55 | 46.7 % |
+| image_count_medium | 607, 609, 611 | 0.765 s | 2.43 | 46.9 % |
+| image_count_high | 607, 609, 613, 621 | 0.719 s | 2.47 | 46.4 % |
 
 All six rows train: no skipped or non-finite step and both weight norms move. Not comparable with
 the Optimus pilot's numbers or with sections 1-2 — different GPU count, optimizer placement and
