@@ -1,0 +1,427 @@
+{
+  "status": "passed",
+  "started_at": "2026-11-05T09:16:24.676784+00:00",
+  "command_arguments": {
+    "config": "/Users/ziyuli/Desktop/26Fall/CSCI5540/project/part_a_model_check/config.json",
+    "model_dir": null,
+    "device": "mps",
+    "dtype": "bfloat16",
+    "mode": "train-step",
+    "cases": null,
+    "steps": 1,
+    "visual_token_budget": 576,
+    "gradient_checkpointing": null,
+    "mps_fallback": false,
+    "output_dir": "runs/final-macos-576"
+  },
+  "scope": "Single-device correctness check for the complete model",
+  "source_sha256": {
+    "run_check.py": "1722c2bc63a8ad164f1c33fccbf3e8facdcb8a0db4a756907c10af926c8a543c",
+    "mps_compat.py": "265ed9b01bd6f0fb97574085066a99258f5a9b9baab871e6a906a05a07c12bbd",
+    "prepare.py": "8111d8ac76d9473bc2004095faa50227aad8eb92daaf648e6e37cf3f528c53fa",
+    "config.json": "01cff008cc8739ba8010d2cabff4b51c65ca38ca21cbd0714fda6c70217b491e",
+    "requirements.txt": "c9d32b8e45c87f505720099538e00f05b0ba9e7a1f926e4ee89fe70951cd1d12"
+  },
+  "config_source_sha256": "01cff008cc8739ba8010d2cabff4b51c65ca38ca21cbd0714fda6c70217b491e",
+  "environment": {
+    "python": "3.12.7",
+    "platform": "macOS-27.0.1-arm64-arm-64bit",
+    "machine": "arm64",
+    "device": "mps",
+    "packages": {
+      "torch": "2.6.0",
+      "torchvision": "0.21.0",
+      "transformers": "4.49.0",
+      "numpy": "2.3.5",
+      "Pillow": "12.3.0",
+      "accelerate": "1.4.0",
+      "safetensors": "0.5.3",
+      "huggingface-hub": "0.29.3",
+      "tokenizers": "0.21.4",
+      "jinja2": "3.1.6"
+    },
+    "system_memory_bytes": 51539607552,
+    "initial_available_memory_bytes": 30853005312,
+    "mps_fallback_environment": "0",
+    "mps_recommended_max_memory_bytes": 40200896512
+  },
+  "dtype": "bfloat16",
+  "mode": "train-step",
+  "compatibility": {
+    "mps_scatter_source_flat_view": true
+  },
+  "config": {
+    "model_id": "Qwen/Qwen2-VL-2B-Instruct",
+    "revision": "895c3a49bc3fa70a340399125c650a463535e71c",
+    "group_repository": "https://github.com/doughnut923/CSCI5540_Project",
+    "group_commit": "047be401a7dfc37c8051660f9a883ea1de61d720",
+    "transformers_version": "4.49.0",
+    "seed": 55402026,
+    "visual_token_budget": 576,
+    "min_pixels": 3136,
+    "steps": 1,
+    "optimizer": "adamw",
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "epsilon": 1e-08,
+    "trainable_scope": "all_parameters",
+    "attention_implementation": "eager",
+    "gradient_checkpointing": true,
+    "cases": [
+      {
+        "name": "single_image",
+        "photos": [
+          "photos/imagenet_row_0000.jpg"
+        ],
+        "answer": "The photo shows a fish."
+      },
+      {
+        "name": "two_images",
+        "photos": [
+          "photos/imagenet_row_0000.jpg",
+          "photos/imagenet_row_2500.jpg"
+        ],
+        "answer": "These photos show two animals."
+      }
+    ]
+  },
+  "checkpoint_files": [
+    {
+      "file": "model-00001-of-00002.safetensors",
+      "bytes": 3988609112
+    },
+    {
+      "file": "model-00002-of-00002.safetensors",
+      "bytes": 429441656
+    }
+  ],
+  "checkpoint_loading": {
+    "missing_keys": [],
+    "unexpected_keys": [],
+    "mismatched_keys": [],
+    "error_msgs": []
+  },
+  "load_seconds": 0.9614282920010737,
+  "model_parameters": 2208985600,
+  "trainable_parameters": 2208985600,
+  "checkpointing": {
+    "vision": true,
+    "language": true,
+    "use_reentrant": false
+  },
+  "attention_classes": {
+    "vision": "VisionAttention",
+    "language": "Qwen2VLAttention"
+  },
+  "cases": [
+    {
+      "name": "single_image",
+      "input": {
+        "photos": [
+          {
+            "file": "photos/imagenet_row_0000.jpg",
+            "sha256": "abf8e6170852042df23127ff6f00f861dadd48ba746cab0cddce6ff8843149d4",
+            "source_wh": [
+              500,
+              375
+            ]
+          }
+        ],
+        "image_count": 1,
+        "image_grid_thw": [
+          [
+            1,
+            26,
+            36
+          ]
+        ],
+        "derived_visual_tokens_per_image": [
+          234
+        ],
+        "derived_visual_tokens_total": 234,
+        "image_placeholder_count": 234,
+        "supervised_text_tokens": 8,
+        "prompt_tokens": 262,
+        "tensor_shapes": {
+          "input_ids": [
+            1,
+            270
+          ],
+          "attention_mask": [
+            1,
+            270
+          ],
+          "pixel_values": [
+            936,
+            1176
+          ],
+          "image_grid_thw": [
+            1,
+            3
+          ],
+          "labels": [
+            1,
+            270
+          ]
+        },
+        "processor_min_pixels": 3136,
+        "processor_max_pixels": 451584
+      },
+      "steps": [
+        {
+          "step": 1,
+          "loss": 3.0255730152130127,
+          "forward_seconds": 0.4690774170012446,
+          "backward_seconds": 0.670220749998407,
+          "gradients": {
+            "vision_encoder": {
+              "trainable_parameters": 631183360,
+              "all_gradients_finite": true,
+              "any_gradient_nonzero": true,
+              "gradient_l2": 144.3185272216797,
+              "missing_gradient_names": []
+            },
+            "vision_merger": {
+              "trainable_parameters": 34087936,
+              "all_gradients_finite": true,
+              "any_gradient_nonzero": true,
+              "gradient_l2": 7.703985691070557,
+              "missing_gradient_names": []
+            },
+            "language_model": {
+              "trainable_parameters": 1543714304,
+              "all_gradients_finite": true,
+              "any_gradient_nonzero": true,
+              "gradient_l2": 105.54275512695312,
+              "missing_gradient_names": []
+            }
+          },
+          "vision_output_shape": [
+            234,
+            1536
+          ],
+          "vision_output_gradient_shape": [
+            234,
+            1536
+          ],
+          "vision_output_gradient_l2": 0.08035755157470703,
+          "mps_scatter_fix_calls": 1,
+          "optimizer_seconds": 0.5245189580018632,
+          "optimizer_state_dtypes": {
+            "step": "torch.float32",
+            "exp_avg": "torch.bfloat16",
+            "exp_avg_sq": "torch.bfloat16"
+          },
+          "updates": {
+            "vision_encoder": {
+              "parameter": "visual.patch_embed.proj.weight",
+              "sampled_elements": 4096,
+              "changed_elements": 4017,
+              "max_abs_change": 0.0001220703125
+            },
+            "vision_merger": {
+              "parameter": "visual.merger.mlp.0.weight",
+              "sampled_elements": 4096,
+              "changed_elements": 2964,
+              "max_abs_change": 0.0001220703125
+            },
+            "language_model": {
+              "parameter": "model.layers.0.self_attn.q_proj.weight",
+              "sampled_elements": 4096,
+              "changed_elements": 3049,
+              "max_abs_change": 0.0001220703125
+            }
+          },
+          "memory": {
+            "process_rss_bytes": 1849884672,
+            "mps_allocated_bytes": 18201334528,
+            "mps_driver_bytes": 22918201344
+          }
+        }
+      ],
+      "forward_observation": {
+        "loss": 3.0255730152130127,
+        "vision_shape_at_encoder_boundary": [
+          234,
+          1536
+        ],
+        "vision_shape_after_llm_input_scatter": [
+          234,
+          1536
+        ],
+        "expected_visual_tokens": 234
+      }
+    },
+    {
+      "name": "two_images",
+      "input": {
+        "photos": [
+          {
+            "file": "photos/imagenet_row_0000.jpg",
+            "sha256": "abf8e6170852042df23127ff6f00f861dadd48ba746cab0cddce6ff8843149d4",
+            "source_wh": [
+              500,
+              375
+            ]
+          },
+          {
+            "file": "photos/imagenet_row_2500.jpg",
+            "sha256": "5de18b0524d390304288298a2ae24fdaf869dc9f7b16aa15a061ad6dd1e2e469",
+            "source_wh": [
+              500,
+              383
+            ]
+          }
+        ],
+        "image_count": 2,
+        "image_grid_thw": [
+          [
+            1,
+            26,
+            36
+          ],
+          [
+            1,
+            28,
+            36
+          ]
+        ],
+        "derived_visual_tokens_per_image": [
+          234,
+          252
+        ],
+        "derived_visual_tokens_total": 486,
+        "image_placeholder_count": 486,
+        "supervised_text_tokens": 8,
+        "prompt_tokens": 516,
+        "tensor_shapes": {
+          "input_ids": [
+            1,
+            524
+          ],
+          "attention_mask": [
+            1,
+            524
+          ],
+          "pixel_values": [
+            1944,
+            1176
+          ],
+          "image_grid_thw": [
+            2,
+            3
+          ],
+          "labels": [
+            1,
+            524
+          ]
+        },
+        "processor_min_pixels": 3136,
+        "processor_max_pixels": 225792
+      },
+      "steps": [
+        {
+          "step": 1,
+          "loss": 3.9573092460632324,
+          "forward_seconds": 0.6957875840016641,
+          "backward_seconds": 1.185932791999221,
+          "gradients": {
+            "vision_encoder": {
+              "trainable_parameters": 631183360,
+              "all_gradients_finite": true,
+              "any_gradient_nonzero": true,
+              "gradient_l2": 370.81451416015625,
+              "missing_gradient_names": []
+            },
+            "vision_merger": {
+              "trainable_parameters": 34087936,
+              "all_gradients_finite": true,
+              "any_gradient_nonzero": true,
+              "gradient_l2": 11.263031959533691,
+              "missing_gradient_names": []
+            },
+            "language_model": {
+              "trainable_parameters": 1543714304,
+              "all_gradients_finite": true,
+              "any_gradient_nonzero": true,
+              "gradient_l2": 120.53010559082031,
+              "missing_gradient_names": []
+            }
+          },
+          "vision_output_shape": [
+            486,
+            1536
+          ],
+          "vision_output_gradient_shape": [
+            486,
+            1536
+          ],
+          "vision_output_gradient_l2": 0.1365954726934433,
+          "mps_scatter_fix_calls": 1,
+          "optimizer_seconds": 0.6566709170001559,
+          "optimizer_state_dtypes": {
+            "step": "torch.float32",
+            "exp_avg": "torch.bfloat16",
+            "exp_avg_sq": "torch.bfloat16"
+          },
+          "updates": {
+            "vision_encoder": {
+              "parameter": "visual.patch_embed.proj.weight",
+              "sampled_elements": 4096,
+              "changed_elements": 3823,
+              "max_abs_change": 0.0001220703125
+            },
+            "vision_merger": {
+              "parameter": "visual.merger.mlp.0.weight",
+              "sampled_elements": 4096,
+              "changed_elements": 2320,
+              "max_abs_change": 0.0001220703125
+            },
+            "language_model": {
+              "parameter": "model.layers.0.self_attn.q_proj.weight",
+              "sampled_elements": 4096,
+              "changed_elements": 2438,
+              "max_abs_change": 0.0001220703125
+            }
+          },
+          "memory": {
+            "process_rss_bytes": 1455063040,
+            "mps_allocated_bytes": 18260516864,
+            "mps_driver_bytes": 26731020288
+          }
+        }
+      ],
+      "forward_observation": {
+        "loss": 3.9573092460632324,
+        "vision_shape_at_encoder_boundary": [
+          486,
+          1536
+        ],
+        "vision_shape_after_llm_input_scatter": [
+          486,
+          1536
+        ],
+        "expected_visual_tokens": 486
+      }
+    }
+  ],
+  "memory": {
+    "sampling_interval_seconds": 0.1,
+    "sampled_peak": {
+      "process_rss_bytes": 1952743424,
+      "mps_allocated_bytes": 18727021056,
+      "mps_driver_bytes": 26956595200
+    },
+    "final": {
+      "process_rss_bytes": 1456160768,
+      "mps_allocated_bytes": 13315885568,
+      "mps_driver_bytes": 26731020288
+    },
+    "mps_peak_method": "sampled, not an exact allocator peak"
+  },
+  "finished_at": "2026-11-05T09:16:32.368265+00:00"
+}
