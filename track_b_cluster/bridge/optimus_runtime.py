@@ -62,13 +62,14 @@ class PlanExecutor:
         self.rank = dist.get_rank()
         self.world = dist.get_world_size()
 
-    def run(self, plan):
+    def run(self, plan, capture_image_grads=False):
         validate_plan(plan)
         if plan["world"] != self.world:
             raise ValueError("plan world differs from process group")
         owners = plan["owners"]
         encoded, embeddings, inputs, outputs, losses = {}, {}, {}, {}, {}
         marks, compute_marks = [], []
+        image_grad_norms = {}
         cuda = self.device.type == "cuda"
         dist.barrier()
         if cuda:
@@ -140,6 +141,10 @@ class PlanExecutor:
                     grad = embeddings[m].grad
                     if grad is None:
                         raise RuntimeError("missing encoder output gradient")
+                    if capture_image_grads:
+                        ranges = self.adapter.encoder_gradient_ranges(m)
+                        image_grad_norms[str(m)] = [float(torch.linalg.vector_norm(grad[a:b].float()))
+                                                   for a, b in ranges]
                     if owners[m] == 0:
                         embeddings[m] = grad
                     else:
@@ -176,13 +181,16 @@ class PlanExecutor:
         # ranges, not kernel-busy intervals; do not call their complement bubbles.
         local = {"rank": self.rank, "elapsed_s": elapsed, "intervals": intervals(marks),
                  "compute": intervals(compute_marks),
+                 "image_grad_norms": image_grad_norms,
                  "losses": {str(m): float(v.detach()) for m, v in losses.items()}}
         gathered = [None] * self.world
         dist.all_gather_object(gathered, local)
-        return {"step_time_s": max(r["elapsed_s"] for r in gathered),
+        result = {"step_time_s": max(r["elapsed_s"] for r in gathered),
                 "loss": sum(gathered[-1]["losses"].values()) / len(owners),
                 "execution_intervals": [v for r in gathered for v in r["intervals"]],
                 "compute_intervals": [v for r in gathered for v in r["compute"]]}
+        result["image_embedding_grad_norms"] = gathered[0]["image_grad_norms"]
+        return result
 
 
 def collect_main_grads(module):

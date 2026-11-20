@@ -13,6 +13,8 @@ def compare(root, rtol=1e-3, atol=1e-5):
                 "optimizer_device", "llm_parallelism", "microbatches", "layers", "steps"):
         if configs[0][key] != configs[1][key]:
             errors.append("configuration mismatch: " + key)
+    if configs[0].get("batching") != configs[1].get("batching"):
+        errors.append("configuration mismatch: batching")
     rows = [[json.loads(s) for s in (p / "metrics.jsonl").read_text().splitlines()]
             for p in (reference, candidate)]
     if len(rows[0]) != len(rows[1]) or not rows[0]:
@@ -28,6 +30,12 @@ def compare(root, rtol=1e-3, atol=1e-5):
         step = a["step"]
         if a["sample_ids"] != b["sample_ids"] or step != b["step"]:
             errors.append("sample/step alignment differs")
+        if a.get("input_observations") != b.get("input_observations"):
+            errors.append("processed input metadata differs")
+        for record in (a, b):
+            for mb, norms in record.get("image_embedding_grad_norms", {}).items():
+                if any(not math.isfinite(x) or x <= 0 for x in norms):
+                    errors.append("missing/nonfinite image gradient in microbatch " + mb)
         for field in ("loss", "grad_norm"):
             check(a[field], b[field], field, "step%d" % step)
         for rank in range(configs[0]["llm_parallelism"]["pp"]):

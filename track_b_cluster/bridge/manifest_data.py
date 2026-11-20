@@ -1,5 +1,8 @@
 """Shared deterministic Qwen2-VL manifest input, extracted from the team runner."""
 import json
+import hashlib
+import os
+from copy import copy, deepcopy
 from pathlib import Path
 
 import torch
@@ -19,15 +22,38 @@ def build_sample(processor, sample, repo_root):
         path = Path(img["path_relative_to_repo_root"])
         if not path.is_absolute():
             path = Path(repo_root) / path
+        if img.get("sha256") and hashlib.sha256(path.read_bytes()).hexdigest() != img["sha256"]:
+            raise ValueError("source image hash mismatch: " + str(path))
         with Image.open(path) as src:
-            res = int(img["resolution"])
-            images.append(src.convert("RGB").resize((res, res)))
+            preparation = img.get("preparation", {})
+            if preparation.get("type") == "part_c_padded_control":
+                # Reuse the team's exact fit/pad intervention, not a new crop.
+                import sys
+                repo = str(Path(__file__).resolve().parents[2])
+                if repo not in sys.path:
+                    sys.path.insert(0, repo)
+                from part_c_image_count.real_photo_pilot.run_real_photo_pilot import prepare
+                image, _ = prepare(src.convert("RGB"), preparation["image_count"], "padded_control")
+                images.append(image)
+            else:
+                res = int(img["resolution"])
+                images.append(src.convert("RGB").resize((res, res)))
+
+    if sample.get("processor_bounds"):
+        # A private image processor prevents one sample's pixel cap from leaking
+        # into later samples or the baseline. Share the read-only tokenizer.
+        processor = copy(processor)
+        processor.image_processor = deepcopy(processor.image_processor)
+        for name, value in sample["processor_bounds"].items():
+            if name not in ("min_pixels", "max_pixels") or not isinstance(value, int) or value <= 0:
+                raise ValueError("invalid per-sample processor bound")
+            setattr(processor.image_processor, name, value)
 
     message = {"role": "user", "content": [{"type": "image"} for _ in images]
                + [{"type": "text", "text": "Describe these images."}]}
     prefix = processor.apply_chat_template([message], tokenize=False, add_generation_prompt=True)
     full = processor.apply_chat_template(
-        [message, {"role": "assistant", "content": [{"type": "text", "text": "Two images."}]}],
+        [message, {"role": "assistant", "content": [{"type": "text", "text": sample.get("target_text", "Two images.")}]}],
         tokenize=False, add_generation_prompt=False)
     batch = dict(processor(text=[full], images=images, padding=True, return_tensors="pt"))
     prefix_len = processor(text=[prefix], images=images, padding=True,
@@ -39,6 +65,7 @@ def build_sample(processor, sample, repo_root):
 
     tokens = batch["input_ids"]
     image_token_id = processor.tokenizer.convert_tokens_to_ids("<|image_pad|>")
+    visual_tokens = (batch["image_grid_thw"].prod(dim=1) // processor.image_processor.merge_size**2).tolist()
     return {
         "sample_id": sample["sample_id"],
         "tokens": tokens,
@@ -46,6 +73,11 @@ def build_sample(processor, sample, repo_root):
         "grid": batch["image_grid_thw"],
         "pixels": batch["pixel_values"].to(torch.bfloat16),
         "image_mask": tokens == image_token_id,
+        "input_observation": {"image_count": len(images), "visual_tokens_per_image": visual_tokens,
+                              "visual_tokens_total": sum(visual_tokens),
+                              "image_grid_thw": batch["image_grid_thw"].tolist(),
+                              "sequence_length": tokens.shape[1],
+                              "supervised_tokens": int((labels != -100).sum())},
     }
 
 
@@ -60,7 +92,7 @@ class ManifestBatches:
     Samples are built once and cached; builds happen before a step is timed.
     """
 
-    def __init__(self, hf_dir, manifest_path, repo_root):
+    def __init__(self, hf_dir, manifest_path, repo_root, batching=None):
         self.hf_dir = hf_dir
         self.repo_root = repo_root
         self.samples = json.loads(Path(manifest_path).read_text())["samples"]
@@ -71,6 +103,12 @@ class ManifestBatches:
             raise ValueError("manifest sample_id values must be unique")
         self.processor = None
         self.cache = {}
+        self.batching = batching or os.environ.get("MANIFEST_BATCHING", "bucket")
+        if self.batching not in ("bucket", "manifest"):
+            raise ValueError("batching must be bucket or manifest")
+        if self.batching == "manifest":
+            self.groups = [self.samples]
+            return
         groups = {}
         for s in self.samples:
             total = s.get("derived_visual_tokens_total")
@@ -104,7 +142,7 @@ class ManifestBatches:
                     self.processor, sample, self.repo_root)
             batches.append(self.cache[sample["sample_id"]])
         lengths = {b["tokens"].shape[1] for b in batches}
-        assert len(lengths) == 1, (
+        assert self.batching == "manifest" or len(lengths) == 1, (
             "step %d microbatches have mixed sequence lengths %s: the derived-token "
             "grouping does not match this manifest" % (step, sorted(lengths)))
         return batches

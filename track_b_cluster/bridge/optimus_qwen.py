@@ -32,7 +32,15 @@ class QwenAdapter:
         self.model, self.data = model, data
 
     def encoder_shape(self, m):
-        return (int(self.data[m]["image_mask"].sum()), self.model.config.hidden_size)
+        return (self.data[m]["input_observation"]["visual_tokens_total"], self.model.config.hidden_size)
+
+    def encoder_gradient_ranges(self, m):
+        counts = self.data[m]["input_observation"]["visual_tokens_per_image"]
+        offset, ranges = 0, []
+        for count in counts:
+            ranges.append((offset, offset + count))
+            offset += count
+        return ranges
 
     def hidden_shape(self, m):
         return (self.data[m]["tokens"].shape[1], 1, self.model.config.hidden_size)
@@ -57,7 +65,7 @@ class QwenAdapter:
 
     def loss(self, m, output):
         mask = self.data[m]["loss_mask"].reshape(-1).float()
-        if not bool(mask.sum() > 0):
+        if self.data[m]["input_observation"]["supervised_tokens"] < 1:
             raise ValueError("microbatch has no supervised tokens")
         return (output.float().reshape(-1) * mask).sum() / mask.sum()
 
@@ -123,6 +131,8 @@ def main():
     p.add_argument("--validation-samples", type=int, default=0,
                    help="Save evenly spaced parameter/used-gradient samples after timing")
     p.add_argument("--schedule", choices=("serial-reference", "optimus-pp"), default="optimus-pp")
+    p.add_argument("--batching", choices=("bucket", "manifest"), default="manifest",
+                   help="Manifest order preserves mixed sizes/counts within each step")
     opts = p.parse_args()
     if opts.steps < 1 or opts.warmup_steps < 0 or opts.microbatches < 1 or opts.validation_samples < 0:
         p.error("steps/microbatches must be positive; warmup must be nonnegative")
@@ -170,7 +180,8 @@ def main():
                            "or a shared memory optimization. Per-rank estimates: " + str(memory_by_rank))
     optimizer = MainGradAdamW(model, args, opts.warmup_steps + opts.steps,
                              master_device=opts.optimizer_device)
-    batches = ManifestBatches(str(opts.model_dir), str(opts.manifest), os.environ["PROJ_ROOT"])
+    batches = ManifestBatches(str(opts.model_dir), str(opts.manifest), os.environ["PROJ_ROOT"],
+                              batching=opts.batching)
     empty_video = torch.zeros((0, 3), dtype=torch.long, device=device)
     profiles = {}
     config = dict(vars(opts), implementation="optimus-inspired-pp-whole-encoder",
@@ -221,7 +232,7 @@ def main():
         torch.cuda.synchronize()
         started = time.monotonic()
         with torch.autocast("cuda", dtype=torch.bfloat16):
-            result = executor.run(plan)
+            result = executor.run(plan, capture_image_grads=opts.validation_samples > 0)
         collect_main_grads(model)
         sync_encoder_grads(model.vision_model)
         # Retain the pinned framework's tied-embedding gradient synchronization.
@@ -240,6 +251,7 @@ def main():
                       step_time_s=max(r["elapsed"] for r in ranks),
                       max_memory_allocated_bytes_by_rank={str(r): v["peak"] for r, v in enumerate(ranks)},
                       sample_ids=[b["sample_id"] for b in data],
+                      input_observations=[b["input_observation"] for b in data],
                       skipped=False, nan_or_inf=False,
                       optimizer_updates=optimizer.steps)
         if opts.validation_samples:

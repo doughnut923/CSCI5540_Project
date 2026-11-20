@@ -40,10 +40,13 @@ class ToyAdapter:
         self.encoder, self.language, self.rank, self.data = encoder, language, rank, data
 
     def encoder_shape(self, m):
-        return (1, 4)
+        return (self.data[m][0].shape[0], 4)
 
     def hidden_shape(self, m):
-        return (1, 6)
+        return (self.data[m][0].shape[0], 6)
+
+    def encoder_gradient_ranges(self, m):
+        return [(i, i + 1) for i in range(self.data[m][0].shape[0])]
 
     def encoder_forward(self, m):
         return self.encoder(self.data[m][0])
@@ -72,7 +75,7 @@ def worker(rank, path, result_dir, world):
     optimizer = MainGradAdamW(joint, args, 3)
     ref_opt = MainGradAdamW(reference, args, 3)
     torch.manual_seed(64)
-    data = [(torch.randn(1, 4), torch.randn(1, 3)) for _ in range(5)]
+    data = [(torch.randn(m % 3 + 1, 4), torch.randn(m % 3 + 1, 3)) for m in range(5)]
     # Unequal ownership, a rank with no encoder work, and profile-selected work.
     plans = [make_plan(world, [0] * 5, costs(world, 5), "serial"),
              make_plan(world, [0] + [world - 1] * 4, costs(world, 5)),
@@ -86,7 +89,10 @@ def worker(rank, path, result_dir, world):
         expected.backward()
         collect_main_grads(reference)
         adapter = ToyAdapter(enc, stages[rank], rank, data)
-        result = PlanExecutor(adapter, transport, torch.device("cpu")).run(plan)
+        result = PlanExecutor(adapter, transport, torch.device("cpu")).run(plan, capture_image_grads=True)
+        for m, norms in result["image_embedding_grad_norms"].items():
+            assert len(norms) == data[int(m)][0].shape[0]
+            assert all(value > 0 for value in norms)
         collect_main_grads(joint)
         sync_encoder_grads(enc)
         assert abs(result["loss"] - float(expected)) < 1e-6
@@ -109,6 +115,22 @@ def worker(rank, path, result_dir, world):
 
 
 class PlanTests(unittest.TestCase):
+    def test_mixed_lengths_preserve_manifest_order(self):
+        fixture = {"samples": [{"sample_id": str(i), "images": [],
+                                 "derived_visual_tokens_total": 10} for i in range(2)]}
+        def build(processor, sample, root):
+            return {"tokens": torch.zeros((1, 4 + int(sample["sample_id"])), dtype=torch.long)}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "manifest.json")
+            path.write_text(json.dumps(fixture))
+            with patch("manifest_data.load_processor", return_value=object()), \
+                    patch("manifest_data.build_sample", side_effect=build):
+                data = ManifestBatches("unused", path, tmp, batching="manifest")
+                self.assertEqual([s["sample_id"] for s in data.plan(0, 2)], ["0", "1"])
+                self.assertEqual([b["tokens"].shape[1] for b in data.build(0, 2)], [4, 5])
+                with self.assertRaises(AssertionError):
+                    ManifestBatches("unused", path, tmp, batching="bucket").build(0, 2)
+
     def test_large_parameter_sample_indices(self):
         length = 151936 * 1536
         indices = sample_indices(length, 16, "cpu")
