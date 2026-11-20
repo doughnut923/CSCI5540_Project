@@ -30,14 +30,14 @@ Both units step AdamW over MCore's fp32 `main_grad`; see `bridge/disagg_units.py
   warmup (2 steps) discarded.
 - `samples/s` = sum(samples) / sum(step time) over measured steps, 4 samples per step.
 - Bubble is instrumented over both units: `(ranks * step_time - sum(busy intervals)) / (ranks *
-  step_time)`, ranks = encoder ranks + LLM stages. Definition in `docs/pipeline-bubble.md`.
+  step_time)`, ranks = encoder ranks + LLM stages. Definition in `../pipeline-bubble.md`.
 - Both rows train: inside a run the loss peaks at 1.56-1.59 when the plan reaches the 424-token
   group and ends at 0.26 (`PP=4`) / 0.18 (`PP=2`), and both `weight_norm` and `enc_weight_norm`
   move.
 
-Figures: `docs/disagg_m4_a2run20_step10.png` (`ENC=1+PP=2`, step 10),
-`docs/disagg_m4_d2pp2_step2.png` (`ENC=2+PP=2`, step 2, with the gradient all-reduce),
-`docs/disagg_m4_b1pp4_step5.png` (`ENC=1+PP=4`, step 5).
+Figures: `disagg_m4_a2run20_step10.png` (`ENC=1+PP=2`, step 10),
+`disagg_m4_d2pp2_step2.png` (`ENC=2+PP=2`, step 2, with the gradient all-reduce),
+`disagg_m4_b1pp4_step5.png` (`ENC=1+PP=4`, step 5).
 
 **Encoder DP=2 is a net loss here.** Same PP, same data, one extra GPU: p50 1.103 s vs 0.932 s
 (+18 %) and 3.59 vs 4.32 samples/s. The measured all-reduce is 0.41-0.47 s per step, i.e. 40 % of
@@ -61,7 +61,7 @@ sits at its initial ~3.0. Compare the timing columns only.
 | fused PP=4 (encoder in stage 0) | 4 | 10 | 0.792 / 0.770 / 0.922 | 5.05 | 60.1 % |
 | DistTrain `ENC=1 + LLM_PP=4` (section 1) | 5 | 10 | 0.837 / 0.830 / 0.960 | 4.78 | 57.9 % |
 
-Figure: `docs/fused_pp4_step5.png` (step 5, 0.756 s, busy 39.5 %, bubble 60.5 %).
+Figure: `fused_pp4_step5.png` (step 5, 0.756 s, busy 39.5 %, bubble 60.5 %).
 
 The fused row is faster in wall clock and uses one GPU fewer, but it is **not** a like-for-like
 training number: it has no optimizer step. The measured optimizer cost in the DistTrain arm is
@@ -89,9 +89,9 @@ Seeded CPU init, one fixed sample, forward+backward only, no optimizer, and (unl
 | disagg 2 enc + PP=2, streamed | 4 | 0.695 | 54-59 % | placement only |
 | disagg 2 enc + PP=2, fp32 all-reduce | 4 | 1.19 | — | exchange alone 1.13 s |
 
-Figures: `docs/pp8_gantt_split_v1.png` (fused PP=8), `docs/disagg_pp4_enc4.png` and
-`docs/disagg_pp4_enc4_gradsync.png` (4 encoder ranks, with and without the exchange),
-`docs/disagg_overlap_4gpu_nosync.png` (2 encoder ranks, streamed).
+Figures: `pp8_gantt_split_v1.png` (fused PP=8), `disagg_pp4_enc4.png` and
+`disagg_pp4_enc4_gradsync.png` (4 encoder ranks, with and without the exchange),
+`disagg_overlap_4gpu_nosync.png` (2 encoder ranks, streamed).
 
 Encoder DP does not pay on this hardware: 2.6 GB of fp32 vision gradients, ~300 small
 collectives, no P2P between these 3090s (~5.3 GB/s host-staged). The exchange measured 1.13 s at

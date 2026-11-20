@@ -111,7 +111,7 @@ Plot one step with `track_b_cluster/scripts/plot_pipeline_gantt.py --input <json
 | `track_b_cluster/slurm/pp2_equivalence.sbatch` | launch the fused baseline |
 | `track_b_cluster/scripts/collect_step_metrics.py` | JSONL → p50/p95 summary |
 | `track_b_cluster/scripts/plot_pipeline_gantt.py` | JSONL → Gantt figure |
-| `docs/distrain-results.md` | measured numbers, caveats, what is not measured |
+| `docs/distrain/distrain-results.md` | measured numbers, caveats, what is not measured |
 | `docs/pipeline-bubble.md` | how the bubble number is defined |
 
 ## Still open
