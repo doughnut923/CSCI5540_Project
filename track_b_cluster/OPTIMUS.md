@@ -58,8 +58,9 @@ Two/three/four-rank schedule checks and two-process CPU training tests cover
 unequal microbatch ownership, zero-work encoder replicas, gradient transfer,
 three AdamW updates, and full gradient/parameter parity with an unpartitioned
 small model. CPU tests are correctness evidence, not GPU performance evidence.
-The recorded [CPU validation](reproduction/optimus_cpu/validation.json) passed
-five tests, including two- and four-process training, on PyTorch 2.6.0.
+The recorded [CPU validation](reproduction/optimus_cpu/validation.json) covers
+two- and four-process training on PyTorch 2.6.0. Six tests also cover large
+parameter sampling, where FP32 linspace indices can round out of bounds.
 
 ```bash
 cd track_b_cluster/bridge
@@ -112,3 +113,31 @@ python track_b_cluster/scripts/collect_step_metrics.py \
 
 The proposal's final two axes × three levels are a later experiment matrix,
 after Qwen GPU parity and actual colocation/communication behavior are verified.
+
+## Verified GPU result (2026-11-20)
+
+[Validation record](reproduction/optimus_gpu/validation.json): two RTX 3090 GPUs,
+28-layer random-initialized Qwen2-VL-2B architecture, four microbatches per step,
+two optimizer updates, with identical CPU-offloaded AdamW in both arms.
+
+| Step | Reference loss | Optimus PP loss | Both global gradient norms |
+| --- | --- | --- | --- |
+| 0 | 12.519957542419434 | 12.519957542419434 | 854.281986329445 |
+| 1 | 9.399199485778809 | 9.399199485778809 | 400.9212604800243 |
+
+All **31,392 sampled parameter values and 31,392 sampled used-gradient values**
+matched exactly across the two runs. This is sampled Qwen equivalence; the CPU
+small-model tests separately compare every parameter and gradient.
+The selected bubble plan assigned encoder microbatches to ranks `[1, 0, 1, 0]`,
+so this check exercised actual cross-GPU encoder handoff and gradient return.
+
+This is not a speedup result: two cold steps with CPU optimizer offload do not
+establish steady-state GPU training performance. It is not pretrained-weight
+reproduction, convergence validation, or a complete ATC Optimus implementation.
+
+To compare an independent pair of evidence directories:
+
+```bash
+python track_b_cluster/scripts/compare_optimus_validation.py <parent-of-both-runs> \
+  --output <parent-of-both-runs>/comparison.json
+```
