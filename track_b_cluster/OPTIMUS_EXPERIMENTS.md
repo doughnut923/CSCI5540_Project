@@ -108,3 +108,19 @@ to other members' runners remain their responsibility.
 Mean encoder work is also not yet calibrated across the resolution distributions.
 Token equality alone is not a sufficient control. Do not quote a final speedup,
 variance-only effect, or full-paper Optimus reproduction from these checks.
+
+## Verified targeted follow-up (2026-11-22)
+
+[GPU evidence](reproduction/optimus_gpu_sync_20261122/validation.json), executed
+source `1c977ec91da5d09a1703bdd826cf6481ec53a34d`: the image-count-high case
+(N=1/2/4/8) passed in bucketed and interleaved order on two RTX 3090s. Each
+order was paired with the internal serial reference for one warmup plus eight
+measured steps. Loss, global gradient norm, sampled parameters and used gradients
+matched exactly within each pair. The runtime logs also confirm equal measured
+sample multiplicities across the two orders and nonzero gradients for every image.
+
+Complete raw samples/logs are retained in the user's server archive with its
+SHA-256 recorded in the evidence file. Configs, step metrics and comparator
+summaries were verified locally. The GPU allocation was released. This validates
+the new adapter path for the targeted case; other cases and dedicated performance
+runs remain separate experiments.

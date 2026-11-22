@@ -175,5 +175,11 @@ The [local synchronization record](reproduction/optimus_sync_20261122/validation
 checks that all 113 upstream files are unchanged, ten CPU tests pass, and all six
 bucketed and reordered plans retain identical measured sample multiplicities and
 complete input coverage. The reordered plans are an Optimus-only adapter over the
-shared builder. New GPU validation is pending restoration of the course SSH
-connection; the earlier GPU records remain tied to their original source commits.
+shared builder. The [post-sync GPU check](reproduction/optimus_gpu_sync_20261122/validation.json)
+now also passes for the image-count-high case in bucketed and interleaved order.
+Each order matches its serial reference for nine optimizer steps, including
+282,528 sampled parameter values and the same number of used-gradient values
+across both pairs. All 240 measured per-image gradient checks pass. The actual
+measured sample multisets match across orders. This is a targeted follow-up,
+not a rerun of all six cases or a performance comparison. The earlier GPU
+records remain tied to their original source commits.
