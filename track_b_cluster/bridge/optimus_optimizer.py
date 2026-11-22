@@ -4,6 +4,7 @@ The team implementation is left unchanged. The colocated runner needs CPU
 offload and one whole-model clipping norm so encoder replicas are counted once.
 """
 import math
+from contextlib import nullcontext
 
 import torch
 
@@ -29,33 +30,39 @@ class MainGradAdamW:
         self.total = max(1, total_steps)
         self.steps = 0
 
-    def step(self, global_grad_norm=None):
-        for master, p in zip(self.masters, self.params):
-            master.grad = p.main_grad.to(master.device)
-        lr = self.min_lr + 0.5 * (self.lr - self.min_lr) * (
-            1.0 + math.cos(math.pi * self.steps / self.total))
-        for group in self.opt.param_groups:
-            group["lr"] = lr
-        if not self.masters:
-            raise ValueError("optimizer has no trainable main_grad parameters")
-        if global_grad_norm is None:
-            grad_norm = float(torch.nn.utils.clip_grad_norm_(self.masters, self.clip))
-        else:
-            grad_norm = float(global_grad_norm)
-            if not math.isfinite(grad_norm):
-                raise FloatingPointError("non-finite global gradient norm")
-            scale = min(1.0, self.clip / (grad_norm + 1e-6))
-            for master, param in zip(self.masters, self.params):
-                master.grad.mul_(scale)
-                if master.device != param.main_grad.device:
-                    # Keep the recorded used-gradient samples consistent with
-                    # the clipped CPU gradient actually passed to AdamW.
-                    param.main_grad.mul_(scale)
-        self.opt.step()
-        self.opt.zero_grad(set_to_none=True)
-        with torch.no_grad():
+    def step(self, global_grad_norm=None, profiler=None):
+        phase = profiler.phase if profiler is not None else lambda name: nullcontext()
+        with phase("optimizer.gradient_prepare"):
             for master, p in zip(self.masters, self.params):
-                p.data.copy_(master)
-        self.steps += 1
-        return {"lr": lr, "grad_norm": grad_norm,
-                "weight_norm": float(self.masters[0].norm())}
+                master.grad = p.main_grad.to(master.device)
+        with phase("optimizer.lr_and_clip"):
+            lr = self.min_lr + 0.5 * (self.lr - self.min_lr) * (
+                1.0 + math.cos(math.pi * self.steps / self.total))
+            for group in self.opt.param_groups:
+                group["lr"] = lr
+            if not self.masters:
+                raise ValueError("optimizer has no trainable main_grad parameters")
+            if global_grad_norm is None:
+                grad_norm = float(torch.nn.utils.clip_grad_norm_(self.masters, self.clip))
+            else:
+                grad_norm = float(global_grad_norm)
+                if not math.isfinite(grad_norm):
+                    raise FloatingPointError("non-finite global gradient norm")
+                scale = min(1.0, self.clip / (grad_norm + 1e-6))
+                for master, param in zip(self.masters, self.params):
+                    master.grad.mul_(scale)
+                    if master.device != param.main_grad.device:
+                        # Retain the clipped gradient actually used by AdamW.
+                        param.main_grad.mul_(scale)
+        with phase("optimizer.adamw_update"):
+            self.opt.step()
+            self.opt.zero_grad(set_to_none=True)
+        with phase("optimizer.parameter_copyback"):
+            with torch.no_grad():
+                for master, p in zip(self.masters, self.params):
+                    p.data.copy_(master)
+        with phase("optimizer.diagnostics"):
+            self.steps += 1
+            result = {"lr": lr, "grad_norm": grad_norm,
+                      "weight_norm": float(self.masters[0].norm())}
+        return result

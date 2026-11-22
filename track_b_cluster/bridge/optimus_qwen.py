@@ -24,6 +24,7 @@ from optimus_config import model_arguments
 from optimus_experiment import (OptimusBatches, check_plan_config, check_step_inputs,
                                 file_sha256)
 from optimus_optimizer import MainGradAdamW
+from optimus_profiling import StepProfiler
 
 
 class QwenAdapter:
@@ -147,6 +148,8 @@ def main():
     p.add_argument("--encoder-placement", choices=("profiled", "round-robin"), default="profiled",
                    help="Use round-robin in both arms to isolate scheduling from placement arithmetic")
     p.add_argument("--deterministic", action="store_true")
+    p.add_argument("--profile-step-phases", action="store_true",
+                   help="Diagnostic synchronized phase timings; adds CUDA synchronization")
     opts = p.parse_args()
     if opts.steps < 1 or opts.warmup_steps < 0 or opts.microbatches < 1 or opts.validation_samples < 0:
         p.error("steps/microbatches must be positive; warmup must be nonnegative")
@@ -215,6 +218,8 @@ def main():
                   input_plan_sha256=file_sha256(opts.input_plan) if input_plan else None,
                   sample_order_sha256=input_plan["sample_order_sha256"] if input_plan else None,
                   sample_multiset_sha256=input_plan["sample_multiset_sha256"] if input_plan else None,
+                  timing_method=("synchronized phase wall time; diagnostic, changes overlap"
+                                 if opts.profile_step_phases else "complete step wall time"),
                   torch=torch.__version__, gpu=torch.cuda.get_device_name(),
                   memory_estimates=memory_by_rank,
                   optimizer={"name": "AdamW", "lr": args.lr, "min_lr": args.min_lr,
@@ -225,7 +230,8 @@ def main():
                   code_sha256={name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
                                for name in ("optimus_qwen.py", "optimus_runtime.py", "optimus_schedule.py",
                                             "manifest_data.py", "optimus_optimizer.py", "optimus_config.py",
-                                            "optimus_experiment.py", "pp2_equivalence.py")},
+                                            "optimus_experiment.py", "optimus_profiling.py",
+                                            "pp2_equivalence.py")},
                   pmp_commit=os.environ.get("PMP_COMMIT", "unrecorded"),
                   mcore_commit=os.environ.get("MCORE_COMMIT", "unrecorded"),
                   source_commit=os.environ.get("SOURCE_COMMIT", "unrecorded"),
@@ -266,19 +272,29 @@ def main():
         dist.barrier()
         torch.cuda.synchronize()
         started = time.monotonic()
-        with torch.autocast("cuda", dtype=torch.bfloat16):
-            result = executor.run(plan, capture_image_grads=opts.validation_samples > 0)
-        collect_main_grads(model)
-        sync_encoder_grads(model.vision_model)
-        # Retain the pinned framework's tied-embedding gradient synchronization.
-        finalize_model_grads([model])
-        norm = global_grad_norm(model.vision_model, model.language_model)
+        profiler = StepProfiler(opts.profile_step_phases, synchronize=torch.cuda.synchronize)
+        with profiler.phase("model_schedule"):
+            with torch.autocast("cuda", dtype=torch.bfloat16):
+                result = executor.run(plan, capture_image_grads=opts.validation_samples > 0)
+        with profiler.phase("ordinary_grad_collect"):
+            collect_main_grads(model)
+        with profiler.phase("encoder_grad_sync"):
+            sync_encoder_grads(model.vision_model)
+        with profiler.phase("tied_grad_sync"):
+            # Keep the pinned framework's tied-embedding synchronization.
+            finalize_model_grads([model])
+        with profiler.phase("global_grad_norm"):
+            norm = global_grad_norm(model.vision_model, model.language_model)
         if not math.isfinite(result["loss"]) or not math.isfinite(norm):
             raise FloatingPointError("non-finite loss or gradient; optimizer was not advanced")
-        stats = optimizer.step(global_grad_norm=norm)
+        with profiler.phase("optimizer"):
+            stats = optimizer.step(global_grad_norm=norm, profiler=profiler)
         torch.cuda.synchronize()
         local = {"elapsed": time.monotonic() - started,
                  "peak": torch.cuda.max_memory_allocated()}
+        if opts.profile_step_phases:
+            local["phase_times_s"] = profiler.times
+            local["phase_breakdown_s"] = profiler.breakdown(local["elapsed"])
         ranks = [None] * world
         dist.all_gather_object(ranks, local)
         record = dict(result, step=step, warmup=step < opts.warmup_steps,
@@ -289,6 +305,12 @@ def main():
                       input_observations=[b["input_observation"] for b in data],
                       skipped=False, nan_or_inf=False,
                       optimizer_updates=optimizer.steps)
+        if opts.profile_step_phases:
+            critical = max(range(world), key=lambda r: ranks[r]["elapsed"])
+            record.update(phase_times_s_by_rank={str(r): item["phase_times_s"]
+                                                for r, item in enumerate(ranks)},
+                          critical_rank=critical,
+                          critical_rank_phase_breakdown_s=ranks[critical]["phase_breakdown_s"])
         if opts.validation_samples:
             sampled = {}
             for name, param in model.named_parameters():

@@ -20,6 +20,7 @@ from manifest_data import ManifestBatches
 from optimus_config import model_arguments
 from optimus_experiment import (OptimusBatches, make_input_plan, check_step_inputs,
                                 interleave_input_plan)
+from optimus_profiling import StepProfiler
 
 
 def costs(world, count):
@@ -121,6 +122,54 @@ def worker(rank, path, result_dir, world):
 
 
 class PlanTests(unittest.TestCase):
+    def test_phase_accounting_and_disabled_timer(self):
+        now, syncs = [0.0], []
+        timer = StepProfiler(True, synchronize=lambda: syncs.append(now[0]), clock=lambda: now[0])
+        with timer.phase("model_schedule"):
+            now[0] = 2.0
+        with timer.phase("optimizer"):
+            with timer.phase("optimizer.adamw_update"):
+                now[0] = 5.0
+            now[0] = 6.0
+        phases = timer.breakdown(7.0)
+        self.assertEqual(phases["model_schedule"], 2.0)
+        self.assertEqual(phases["optimizer"], 4.0)
+        self.assertEqual(phases["unattributed"], 1.0)
+        self.assertEqual(sum(phases.values()), 7.0)
+        self.assertEqual(timer.times["optimizer.adamw_update"], 3.0)
+        self.assertEqual(len(syncs), 3)
+        with self.assertRaisesRegex(ValueError, "exceed"):
+            timer.breakdown(4.0)
+        disabled = StepProfiler(False, synchronize=lambda: self.fail("disabled timer synchronized"),
+                                clock=lambda: self.fail("disabled timer read clock"))
+        with disabled.phase("optimizer"):
+            pass
+        self.assertIsNone(disabled.breakdown(1.0))
+
+    def test_optimizer_timing_preserves_updates(self):
+        torch.manual_seed(9)
+        plain = torch.nn.Linear(4, 3)
+        timed = deepcopy(plain)
+        for model in (plain, timed):
+            for parameter in model.parameters():
+                parameter.main_grad = torch.zeros_like(parameter)
+        args = SimpleNamespace(lr=.01, min_lr=.001, adam_beta1=.9, adam_beta2=.95,
+                               adam_eps=1e-8, weight_decay=.01, clip_grad=.3)
+        a, b = [MainGradAdamW(model, args, 3, master_device="cpu") for model in (plain, timed)]
+        for step in range(3):
+            for x, y in zip(plain.parameters(), timed.parameters()):
+                x.main_grad = torch.full_like(x, .15 + step)
+                y.main_grad = x.main_grad.clone()
+            expected = a.step(global_grad_norm=2.0 + step)
+            timer = StepProfiler(True)
+            with timer.phase("optimizer"):
+                actual = b.step(global_grad_norm=2.0 + step, profiler=timer)
+            self.assertEqual(expected, actual)
+            for x, y in zip(plain.parameters(), timed.parameters()):
+                torch.testing.assert_close(x, y, rtol=0, atol=0)
+                torch.testing.assert_close(x.main_grad, y.main_grad, rtol=0, atol=0)
+            timer.breakdown(timer.times["optimizer"] + .01)
+
     def test_model_overrides_are_local_to_optimus(self):
         from pp2_equivalence import mcore_argv
         with patch.dict("os.environ", {"QWEN2VL_HF_DIR": "unused"}):
