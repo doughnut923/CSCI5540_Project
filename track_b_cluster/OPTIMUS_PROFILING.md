@@ -56,3 +56,29 @@ The first diagnostic uses `image_count_high` and `resolution_high`, at M=2.
 It is a small attribution check; independent repeats and uninstrumented runs are
 required before drawing a throughput conclusion. GPU count, optimizer residence,
 clipping and initialization differences across backends remain unresolved.
+
+## Recorded diagnosis (2026-11-22)
+
+[Validation record](reproduction/optimus_profiling_20261122/validation.json),
+source `bcb82b8128be9ba30e6e046efba85a5e106fc55c`, two RTX 3090s, CPU optimizer,
+28 language layers, M=2, one warmup and eight measured steps per case:
+
+| Case | Complete step | Optimizer | Optimizer share | CPU AdamW update | Gradient preparation | Parameter copyback |
+| --- | --- | --- | --- | --- | --- | --- |
+| image_count_high | 13.39 s | 12.24 s | 91.4% | 8.71 s | 1.75 s | 1.26 s |
+| resolution_high | 12.87 s | 12.01 s | 93.3% | 8.47 s | 1.73 s | 1.28 s |
+
+The model-schedule phase was 0.61 s and 0.33 s respectively; it includes P2P,
+waits and executor bookkeeping. Each optimizer child in the table is already
+included in the optimizer parent. All top-level components close to the full
+step time. The nine image-count-high losses and global gradient norms match the
+previous unprofiled run exactly; profiling did not sample full GPU parameters.
+CPU tests separately check unchanged optimizer parameter updates.
+
+This diagnosis identifies the CPU-offloaded optimizer path as the dominant
+cost in this configuration. The logs report torchrun's default of one OpenMP
+thread per process. A next experiment can measure one/two/three threads per rank
+within the six training CPU cores, before changing optimizer algorithms or
+expanding the schedule benchmark. Neither threading speedup nor cross-backend
+speedup has been measured here. One run per workload is a diagnosis, not a
+statistical performance study.

@@ -183,3 +183,12 @@ across both pairs. All 240 measured per-image gradient checks pass. The actual
 measured sample multisets match across orders. This is a targeted follow-up,
 not a rerun of all six cases or a performance comparison. The earlier GPU
 records remain tied to their original source commits.
+
+## Bottleneck diagnosis
+
+The [phase-timing follow-up](OPTIMUS_PROFILING.md#recorded-diagnosis-2026-11-22)
+measured both the high image-count and high-resolution workloads with validation
+sampling disabled. In this two-GPU CPU-offload configuration, the optimizer path
+accounts for 91.4–93.3% of the synchronized diagnostic step. CPU AdamW and data
+movement should be investigated before interpreting whole-step timing as a
+pipeline-scheduling result. These intrusive phase timings are not speedup evidence.
