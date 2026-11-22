@@ -21,10 +21,6 @@ BENCH_STEPS=${BENCH_STEPS:-0}
 WARMUP_STEPS=${WARMUP_STEPS:-2}
 NUM_MICROBATCHES=${NUM_MICROBATCHES:-2}
 RUN_TAG=${RUN_TAG:-}   # optional suffix so a re-run never overwrites earlier evidence
-# Private writable paths also work when the node has no mounted login home.
-mkdir -p "$WS/containers" "$WS/container-home" "$WS/libcuda"
-ln -sfn /usr/lib/x86_64-linux-gnu/libcuda.so.1 "$WS/libcuda/libcuda.so"
-ln -sfn /usr/lib/x86_64-linux-gnu/libcuda.so.1 "$WS/libcuda/libcuda.so.1"
 LOG=$WS/containers/pp-native-pp${PP}${RUN_TAG:+-$RUN_TAG}.log
 exec > "$LOG" 2>&1
 set -x
@@ -38,11 +34,11 @@ JSONL=${OUT%.json}.jsonl
 SUMMARY=${OUT%.json}_summary.json
 
 export PYTHONPATH="$BACKEND:$PMP/examples:$PMP/examples/qwen2_vl:$PMP:$WS/third_party/BigMac:$WS/venvs/trackb_pydeps"
-export SINGULARITYENV_LD_LIBRARY_PATH="$WS/libcuda:/.singularity.d/libs:/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu"
+export SINGULARITYENV_LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
 export SINGULARITYENV_PATH=/sbin:/usr/sbin:/usr/local/bin:/usr/bin:/bin
 export SINGULARITYENV_PYTHONPATH="$PYTHONPATH"
 export SINGULARITYENV_HF_HOME=$WS/caches/hf
-export SINGULARITYENV_TRITON_LIBCUDA_PATH="$WS/libcuda"
+export SINGULARITYENV_TRITON_LIBCUDA_PATH=/usr/lib/x86_64-linux-gnu
 export SINGULARITYENV_TOKENIZERS_PARALLELISM=false
 export SINGULARITYENV_PYTHONUNBUFFERED=1
 export SINGULARITYENV_USE_PP_EXECUTOR=0
@@ -52,10 +48,10 @@ export SINGULARITYENV_BENCH_STEPS=$BENCH_STEPS
 export SINGULARITYENV_WARMUP_STEPS=$WARMUP_STEPS
 export SINGULARITYENV_NUM_MICROBATCHES=$NUM_MICROBATCHES
 export SINGULARITYENV_PROJ_ROOT=$PROJ
-export SINGULARITYENV_MANIFEST="${MANIFEST:-$PROJ/runs/track_b_n2_pilot_measured_v1/pilot_manifest.json}"
+export SINGULARITYENV_MANIFEST=$PROJ/runs/track_b_n2_pilot_measured_v1/pilot_manifest.json
 export SINGULARITYENV_QWEN2VL_HF_DIR=$HF
 
-singularity exec --nv --home "$WS/container-home" \
+singularity exec --nv \
   --bind /lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 \
   --bind /lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1 \
   -B "$BIND_ROOT:$BIND_ROOT" \
@@ -65,7 +61,7 @@ singularity exec --nv --home "$WS/container-home" \
 echo "PP_NATIVE_SCALE_RC=$?"
 
 if [ "$BENCH_STEPS" -gt 0 ]; then
-  singularity exec --home "$WS/container-home" \
+  singularity exec \
     -B "$BIND_ROOT:$BIND_ROOT" \
     "$SIF" \
     python3 "$PROJ/track_b_cluster/scripts/collect_step_metrics.py" \

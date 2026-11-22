@@ -1,10 +1,11 @@
 # Optimus PP integration
 
-This branch builds on the team's `distrain-integration` commit
-`3760175772c5952b7cfca2203558edb778c11bc7`, plus the native smoke environment fixes
-from PR #4. It now also includes the team's later DistTrain result/launcher commits
-through `2660a47707c017cc42e81af47fb8faab83591168`. It does not change the team's
-remote branches.
+This branch incorporates the team's `distrain-integration` through
+`a49368b8dad76700c573a550b1f2453b1bd73149`. Every file present in that upstream
+commit is retained unchanged. Optimus-specific extensions are isolated in new
+files; the native setup suggestions remain separately reviewable in PR #4.
+The [experiment alignment protocol](OPTIMUS_EXPERIMENTS.md) describes the current
+workload contract and the remaining differences between backends.
 
 ## Reuse and ownership
 
@@ -12,11 +13,12 @@ remote branches.
 | --- | --- |
 | Qwen2-VL model and processor | Same pinned PMP model_provider as native |
 | Sample order, prompts, labels, image handling | Team ManifestBatches, extracted to bridge/manifest_data.py |
-| BF16 parameters, FP32 master weights, AdamW, cosine LR | Team MainGradAdamW, extracted to bridge/training_common.py |
+| BF16 parameters, FP32 master weights, AdamW, cosine LR | Optimus-owned extension of the team AdamW in bridge/optimus_optimizer.py |
 | Metrics | Existing JSONL schema and scripts/collect_step_metrics.py |
 | Colocation, dependency graph, placement selection and executor | New Optimus PP implementation |
 
-The original imports remain available from pp2_equivalence.py and disagg_units.py.
+The upstream pp2_equivalence.py and disagg_units.py remain unchanged. The
+Optimus tokenizer override is applied locally by bridge/optimus_config.py.
 Missing derived token metadata is handled by measuring processor output, allowing
 the recorded two-photo smoke manifest to use the same input path.
 
@@ -49,8 +51,9 @@ Paper: [Optimus, ATC 2025, sections 3–4](https://arxiv.org/html/2408.03505v2).
 
 Every loss is normalized by the number of microbatches. Each encoder replica has
 only a subset of the global batch, so its gradients must be **summed**, not divided
-again by the number of encoder replicas. The original DistTrain default optimizer
-behavior is preserved; this runner instead passes one global clipping norm.
+again by the number of encoder replicas. The DistTrain optimizer is unchanged; this runner passes one global clipping
+norm to its own optimizer extension. This difference is recorded in the experiment
+contract and prevents a strict cross-backend update-equivalence claim.
 
 Ordinary autograd `.grad` values (embedding/norm/etc.) are combined with fused
 `main_grad` values. The pinned MCore gradient finalizer synchronizes tied embeddings.
@@ -84,7 +87,7 @@ the measured build has about 1.554 billion trainable parameters on each rank,
 with 15.1GB free but 18.6GB additional optimizer allocation needed per rank.
 The launcher therefore uses **2 GPUs with CPU optimizer offload**, retaining
 28 unchanged language layers. Both comparison arms must use this same setting.
-The shared optimizer also exposes this as `OPTIMIZER_DEVICE=cpu` to DistTrain.
+CPU offload is an Optimus-only option; the upstream DistTrain runner is unchanged.
 This is a functional check, not an all-GPU Optimus throughput comparison. On a
 larger GPU allocation use `OPTIMIZER_DEVICE=cuda` consistently across all arms.
 
@@ -159,7 +162,18 @@ per-image gradient coverage. Its fixed-placement, deterministic scope is narrowe
 than general profiled-placement equivalence. The record also preserves the earlier
 cross-layout failure and flags unmatched mean encoder work in the resolution axis.
 
-The team's [latest DistTrain results](../docs/distrain-results.md) use different
-GPU counts, a 32-layer synthetic depth and M=4. Their fused baseline omits optimizer
-updates. Those measurements must not be placed beside this 28-layer, M=2,
-CPU-offloaded pilot as a controlled training-throughput comparison.
+The team's [DistTrain results](../docs/distrain/distrain-results.md) include both
+the older 32-layer/M=4 configurations and the newer 28-layer/M=2 B/C runs.
+The newer B/C runs align model depth and microbatch count, but GPU count, optimizer
+placement, clipping and batching still differ from the historical Optimus pilot.
+Their fused baseline omits optimizer updates. See [the alignment protocol](OPTIMUS_EXPERIMENTS.md)
+before comparing results.
+
+## Synchronization validation (2026-11-22)
+
+The [local synchronization record](reproduction/optimus_sync_20261122/validation.json)
+checks that all 113 upstream files are unchanged, ten CPU tests pass, and all six
+bucketed and reordered plans retain identical measured sample multiplicities and
+complete input coverage. The reordered plans are an Optimus-only adapter over the
+shared builder. New GPU validation is pending restoration of the course SSH
+connection; the earlier GPU records remain tied to their original source commits.

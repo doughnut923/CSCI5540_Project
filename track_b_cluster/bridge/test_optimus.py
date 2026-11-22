@@ -15,8 +15,11 @@ import torch.multiprocessing as mp
 from optimus_runtime import (PlanExecutor, Transport, collect_main_grads,
                              global_grad_norm, sample_indices, sync_encoder_grads, zero_grads)
 from optimus_schedule import choose_plan, make_plan, validate_plan
-from training_common import MainGradAdamW
+from optimus_optimizer import MainGradAdamW
 from manifest_data import ManifestBatches
+from optimus_config import model_arguments
+from optimus_experiment import (OptimusBatches, make_input_plan, check_step_inputs,
+                                interleave_input_plan)
 
 
 def costs(world, count):
@@ -118,6 +121,45 @@ def worker(rank, path, result_dir, world):
 
 
 class PlanTests(unittest.TestCase):
+    def test_model_overrides_are_local_to_optimus(self):
+        from pp2_equivalence import mcore_argv
+        with patch.dict("os.environ", {"QWEN2VL_HF_DIR": "unused"}):
+            before = mcore_argv(1024)
+            ours = model_arguments(1024)
+            self.assertEqual(before, mcore_argv(1024))
+        self.assertEqual(ours[ours.index("--patch-tokenizer-type") + 1], "Qwen2VLTokenizer")
+        self.assertEqual(before[before.index("--patch-tokenizer-type") + 1], "Qwen2Tokenizer")
+        self.assertEqual(ours[ours.index("--seq-length") + 1], "1024")
+
+    def test_bucket_plan_requires_complete_coverage(self):
+        counts = [1, 2, 4, 8] * 3
+        fixture = {"samples": [{"sample_id": str(i), "images": [{}] * count,
+                                 "derived_visual_tokens_total": 576}
+                                for i, count in enumerate(counts)]}
+        audit = {"passed": True, "samples": [
+            {"sample_id": str(i), "image_count": count, "sequence_length": 605 + 2 * count}
+            for i, count in enumerate(counts)]}
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp, "manifest.json")
+            path.write_text(json.dumps(fixture))
+            source = ManifestBatches("unused", path, tmp, batching="bucket")
+            with self.assertRaisesRegex(ValueError, "misses 2 samples"):
+                make_input_plan(source, path, audit, 2, 1, 6)
+            plan = make_input_plan(source, path, audit, 2, 1, 8)
+            self.assertEqual(plan["distinct_measured_samples"], 12)
+            for step in plan["steps"]:
+                self.assertEqual(len({row["image_count"] for row in step["input_observations"]}), 1)
+            mixed = interleave_input_plan(plan)
+            self.assertEqual(mixed["sample_multiset_sha256"], plan["sample_multiset_sha256"])
+            self.assertNotEqual(mixed["sample_order_sha256"], plan["sample_order_sha256"])
+            replay = OptimusBatches("unused", path, tmp, batching="manifest", input_plan=mixed)
+            for step in mixed["steps"]:
+                self.assertEqual([sample["sample_id"] for sample in replay.plan(step["step"], 2)],
+                                 step["sample_ids"])
+            wrong = [{"sample_id": "incorrect"}]
+            with self.assertRaisesRegex(ValueError, "sample order"):
+                check_step_inputs(plan, 0, wrong)
+
     def test_ordinary_bf16_gradients_accumulate_in_fp32(self):
         module = torch.nn.Linear(1, 1, bias=False, dtype=torch.bfloat16)
         p = module.weight

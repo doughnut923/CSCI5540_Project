@@ -28,9 +28,10 @@ forward/backward costs before attributing a difference to variance alone.
 
 ## Preserve heterogeneity within a batch
 
-The legacy runner groups by visual-token total. Besides hiding resolution
-variation, that assumption fails for mixed image counts: the start/end image
-markers add tokens even when visual-token totals are equal.
+Yin's updated shared loader groups by visual-token total **and image count**,
+which keeps the start/end image markers consistent within a bucket. Optimus
+uses that loader unchanged, with bucket mode for the aligned-input run and
+manifest mode for its separate mixed-length experiment.
 
 `ManifestBatches(..., batching="manifest")` instead keeps the manifest order and
 allows each microbatch to have its own sequence/grid shape. The Optimus executor
@@ -60,7 +61,9 @@ under both the serial correctness reference and Optimus PP:
 ```bash
 export SUITE_ROOT=<suite-directory> OUTPUT_ROOT=<new-results-directory>
 export PP=2 NUM_MICROBATCHES=2 OPTIMIZER_DEVICE=cpu
-export WARMUP_STEPS=1 BENCH_STEPS=6 REPEATS=1 VALIDATION_SAMPLES=16
+export WARMUP_STEPS=1 BENCH_STEPS=8 REPEATS=1 VALIDATION_SAMPLES=16
+export MANIFEST_BATCHING=bucket
+# Prepare INPUT_PLANS_ROOT first as described in OPTIMUS_EXPERIMENTS.md.
 export ENCODER_PLACEMENT=round-robin DETERMINISTIC=1
 bash track_b_cluster/scripts/run_heterogeneity_suite.sh
 python track_b_cluster/scripts/report_heterogeneity_suite.py \
@@ -68,8 +71,11 @@ python track_b_cluster/scripts/report_heterogeneity_suite.py \
   --output "$OUTPUT_ROOT/summary.json"
 ```
 
-Six measured steps × two microbatches cover all 12 manifest samples once,
-regardless of the warmup offset. One repeat is an integration pilot. For later
+The historical manifest-order run used six measured steps × two microbatches
+to cover all 12 samples once. The current bucket-aligned run uses eight steps
+and checks coverage explicitly. For a bucket-versus-mixed-order experiment replay and interleave the exact same
+sample occurrences; see [OPTIMUS_EXPERIMENTS.md](OPTIMUS_EXPERIMENTS.md).
+One repeat is an integration pilot. For later
 statistics, agree on repeated runs, warmup, step budget and memory policy across
 the actual backends. Keep validation sampling off during a dedicated performance
 run; it introduces synchronization outside and inside the measured step.

@@ -6,15 +6,10 @@ Regenerate with `git -C <repo> diff` after applying.
 | File | Target | Why |
 | --- | --- | --- |
 | `pai-megatron-patch-mcore017.patch` | `third_party/BigMac/third_party/Pai-Megatron-Patch` | Pai-Megatron-Patch targets ~MCore 0.11-0.14; these make its Qwen2-VL path import/build on stock MCore 0.17.1 |
-| `pai-megatron-patch-inference-context.patch` | `third_party/BigMac/third_party/Pai-Megatron-Patch` | Accept MCore's renamed `inference_context` keyword in both attention implementations |
 | `bigmac-mcore-250624-te2.patch` | `.../backends/megatron/Megatron-LM-250624` (BigMac's MCore fork) | MCore 0.14 hands TE 2.x packed 3-D qkv; TE 2.x wants unpacked 4-D |
 | `megatron-lm-nvrx.patch` | `third_party/Megatron-LM` (core_v0.17.1) | NGC ships `nvidia_resiliency_ext` without `__version__`, which crashes MCore import |
 
-Apply with `git apply -p1 < patch>` from each repo root. Apply the new
-`pai-megatron-patch-inference-context.patch` after `pai-megatron-patch-mcore017.patch`.
-It maps the new keyword to the existing `inference_params` variable, rejects
-conflicting non-null values, and leaves the training path (both are `None`)
-unchanged.
+Apply with `git apply -p1 < patch>` from each repo root.
 
 ## What each hunk does
 
@@ -32,7 +27,7 @@ Note on the backend: conversion runs on BigMac's `Megatron-LM-250624` fork (core
 
 ## Extra runtime pieces (not patches)
 
-- `scripts/prepare_energon_stub.py` creates the import-only shim under `venvs/trackb_pydeps/megatron/energon/`. Its dataset functions fail explicitly; it is only for the model-only smoke test.
+- `venvs/trackb_pydeps/megatron/energon/` is a small local stub (EPath, Sample, placeholder factories) installed only so the import chain resolves.
 - Install extras with `--no-deps`; keep the container's numpy 1.26 (container `cv2` is built against it) and use `pyarrow==17.0.0` (pyarrow >= 18 requires numpy 2).
 
 ## Hardware requirement (learned the hard way)
@@ -62,10 +57,3 @@ bf16 noise. This validates the conversion and the model path; it is **not** a tr
 
 Note: Megatron computes cross-entropy against the labels it is handed (no internal shift), so the
 MCore side must receive next-token targets. Passing unshifted labels inflates the loss ~4x.
-
-## Native PP=2 reproduction
-
-The [2026-11-18 smoke record](../reproduction/native_pp2_smoke/README.md) includes
-the corrected multimodal tokenizer, additional attention API patch, exact extra
-dependencies, input hashes and a two-3090 forward/backward result. It is distinct
-from the earlier checkpoint-parity measurement above.

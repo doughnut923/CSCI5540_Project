@@ -34,8 +34,7 @@ from pathlib import Path
 import torch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from manifest_data import ManifestBatches
-from training_common import MainGradAdamW  # noqa: E402  (same-directory helper)
+from manifest_data import ManifestBatches  # noqa: E402  (same-directory helper)
 
 
 def env_int(name, default):
@@ -51,7 +50,8 @@ def mcore_argv(num_layers, pp_size, num_microbatches):
         "--num-query-groups", "2",
         "--group-query-attention",
         "--max-position-embeddings", "32768",
-        "--seq-length", "512",
+        # 1024: the Part C image-count cases are 607-621 tokens, above the old 512.
+        "--seq-length", "1024",
         "--micro-batch-size", "1",
         "--global-batch-size", str(num_microbatches),
         "--pipeline-model-parallel-size", str(pp_size),
@@ -84,7 +84,7 @@ def mcore_argv(num_layers, pp_size, num_microbatches):
         "--adam-beta1", "0.9",
         "--adam-beta2", "0.95",
         "--transformer-impl", "transformer_engine",
-        "--patch-tokenizer-type", "Qwen2VLTokenizer",
+        "--patch-tokenizer-type", "Qwen2Tokenizer",
         "--extra-vocab-size", "293",
         "--spatial-merge-size", "2",
         "--load", os.environ["QWEN2VL_HF_DIR"],
@@ -123,11 +123,49 @@ class Shm:
         return json.loads((self.root / name).read_text())
 
 
+class MainGradAdamW:
+    """AdamW over MCore's fp32 main_grad buffers, with fp32 master weights.
+
+    The fused path accumulates into `param.main_grad` and never writes `.grad`, so the
+    fp32 masters take those buffers as their grads and are cast back into the bf16 params
+    after every update (the same split Megatron's mixed-precision optimizer uses).
+    """
+
+    def __init__(self, model, args, total_steps):
+        self.params = [p for p in model.parameters()
+                       if getattr(p, "main_grad", None) is not None]
+        self.masters = [p.detach().float().clone().requires_grad_(True) for p in self.params]
+        self.opt = torch.optim.AdamW(
+            self.masters, lr=args.lr, betas=(args.adam_beta1, args.adam_beta2),
+            eps=args.adam_eps, weight_decay=args.weight_decay)
+        self.lr, self.min_lr = args.lr, args.min_lr
+        self.clip = args.clip_grad
+        self.total = max(1, total_steps)
+        self.steps = 0
+
+    def step(self):
+        for master, p in zip(self.masters, self.params):
+            master.grad = p.main_grad
+        lr = self.min_lr + 0.5 * (self.lr - self.min_lr) * (
+            1.0 + math.cos(math.pi * self.steps / self.total))
+        for group in self.opt.param_groups:
+            group["lr"] = lr
+        grad_norm = float(torch.nn.utils.clip_grad_norm_(self.masters, self.clip))
+        self.opt.step()
+        self.opt.zero_grad(set_to_none=True)
+        with torch.no_grad():
+            for master, p in zip(self.masters, self.params):
+                p.data.copy_(master)
+        self.steps += 1
+        return {"lr": lr, "grad_norm": grad_norm,
+                "weight_norm": float(self.masters[0].norm())}
+
 
 def main():
     num_mb = env_int("NUM_MICROBATCHES", 4)
     batches = ManifestBatches(os.environ["QWEN2VL_HF_DIR"], os.environ["MANIFEST"],
-                              os.environ["PROJ_ROOT"])
+                              os.environ["PROJ_ROOT"],
+                              batching=os.environ.get("MANIFEST_BATCHING", "bucket"))
     if env_int("PLAN_ONLY", 0):
         for step in range(env_int("PLAN_STEPS", 4)):
             built = batches.build(step, num_mb)
@@ -213,8 +251,7 @@ def main():
         fwd_bwd = get_forward_backward_func()
         shm.touch("ready_llm")
 
-    step_opt = MainGradAdamW(model, args, warmup_steps + bench_steps,
-                            master_device=os.environ.get("OPTIMIZER_DEVICE"))
+    step_opt = MainGradAdamW(model, args, warmup_steps + bench_steps)
 
     # Fingerprint of the initial weights, before any optimizer step. Equal fingerprints
     # across arms mean any loss difference comes from the computation, not the init.
@@ -415,7 +452,7 @@ def main():
                     data_iterator=_mb_iter(),
                     model=[model],
                     num_microbatches=num_mb,
-                    seq_length=step_data[0]["tokens"].shape[1],
+                    seq_length=max(b["tokens"].shape[1] for b in step_data),
                     micro_batch_size=1,
                     forward_only=False,
                 )
@@ -495,6 +532,7 @@ def main():
                         "loss": step_loss,
                         "microbatch_losses": mb_list,
                         "sample_ids": [b["sample_id"] for b in step_data],
+                        "input_observations": [b["input_observation"] for b in step_data],
                         "lr": opt_stats["lr"],
                         "grad_norm": opt_stats["grad_norm"],
                         "grad_norm_total": math.sqrt(
@@ -519,8 +557,10 @@ def main():
             shm.wait("llm_done_%d.ok" % it)
 
     if role == "llm" and rank == 0:
-        out_path = (Path(os.environ["PROJ_ROOT"]) / "runs" /
-                    "track_b_n2_pilot_measured_v1" / ("disagg_m%d_%s.jsonl" % (num_mb, tag)))
+        out_dir = Path(os.environ.get("OUT_DIR")
+                       or Path(os.environ["PROJ_ROOT"]) / "runs" /
+                       "track_b_n2_pilot_measured_v1")
+        out_path = out_dir / ("disagg_m%d_%s.jsonl" % (num_mb, tag))
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text("".join(json.dumps(r) + "\n" for r in records))
         print(json.dumps({"wrote": str(out_path), "records": len(records)}), flush=True)

@@ -105,7 +105,7 @@ python3 track_b_cluster/scripts/plot_pipeline_gantt.py --input <jsonl> [--step 0
   --output pp8_gantt.png
 ```
 
-`docs/pp8_gantt_split_v1.png` is that diagram for the PP=8 / M=4 run (job 28700).
+`docs/distrain/pp8_gantt_split_v1.png` is that diagram for the PP=8 / M=4 run (job 28700).
 
 `BENCH_STEPS=0` (default) keeps the original single-step equivalence gate behavior and
 writes no benchmark records.

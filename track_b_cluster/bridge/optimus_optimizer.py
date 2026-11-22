@@ -1,7 +1,7 @@
-"""Shared optimizer from the team DistTrain runner.
+"""Optimus-owned extension of the team DistTrain optimizer.
 
-The default step keeps the existing per-unit clipping behavior. The colocated
-runner supplies one whole-model norm so encoder replicas are counted once.
+The team implementation is left unchanged. The colocated runner needs CPU
+offload and one whole-model clipping norm so encoder replicas are counted once.
 """
 import math
 

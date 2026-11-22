@@ -1,0 +1,102 @@
+{
+  "date": "2026-11-22",
+  "upstream_commit": "a49368b8dad76700c573a550b1f2453b1bd73149",
+  "upstream_files_unchanged": true,
+  "upstream_file_count": 113,
+  "python": "3.12.7",
+  "torch": "2.6.0",
+  "cpu_tests": {
+    "pass": true,
+    "count": 10,
+    "gloo_interface": "lo0",
+    "world_sizes": [
+      2,
+      4
+    ],
+    "optimizer_updates_per_world": 3
+  },
+  "input_plan_checks": {
+    "pass": true,
+    "cases": [
+      {
+        "case": "image_count_high",
+        "distinct_samples": 12,
+        "measured_sample_visits": 16,
+        "bucket_order_sha256": "a768a849328e108fbf7aac1f70142c5ee209170dccfa41470d0d41a10d4d359c",
+        "mixed_order_sha256": "452ac370b3fed2c2de016a965f8e5fd537ef9e714ddb8b90a6bd1438863578a6",
+        "sample_multiset_sha256": "90955d2c51efe4b3817a28b86f01c328f6064f90f5b0de78bfd7be9408be9f7f"
+      },
+      {
+        "case": "image_count_low",
+        "distinct_samples": 12,
+        "measured_sample_visits": 16,
+        "bucket_order_sha256": "6de88f4eb0d28dfa362ee231b07e3175233bcf0a0709e2f52d96f46311af30b8",
+        "mixed_order_sha256": "6de88f4eb0d28dfa362ee231b07e3175233bcf0a0709e2f52d96f46311af30b8",
+        "sample_multiset_sha256": "32608cc424d86bbe61aa44d3758f7aa1f8ea30f7832ed52a044544d8a8fbe089"
+      },
+      {
+        "case": "image_count_medium",
+        "distinct_samples": 12,
+        "measured_sample_visits": 16,
+        "bucket_order_sha256": "c06a77ffad23ad730e11389efda681831c8a8f8adcb65212d099e0fead2354fb",
+        "mixed_order_sha256": "d5481160018354d4d7d92ca438f4f9499e3237cb64f55b9d0f3bca04e42df281",
+        "sample_multiset_sha256": "fe5a8f31a072fc237f9b1b2b1f82f8b68b04e17616aaaf7ee8dd445a8f6624ee"
+      },
+      {
+        "case": "resolution_high",
+        "distinct_samples": 12,
+        "measured_sample_visits": 16,
+        "bucket_order_sha256": "7d4681cd9f61cd328e57991dd31f04c3f248397ac48438c71a57e4021f065844",
+        "mixed_order_sha256": "0c875e22dc4a496ff04156815472d539e8a482d2e9e8940f3a86eb96af5e83d5",
+        "sample_multiset_sha256": "a3f227ba327c704e7c64aeaf244c9f57b135211c1f68647070630734f4195c29"
+      },
+      {
+        "case": "resolution_low",
+        "distinct_samples": 12,
+        "measured_sample_visits": 16,
+        "bucket_order_sha256": "9d10616025212296e84e7975bb2991c3db72e5adbc6e8a4be977249810ed01b9",
+        "mixed_order_sha256": "9d10616025212296e84e7975bb2991c3db72e5adbc6e8a4be977249810ed01b9",
+        "sample_multiset_sha256": "ff0554e4a9545d0afbc1e1083454cf2c47fcb2e496b4f19c6cff303c4d188688"
+      },
+      {
+        "case": "resolution_medium",
+        "distinct_samples": 12,
+        "measured_sample_visits": 16,
+        "bucket_order_sha256": "6dc257c292b7b7995ffa68a84daf05a204b4cece63e17466f0d1ad8f8e929605",
+        "mixed_order_sha256": "84c0ffbd6f537e34df52925103e893cb8529410ac62ec757201d065ace8df75c",
+        "sample_multiset_sha256": "9baf3dbed7ed9c18414fc049205008f38a14077e3941200d90831130cf18a1f4"
+      }
+    ],
+    "warmup_steps": 1,
+    "measured_steps": 8,
+    "microbatches": 2
+  },
+  "historical_gpu_evidence_recheck": {
+    "pass": true,
+    "cases": 6,
+    "record": "../heterogeneity/validation.json"
+  },
+  "new_gpu_validation": {
+    "status": "not_run",
+    "reason": "course SSH master connection expired"
+  },
+  "cross_backend_performance_comparable": false,
+  "remaining_differences": [
+    "physical GPU count",
+    "optimizer state placement",
+    "clipping scope",
+    "layout-dependent initial weights"
+  ],
+  "source_sha256": {
+    "bridge/optimus_config.py": "da16b6666367630a66a9ec9563f064cf62bcfbc1776b6c31c4f9db5599cc452e",
+    "bridge/optimus_experiment.py": "1cb5ea5a4435f42a32638646234e8b91dea2f3bc1f3c8f4234ffcf6157cf6bec",
+    "bridge/optimus_optimizer.py": "e83801eec64ad4be9777b9871000508da8538dc8c37038ec0a2219e79e5c09c0",
+    "bridge/optimus_qwen.py": "6d5f14631efa4f687af8fd7262985c0050018ca1bae9e6817f191838ba766757",
+    "bridge/test_optimus.py": "020c5f1b65d06e003fd4fe1c00db5a1a4a9db885383fb9a06e75d6287c2970dc",
+    "scripts/prepare_optimus_suite.py": "3c111e222775d1138e21b9a4931096027474520cf69ee2216ad17b35f9b6c680",
+    "scripts/compare_optimus_validation.py": "c926a072d72a1b7a77d6b54ad7761f2faf9c7cb1b65c1f7a841d3ab0a7b3e0f2",
+    "scripts/report_heterogeneity_suite.py": "af71ea0a4ad80be4222c27fc13a89027641cf362dee3086ca7766c3cd0a6f88a",
+    "scripts/run_heterogeneity_suite.sh": "39a46e5253ee906429d9b52efb445b978e423cf99cb771ac18e90650ae250650",
+    "slurm/optimus_pp.sbatch": "2503b166543f3d4148cad579b2b36181a5f37af1cd64948da0d4e6e4b6b5fd8c"
+  }
+}

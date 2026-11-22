@@ -77,7 +77,7 @@ def mcore_argv(seq_length):
         "--adam-beta1", "0.9",
         "--adam-beta2", "0.95",
         "--transformer-impl", "transformer_engine",
-        "--patch-tokenizer-type", "Qwen2VLTokenizer",
+        "--patch-tokenizer-type", "Qwen2Tokenizer",
         "--extra-vocab-size", "293",
         "--spatial-merge-size", "2",
         "--load", os.environ["QWEN2VL_HF_DIR"],

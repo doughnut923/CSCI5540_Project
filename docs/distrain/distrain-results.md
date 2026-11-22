@@ -21,6 +21,7 @@ Both units step AdamW over MCore's fp32 `main_grad`; see `bridge/disagg_units.py
 | config | GPUs | measured steps | step time mean / p50 / p95 (s) | samples/s | bubble | peak GPU mem | skipped / non-finite |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `ENC=1 + LLM_PP=2` | 3 | 30 (3 runs x 10) | 0.926 / 0.932 / 1.022 | 4.32 | 30.0 % | 20.68 GiB | 0 / 0 |
+| `ENC=2 + LLM_PP=2` (encoder DP=2, grads exchanged) | 4 | 10 | 1.115 / 1.103 / 1.167 | 3.59 | 41.8 % | 20.68 GiB | 0 / 0 |
 | `ENC=1 + LLM_PP=4` | 5 | 10 | **0.837 / 0.830 / 0.960** | **4.78** | 57.9 % | 19.76 GiB | 0 / 0 |
 
 - Source records: `runs/track_b_n2_pilot_measured_v1/disagg_m4_a3all.jsonl` (+ `_summary.json`),
@@ -29,13 +30,21 @@ Both units step AdamW over MCore's fp32 `main_grad`; see `bridge/disagg_units.py
   warmup (2 steps) discarded.
 - `samples/s` = sum(samples) / sum(step time) over measured steps, 4 samples per step.
 - Bubble is instrumented over both units: `(ranks * step_time - sum(busy intervals)) / (ranks *
-  step_time)`, ranks = encoder ranks + LLM stages. Definition in `docs/pipeline-bubble.md`.
+  step_time)`, ranks = encoder ranks + LLM stages. Definition in `../pipeline-bubble.md`.
 - Both rows train: inside a run the loss peaks at 1.56-1.59 when the plan reaches the 424-token
   group and ends at 0.26 (`PP=4`) / 0.18 (`PP=2`), and both `weight_norm` and `enc_weight_norm`
   move.
 
-Figures: `docs/disagg_m4_a2run20_step10.png` (`ENC=1+PP=2`, step 10),
-`docs/disagg_m4_b1pp4_step5.png` (`ENC=1+PP=4`, step 5).
+Figures: `disagg_m4_a2run20_step10.png` (`ENC=1+PP=2`, step 10),
+`disagg_m4_d2pp2_step2.png` (`ENC=2+PP=2`, step 2, with the gradient all-reduce),
+`disagg_m4_b1pp4_step5.png` (`ENC=1+PP=4`, step 5).
+
+**Encoder DP=2 is a net loss here.** Same PP, same data, one extra GPU: p50 1.103 s vs 0.932 s
+(+18 %) and 3.59 vs 4.32 samples/s. The measured all-reduce is 0.41-0.47 s per step, i.e. 40 % of
+the step, and the Gantt shows both encoder ranks sitting in the grey bar while the LLM pipeline
+is already finished. That is the 2.6 GB of fp32 vision gradients crossing a link with no P2P.
+Note this run measured 0.41-0.47 s, not the 1.13 s recorded in section 3 on a busier node — same
+config, different node load, so quote the range rather than a single exchange cost.
 
 **Reading the two rows together:** two extra stages cut step time 10 % but double the bubble
 (30 % -> 58 %). With one encoder rank feeding the pipeline, every added stage adds a place to
@@ -52,7 +61,7 @@ sits at its initial ~3.0. Compare the timing columns only.
 | fused PP=4 (encoder in stage 0) | 4 | 10 | 0.792 / 0.770 / 0.922 | 5.05 | 60.1 % |
 | DistTrain `ENC=1 + LLM_PP=4` (section 1) | 5 | 10 | 0.837 / 0.830 / 0.960 | 4.78 | 57.9 % |
 
-Figure: `docs/fused_pp4_step5.png` (step 5, 0.756 s, busy 39.5 %, bubble 60.5 %).
+Figure: `fused_pp4_step5.png` (step 5, 0.756 s, busy 39.5 %, bubble 60.5 %).
 
 The fused row is faster in wall clock and uses one GPU fewer, but it is **not** a like-for-like
 training number: it has no optimizer step. The measured optimizer cost in the DistTrain arm is
@@ -80,24 +89,61 @@ Seeded CPU init, one fixed sample, forward+backward only, no optimizer, and (unl
 | disagg 2 enc + PP=2, streamed | 4 | 0.695 | 54-59 % | placement only |
 | disagg 2 enc + PP=2, fp32 all-reduce | 4 | 1.19 | — | exchange alone 1.13 s |
 
-Figures: `docs/pp8_gantt_split_v1.png` (fused PP=8), `docs/disagg_pp4_enc4.png` and
-`docs/disagg_pp4_enc4_gradsync.png` (4 encoder ranks, with and without the exchange),
-`docs/disagg_overlap_4gpu_nosync.png` (2 encoder ranks, streamed).
+Figures: `pp8_gantt_split_v1.png` (fused PP=8), `disagg_pp4_enc4.png` and
+`disagg_pp4_enc4_gradsync.png` (4 encoder ranks, with and without the exchange),
+`disagg_overlap_4gpu_nosync.png` (2 encoder ranks, streamed).
 
 Encoder DP does not pay on this hardware: 2.6 GB of fp32 vision gradients, ~300 small
-collectives, no P2P between these 3090s (~5.3 GB/s host-staged), i.e. 1.13 s at N=2 and 1.72 s at
-N=4. Sync-free disaggregation is 2x faster than the fused baseline; with the naive exchange it
-is 2x slower. Bucketed-bf16 exchange is the cheapest untried fix (workpackage B2).
+collectives, no P2P between these 3090s (~5.3 GB/s host-staged). The exchange measured 1.13 s at
+N=2 in the older run below and 0.41-0.47 s at N=2 in the training run of section 1, depending on
+node load; either way the sync-free disaggregation is 2x faster than the fused baseline while
+with the naive exchange it is 1.4-2x slower. Bucketed-bf16 exchange is the cheapest untried fix
+(workpackage B2).
 
-## 4. Other arms and integration status
+## 4. B/C workloads
+
+Run on this arm at 3 GPUs, 28 layers, M=2. Full tables, the mixed-length probe and the caveats live
+in `docs/distrain/distrain-bc-suite.md`. Two facts shape every row: the arm buckets samples by
+length (the MCore/PMP path rejects a step that carries two lengths), and step cost is flat up to
+about 254 tokens, so it tracks sequence length rather than image count.
+
+Part B resolution datasets, **full size** — 750 images each, 375 two-image samples, all samples
+consumed:
+
+| dataset | per-sample tokens mean / var | step mean / p50 / p95 (s) | tokens/s | bubble |
+| --- | --- | --- | --- | --- |
+| Low (750 × 256) | 162.0 / 0 | 0.511 / 0.510 / 0.534 | **634** | 40.3 % |
+| Medium (128/256/384) | 163.0 / 6 785 | 0.544 / 0.528 / 0.610 | 599 | 41.4 % |
+| High (128/384) | 164.0 / 13 516 | 0.550 / 0.526 / 0.613 | 596 | 41.4 % |
+
+Equal mean tokens, 7.6 % slower per step at high variance, 6 % fewer tokens per second — the mixture
+pays for its 425-token steps (+18 % over 195 tokens) and saves nothing at 83 tokens.
+
+Six-case suite, 12-sample pilot cases (the resolution rows reproduce Part B's ratios on 24 of its
+750 images and are superseded by the full run above):
+
+| case | seq lengths | step p50 | samples/s | bubble |
+| --- | --- | --- | --- | --- |
+| resolution_low *(pilot)* | 195 | 0.498 s | 4.03 | 41.2 % |
+| resolution_medium *(pilot)* | 139, 195, 254 | 0.543 s | 3.01 | 44.6 % |
+| resolution_high *(pilot)* | 83, 254 | 0.513 s | 3.19 | 43.4 % |
+| image_count_low | 607 | 0.753 s | 2.55 | 46.7 % |
+| image_count_medium | 607, 609, 611 | 0.765 s | 2.43 | 46.9 % |
+| image_count_high | 607, 609, 613, 621 | 0.719 s | 2.47 | 46.4 % |
+
+Every row trains: no skipped or non-finite step and both weight norms move. Not comparable with the
+Optimus pilot's numbers or with sections 1-2 — different GPU count, optimizer placement and
+batching.
+
+## 5. Not measured
 
 | arm | status |
 | --- | --- |
 | BigMac VE executor (`MODE=1`, `pp_executor`) | fails with no output; no BigMac number exists |
-| Optimus-inspired PP prototype | Now implemented on this integration branch; six-case matched-placement correctness pilot passed. See [protocol and limitations](../track_b_cluster/HETEROGENEITY.md). Its 28 layers, M=2, two GPUs and CPU optimizer offload differ from the tables above; no cross-system throughput comparison is claimed. |
+| Optimus | no code in this repository (only a mention in `AGENTS.md`) |
 | encoder-as-pipeline-stages | not implemented (needs the ViT layer split); est. 0.28-0.36 s |
 
-## 5. Caveats that apply to any table built from this
+## 6. Caveats that apply to any table built from this
 
 1. **Placement-only rows are not training results.** They have no optimizer step and, where
    marked, no encoder gradient exchange, so they are not a valid training configuration.
@@ -120,8 +166,15 @@ is 2x slower. Bucketed-bf16 exchange is the cheapest untried fix (workpackage B2
    interconnect, not of the design.
 8. **24-sample dataset**, repeated within a run. These are efficiency measurements, not a
    convergence result.
+9. **The recorded rows' `sample_ids` do not line up with the plan the code prints today.** They match
+   `ManifestBatches.plan(step + 2)` exactly for all ten steps of `disagg_m4_d2pp2.jsonl` — the offset
+   equals those runs' two warmup steps. The plan code is unchanged since `f983355` and prints the
+   same 20-step plan at every commit behind these rows, so the shift came from the run-time
+   environment and is unexplained. The rows do not record a sequence length, so this affects sample
+   labels only; timings, losses and gradient norms are the runs' own measurements. Runs recorded
+   from the B/C suite onward log the plan they consumed.
 
-## 6. Reproduce
+## 7. Reproduce
 
 ```sh
 # training-valid DistTrain, 5 GPUs

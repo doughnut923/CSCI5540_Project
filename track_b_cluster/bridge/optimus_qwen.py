@@ -17,12 +17,13 @@ import time
 import torch
 import torch.distributed as dist
 
-from manifest_data import ManifestBatches
 from optimus_runtime import (PlanExecutor, Transport, collect_main_grads,
                              global_grad_norm, sample_indices, sync_encoder_grads, zero_grads)
 from optimus_schedule import choose_plan, make_plan
-from pp2_equivalence import mcore_argv
-from training_common import MainGradAdamW
+from optimus_config import model_arguments
+from optimus_experiment import (OptimusBatches, check_plan_config, check_step_inputs,
+                                file_sha256)
+from optimus_optimizer import MainGradAdamW
 
 
 class QwenAdapter:
@@ -131,6 +132,10 @@ def main():
     p.add_argument("--warmup-steps", type=int, default=1)
     p.add_argument("--microbatches", type=int, default=4)
     p.add_argument("--layers", type=int, default=28)
+    p.add_argument("--seq-length", type=int, default=1024,
+                   help="Match the team B/C runner's maximum supported sequence length")
+    p.add_argument("--input-plan", type=Path,
+                   help="Require the audited sample plan prepared before GPU execution")
     p.add_argument("--memory-headroom-gb", type=float, default=2.0)
     p.add_argument("--optimizer-device", choices=("cuda", "cpu"), default="cuda",
                    help="CPU offloads FP32 master weights and AdamW states for the two-GPU quota")
@@ -160,7 +165,7 @@ def main():
     if opts.deterministic:
         os.environ.update(NCCL_ALGO="Ring", NVTE_ALLOW_NONDETERMINISTIC_ALGO="0",
                           CUBLAS_WORKSPACE_CONFIG=":4096:8")
-    sys.argv = ["optimus_qwen"] + mcore_argv(512)
+    sys.argv = ["optimus_qwen"] + model_arguments(opts.seq_length)
     if opts.deterministic:
         sys.argv.append("--deterministic-mode")
     from megatron.training.initialize import initialize_megatron
@@ -194,8 +199,12 @@ def main():
                            "or a shared memory optimization. Per-rank estimates: " + str(memory_by_rank))
     optimizer = MainGradAdamW(model, args, opts.warmup_steps + opts.steps,
                              master_device=opts.optimizer_device)
-    batches = ManifestBatches(str(opts.model_dir), str(opts.manifest), os.environ["PROJ_ROOT"],
-                              batching=opts.batching)
+    input_plan = json.loads(opts.input_plan.read_text()) if opts.input_plan else None
+    if input_plan:
+        check_plan_config(input_plan, opts.manifest, opts.batching, opts.microbatches,
+                          opts.warmup_steps, opts.steps, opts.seq_length)
+    batches = OptimusBatches(str(opts.model_dir), str(opts.manifest), os.environ["PROJ_ROOT"],
+                             batching=opts.batching, input_plan=input_plan)
     empty_video = torch.zeros((0, 3), dtype=torch.long, device=device)
     profiles = {}
     config = dict(vars(opts), implementation="optimus-inspired-pp-whole-encoder",
@@ -203,6 +212,9 @@ def main():
                   encoder_parallelism={"pp": 1, "tp": 1, "dp": world},
                   initialization="seeded-random; config/tokenizer from model-dir",
                   manifest_sha256=hashlib.sha256(opts.manifest.read_bytes()).hexdigest(),
+                  input_plan_sha256=file_sha256(opts.input_plan) if input_plan else None,
+                  sample_order_sha256=input_plan["sample_order_sha256"] if input_plan else None,
+                  sample_multiset_sha256=input_plan["sample_multiset_sha256"] if input_plan else None,
                   torch=torch.__version__, gpu=torch.cuda.get_device_name(),
                   memory_estimates=memory_by_rank,
                   optimizer={"name": "AdamW", "lr": args.lr, "min_lr": args.min_lr,
@@ -212,7 +224,8 @@ def main():
                   model_config_sha256=hashlib.sha256((opts.model_dir / "config.json").read_bytes()).hexdigest(),
                   code_sha256={name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
                                for name in ("optimus_qwen.py", "optimus_runtime.py", "optimus_schedule.py",
-                                            "manifest_data.py", "training_common.py", "pp2_equivalence.py")},
+                                            "manifest_data.py", "optimus_optimizer.py", "optimus_config.py",
+                                            "optimus_experiment.py", "pp2_equivalence.py")},
                   pmp_commit=os.environ.get("PMP_COMMIT", "unrecorded"),
                   mcore_commit=os.environ.get("MCORE_COMMIT", "unrecorded"),
                   source_commit=os.environ.get("SOURCE_COMMIT", "unrecorded"),
@@ -223,6 +236,10 @@ def main():
     for step in range(opts.warmup_steps + opts.steps):
         data = batches.step_tensors(step, opts.microbatches, device,
                                     qwen.get_ltor_masks_and_position_ids, empty_video)
+        if max(b["tokens"].shape[1] for b in data) > opts.seq_length:
+            raise ValueError("processed sequence exceeds --seq-length")
+        if input_plan:
+            check_step_inputs(input_plan, step, data)
         adapter = QwenAdapter(model, data)
         executor = PlanExecutor(adapter, transport, device)
         signature = sample_signature(data)

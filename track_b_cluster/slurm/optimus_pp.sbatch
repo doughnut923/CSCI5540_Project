@@ -47,6 +47,7 @@ hostname
 nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv
 extra_args=()
 if [[ ${DETERMINISTIC:-1} == 1 ]]; then extra_args+=(--deterministic); fi
+if [[ -n ${INPUT_PLAN:-} ]]; then extra_args+=(--input-plan "$INPUT_PLAN"); fi
 singularity exec --nv --home "$WS/container-home" \
   --bind "$BIND_ROOT:$BIND_ROOT" \
   --bind /lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1 \
@@ -55,6 +56,7 @@ singularity exec --nv --home "$WS/container-home" \
   "$PROJ_ROOT/track_b_cluster/bridge/optimus_qwen.py" \
   --manifest "$MANIFEST" --model-dir "$MODEL_DIR" --output-dir "$OUTPUT_DIR" \
   --schedule "$MODE" --layers "${NUM_LAYERS:-28}" \
+  --seq-length "${SEQ_LENGTH:-1024}" \
   --microbatches "${NUM_MICROBATCHES:-4}" \
   --warmup-steps "${WARMUP_STEPS:-1}" --steps "${BENCH_STEPS:-3}" \
   --validation-samples "${VALIDATION_SAMPLES:-0}" \

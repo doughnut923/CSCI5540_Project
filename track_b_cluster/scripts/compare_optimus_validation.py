@@ -13,7 +13,8 @@ def compare(root, rtol=1e-3, atol=1e-5):
                 "optimizer_device", "llm_parallelism", "microbatches", "layers", "steps"):
         if configs[0][key] != configs[1][key]:
             errors.append("configuration mismatch: " + key)
-    for key in ("batching", "encoder_placement", "deterministic"):
+    for key in ("batching", "encoder_placement", "deterministic", "seq_length",
+                "input_plan_sha256", "sample_order_sha256", "sample_multiset_sha256"):
         if configs[0].get(key) != configs[1].get(key):
             errors.append("configuration mismatch: " + key)
     rows = [[json.loads(s) for s in (p / "metrics.jsonl").read_text().splitlines()]
