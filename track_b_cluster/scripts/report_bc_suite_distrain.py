@@ -36,6 +36,9 @@ def summarise(rows):
     losses = [r["loss"] for r in rows]
     weights = [r["weight_norm"] for r in rows]
     enc_weights = [r["enc_weight_norm"] for r in rows if r.get("enc_weight_norm") is not None]
+    image_grads = [value for r in rows
+                   for values in (r.get("image_embedding_grad_norms") or {}).values()
+                   for value in values]
     return {
         "steps": len(rows),
         "step_time_s": {"mean": statistics.mean(times), "p50": percentile(ordered, 50),
@@ -56,6 +59,7 @@ def summarise(rows):
                                                   for o in observations)
                                    if observations else None),
             "samples_consumed": len({s for r in rows for s in r["sample_ids"]}),
+            "images_seen": sum(o["image_count"] for o in observations),
         },
         "correctness": {
             "skipped_steps": sum(1 for r in rows if r.get("skipped")),
@@ -65,6 +69,9 @@ def summarise(rows):
             "llm_weight_norm_moved": weights[0] != weights[-1],
             "enc_weight_norm_moved": (enc_weights[0] != enc_weights[-1]
                                       if enc_weights else None),
+            # One value per image slot: every image reached the model, not just the processor.
+            "image_gradient_checks": len(image_grads),
+            "image_gradient_checks_positive": sum(1 for value in image_grads if value > 0),
         },
     }
 
@@ -84,11 +91,16 @@ def report(suite_root, runs_root):
         inputs = summary["inputs"]
         coverage = (inputs["image_counts"] == audit["image_counts"]
                     and set(inputs["sequence_lengths"]) <= set(audit["sequence_lengths"]))
+        checks = summary["correctness"]["image_gradient_checks"]
+        grads_ok = (checks == 0 or (checks == summary["correctness"]
+                                    ["image_gradient_checks_positive"]
+                                    and checks == summary["inputs"]["images_seen"]))
         correct = (not summary["correctness"]["skipped_steps"]
                    and not summary["correctness"]["nan_or_inf_steps"]
                    and summary["correctness"]["loss_finite"]
                    and summary["correctness"]["llm_weight_norm_moved"]
-                   and summary["correctness"]["enc_weight_norm_moved"] is not False)
+                   and summary["correctness"]["enc_weight_norm_moved"] is not False
+                   and grads_ok)
         results.append({"case": case["name"], "axis": case["axis"], "jsonl": str(found[0]),
                         "input_coverage_pass": coverage, "correctness_pass": correct,
                         "audit": {"image_counts": audit["image_counts"],
