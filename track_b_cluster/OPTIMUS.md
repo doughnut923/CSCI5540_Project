@@ -34,7 +34,8 @@ first implementation of the paper's colocation and bubble-filling idea:
   fill dependency-safe idle intervals; one GPU runs one compute task at a time.
 - A no-update calibration pass measures encoder/stage forward/backward calls on
   actual processed shapes. Placement candidates are evaluated with these costs.
-  Encoder costs measured on rank 0 are assumed equal on identical replica GPUs.
+  Each encoder measurement is reused across the identical replicas. The
+  round-robin path calibrates on the same owners as training.
 - A separate P2P channel handles each direction of encoder and LLM transfers.
   Microbatch IDs are retained; no sample order is changed.
 - Encoder forward precedes that microbatch's LLM forward; encoder backward waits
@@ -75,6 +76,10 @@ python -m unittest -v test_optimus
 ```
 
 ## GPU smoke test
+
+For the 28-layer single-node PP=8 layout and its correctness check, use the
+[eight-GPU protocol](OPTIMUS_EXPERIMENTS.md#single-node-pp8-correctness-check).
+The recorded GPU evidence below uses two GPUs.
 
 Use the existing pinned native environment (SETUP.md plus the PR #4 corrections).
 The course queue verified for this account is `csci5540`, with a per-user limit

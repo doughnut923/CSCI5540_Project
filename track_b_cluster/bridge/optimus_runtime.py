@@ -25,6 +25,8 @@ class Transport:
         self.device = device
         self.groups = {}
         self.pending = []
+        rank = dist.get_rank()
+        signal = torch.zeros(1, device=device) if device.type == "cuda" else None
         # All ranks must construct groups in the same order, including outsiders.
         for channel, pairs in (
             ("forward", [(r, r + 1) for r in range(world - 1)]),
@@ -33,7 +35,16 @@ class Transport:
             ("encoder_grad", [(0, r) for r in range(1, world)]),
         ):
             for pair in pairs:
-                self.groups[(channel, pair)] = dist.new_group(list(pair))
+                group = dist.new_group(list(pair))
+                self.groups[(channel, pair)] = group
+                # Initialize each NCCL P2P communicator in group order. Lazy
+                # rendezvous can block a send while its peer is on another channel.
+                if signal is not None:
+                    src, dst = reversed(pair) if channel in ("backward", "encoder") else pair
+                    if rank == src:
+                        dist.send(signal, dst, group=group)
+                    elif rank == dst:
+                        dist.recv(signal, src, group=group)
 
     def group(self, channel, a, b):
         return self.groups[(channel, tuple(sorted((a, b))))]

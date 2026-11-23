@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run inside ONE two-GPU allocation with the prepared native environment.
+# Run both arms inside the same allocation with the prepared native environment.
 set -euo pipefail
 : "${SUITE_ROOT:?Directory containing generated suite.json}"
 : "${OUTPUT_ROOT:?New directory for all run results}"

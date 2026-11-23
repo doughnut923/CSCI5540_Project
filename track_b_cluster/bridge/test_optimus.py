@@ -17,7 +17,7 @@ from optimus_runtime import (PlanExecutor, Transport, collect_main_grads,
 from optimus_schedule import choose_plan, make_plan, validate_plan
 from optimus_optimizer import MainGradAdamW
 from manifest_data import ManifestBatches
-from optimus_config import model_arguments
+from optimus_config import llm_layer_counts, model_arguments, whole_encoder_config
 from optimus_experiment import (OptimusBatches, make_input_plan, check_step_inputs,
                                 interleave_input_plan)
 from optimus_profiling import StepProfiler
@@ -82,11 +82,16 @@ def worker(rank, path, result_dir, world):
     optimizer = MainGradAdamW(joint, args, 3)
     ref_opt = MainGradAdamW(reference, args, 3)
     torch.manual_seed(64)
-    data = [(torch.randn(m % 3 + 1, 4), torch.randn(m % 3 + 1, 3)) for m in range(5)]
+    count = max(5, world)
+    data = [(torch.randn(m % 3 + 1, 4), torch.randn(m % 3 + 1, 3)) for m in range(count)]
     # Unequal ownership, a rank with no encoder work, and profile-selected work.
-    plans = [make_plan(world, [0] * 5, costs(world, 5), "serial"),
-             make_plan(world, [0] + [world - 1] * 4, costs(world, 5)),
-             choose_plan(world, 5, costs(world, 5))]
+    timings = costs(world, count)
+    plans = [make_plan(world, [0] * count, timings, "serial"),
+             make_plan(world, [0] + [world - 1] * (count - 1), timings)]
+    if world == 8:
+        plans.append(make_plan(world, list(range(world)), timings))
+    else:
+        plans.append(choose_plan(world, count, timings))
     max_error = 0.0
     for plan in plans:
         zero_grads(joint)
@@ -180,6 +185,35 @@ class PlanTests(unittest.TestCase):
         self.assertEqual(before[before.index("--patch-tokenizer-type") + 1], "Qwen2Tokenizer")
         self.assertEqual(ours[ours.index("--seq-length") + 1], "1024")
 
+    def test_pp8_preserves_28_language_layers_and_full_encoder(self):
+        self.assertEqual(llm_layer_counts(28, 2), (14, 14))
+        self.assertEqual(llm_layer_counts(28, 4), (7, 7, 7, 7))
+        with self.assertRaises(ValueError):
+            llm_layer_counts(28, 5)
+        counts = llm_layer_counts(28, 8)
+        self.assertEqual(counts, (2, 4, 4, 4, 4, 4, 4, 2))
+        with patch.dict("os.environ", {"QWEN2VL_HF_DIR": "unused", "PP_SIZE": "8", "NUM_LAYERS": "28"}):
+            arguments = model_arguments(layer_counts=counts)
+        self.assertEqual(arguments[arguments.index("--num-layers") + 1], "28")
+        for option in ("--decoder-first-pipeline-num-layers", "--decoder-last-pipeline-num-layers"):
+            self.assertEqual(arguments[arguments.index(option) + 1], "2")
+
+        def pmp_vision_config(args, config):
+            config.num_layers = 32
+            return config
+
+        qwen = SimpleNamespace(get_vision_model_config=pmp_vision_config)
+        llm = SimpleNamespace(num_layers=28, pipeline_model_parallel_size=8,
+                              num_layers_in_first_pipeline_stage=2,
+                              num_layers_in_last_pipeline_stage=2)
+        encoder = whole_encoder_config(qwen, None, llm)
+        self.assertEqual((encoder.num_layers, encoder.pipeline_model_parallel_size), (32, 1))
+        self.assertIsNone(encoder.num_layers_in_first_pipeline_stage)
+        self.assertIsNone(encoder.num_layers_in_last_pipeline_stage)
+        self.assertEqual((llm.num_layers, llm.pipeline_model_parallel_size), (28, 8))
+        self.assertEqual((llm.num_layers_in_first_pipeline_stage,
+                          llm.num_layers_in_last_pipeline_stage), (2, 2))
+
     def test_bucket_plan_requires_complete_coverage(self):
         counts = [1, 2, 4, 8] * 3
         fixture = {"samples": [{"sample_id": str(i), "images": [{}] * count,
@@ -264,7 +298,7 @@ class PlanTests(unittest.TestCase):
                 torch.testing.assert_close(seen_targets[0], torch.tensor([[-100, 9, 2, -100]]))
 
     def test_varied_worlds_and_unequal_work(self):
-        for world in (2, 3, 4):
+        for world in (2, 3, 4, 8):
             for count in (1, 5, 8):
                 best = choose_plan(world, count, costs(world, count))
                 validate_plan(best)
@@ -285,8 +319,8 @@ class PlanTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             make_plan(2, [2], costs(2, 1))
 
-    def test_two_process_training_matches_unpartitioned_reference(self):
-        for world in (2, 4):
+    def test_pipeline_training_matches_unpartitioned_reference(self):
+        for world in (2, 4, 8):
             with self.subTest(world=world), tempfile.TemporaryDirectory(prefix="optimus-test-") as tmp:
                 mp.spawn(worker, args=(str(Path(tmp, "rendezvous")), tmp, world),
                          nprocs=world, join=True)

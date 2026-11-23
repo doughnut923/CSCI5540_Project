@@ -20,7 +20,7 @@ import torch.distributed as dist
 from optimus_runtime import (PlanExecutor, Transport, collect_main_grads,
                              global_grad_norm, sample_indices, sync_encoder_grads, zero_grads)
 from optimus_schedule import choose_plan, make_plan
-from optimus_config import model_arguments
+from optimus_config import llm_layer_counts, model_arguments, whole_encoder_config
 from optimus_experiment import (OptimusBatches, check_plan_config, check_step_inputs,
                                 file_sha256)
 from optimus_optimizer import MainGradAdamW
@@ -78,15 +78,49 @@ class QwenAdapter:
         return (output.float().reshape(-1) * mask).sum() / mask.sum()
 
 
-def build_model(qwen, args, rank, world, device):
-    model = qwen.model_provider(pre_process=rank == 0, post_process=rank == world - 1)
+def build_uneven_qwen(qwen, args, pre_process, post_process):
+    # The pinned provider copies the decoder split into its vision config.
+    # Construct with the same PMP specs and isolate the full vision tower here.
+    qwen.build_tokenizer(args)
+    args.rotary_seq_len_interpolation_factor = None
+    language_config = qwen.core_transformer_config_from_args(args, qwen.Qwen2VLTransformerConfig)
+    vision_config = whole_encoder_config(qwen, args, language_config)
+    projector_config = qwen.get_vision_projection_config(
+        deepcopy(language_config), vision_config.hidden_size, args.spatial_merge_size)
+    model = qwen.Qwen2VLModel(
+        language_transformer_config=language_config,
+        language_transformer_layer_spec=qwen.get_gpt_layer_with_transformer_engine_spec(args.qk_layernorm),
+        language_vocab_size=args.padded_vocab_size,
+        language_max_sequence_length=args.max_position_embeddings,
+        vision_transformer_config=vision_config,
+        vision_transformer_layer_spec=qwen.get_qwen2vl_vision_model_spec(),
+        drop_vision_class_token=False,
+        vision_projection_config=projector_config,
+        vision_projection_layer_spec=qwen.get_mlp_module_spec(add_norm=False).submodules,
+        vision_projection_type="mlp",
+        language_position_embedding_type=args.position_embedding_type,
+        language_rotary_percent=args.rotary_percent,
+        language_rotary_base=args.rotary_base,
+        pre_process=pre_process, post_process=post_process,
+        fp16_lm_cross_entropy=args.fp16_lm_cross_entropy,
+        language_share_embeddings_and_output_weights=not args.untie_embeddings_and_output_weights,
+    )
+    model.freeze(freeze_language_model=args.freeze_LM, freeze_vision_model=args.freeze_ViT,
+                 freeze_vision_projection=False)
+    return model
+
+
+def build_model(qwen, args, rank, layer_counts, device):
+    pre_process, post_process = rank == 0, rank == len(layer_counts) - 1
+    if len(set(layer_counts)) == 1:
+        model = qwen.model_provider(pre_process=pre_process, post_process=post_process)
+    else:
+        model = build_uneven_qwen(qwen, args, pre_process, post_process)
     if model.vision_model is None:
         # Same constructor/configuration as the pinned team model_provider; only
         # placement differs. No duplicate language model is built on this rank.
         from megatron_patch.model.qwen2_vl.visionmodel import Qwen2VisionModel
-        vc = qwen.get_vision_model_config(args, deepcopy(model.config))
-        vc.pipeline_model_parallel_size = 1
-        vc.first_pipeline_num_layers = None
+        vc = whole_encoder_config(qwen, args, model.config)
         pc = qwen.get_vision_projection_config(deepcopy(model.config), vc.hidden_size,
                                                args.spatial_merge_size)
         model.vision_model = Qwen2VisionModel(
@@ -111,7 +145,8 @@ def sample_signature(data):
                   tuple(b["tokens"].shape)) for b in data)
 
 
-def profile_costs(result, world, count):
+def profile_costs(result, world, owners):
+    count = len(owners)
     costs = {kind: [[None] * count for _ in range(world)] for kind in ("EF", "EB", "F", "B")}
     for iv in result["compute_intervals"]:
         # CUDA events cover model calls only, excluding explicit P2P waits.
@@ -119,8 +154,8 @@ def profile_costs(result, world, count):
         costs[iv["kind"]][iv["rank"]][iv["microbatch"]] = max(
             (iv["end_s"] - iv["start_s"]) * 1000, 1e-6)
     for kind in ("EF", "EB"):
-        for rank in range(1, world):
-            costs[kind][rank] = list(costs[kind][0])
+        per_microbatch = [costs[kind][owner][m] for m, owner in enumerate(owners)]
+        costs[kind] = [per_microbatch[:] for _ in range(world)]
     return costs
 
 
@@ -156,8 +191,10 @@ def main():
     if not math.isfinite(opts.memory_headroom_gb) or opts.memory_headroom_gb < 0:
         p.error("memory headroom must be finite and nonnegative")
     world = int(os.environ.get("WORLD_SIZE", "1"))
-    if world < 2 or opts.layers % world:
-        p.error("requires PP >= 2 and a layer count divisible by PP")
+    try:
+        layer_counts = llm_layer_counts(opts.layers, world)
+    except ValueError as error:
+        p.error(str(error))
     out = opts.output_dir.resolve()
     if int(os.environ.get("RANK", "0")) == 0:
         out.mkdir(parents=True, exist_ok=False)
@@ -168,7 +205,7 @@ def main():
     if opts.deterministic:
         os.environ.update(NCCL_ALGO="Ring", NVTE_ALLOW_NONDETERMINISTIC_ALGO="0",
                           CUBLAS_WORKSPACE_CONFIG=":4096:8")
-    sys.argv = ["optimus_qwen"] + model_arguments(opts.seq_length)
+    sys.argv = ["optimus_qwen"] + model_arguments(opts.seq_length, layer_counts=layer_counts)
     if opts.deterministic:
         sys.argv.append("--deterministic-mode")
     from megatron.training.initialize import initialize_megatron
@@ -184,7 +221,15 @@ def main():
     rank = dist.get_rank()
     device = torch.device("cuda", torch.cuda.current_device())
     args = get_args()
-    model = build_model(qwen, args, rank, world, device)
+    model = build_model(qwen, args, rank, layer_counts, device)
+    language_layers = [layer.layer_number for layer in model.language_model.decoder.layers]
+    first_layer = 1 + sum(layer_counts[:rank])
+    expected = list(range(first_layer, first_layer + layer_counts[rank]))
+    if language_layers != expected:
+        raise RuntimeError(f"rank {rank}: LLM layers {language_layers}, expected {expected}")
+    vision_layers = [layer.layer_number for layer in model.vision_model.decoder.layers]
+    if vision_layers != list(range(1, model.vision_model.config.num_layers + 1)):
+        raise RuntimeError(f"rank {rank}: incomplete vision encoder layers {vision_layers}")
     transport = Transport(world, device)
     # AdamW needs FP32 masters and two moments in addition to the model and
     # main_grad already allocated. Check every rank before any starts training.
@@ -192,6 +237,7 @@ def main():
     extra_bytes = parameter_count * 12 if opts.optimizer_device == "cuda" else 0
     free_bytes, _ = torch.cuda.mem_get_info()
     memory = {"rank": rank, "parameters": parameter_count,
+              "llm_layer_numbers": language_layers, "encoder_layers": len(vision_layers),
               "free_bytes_before_optimizer": free_bytes,
               "optimizer_extra_bytes": extra_bytes,
               "fits_with_headroom": extra_bytes + opts.memory_headroom_gb * 2**30 < free_bytes}
@@ -210,8 +256,10 @@ def main():
                              batching=opts.batching, input_plan=input_plan)
     empty_video = torch.zeros((0, 3), dtype=torch.long, device=device)
     profiles = {}
+    fixed_owners = [m % world for m in range(opts.microbatches)]
+    calibration_owners = fixed_owners if opts.encoder_placement == "round-robin" else [0] * opts.microbatches
     config = dict(vars(opts), implementation="optimus-inspired-pp-whole-encoder",
-                  llm_parallelism={"pp": world, "tp": 1, "dp": 1},
+                  llm_parallelism={"pp": world, "tp": 1, "dp": 1, "layers_by_rank": layer_counts},
                   encoder_parallelism={"pp": 1, "tp": 1, "dp": world},
                   initialization="seeded-random; config/tokenizer from model-dir",
                   manifest_sha256=hashlib.sha256(opts.manifest.read_bytes()).hexdigest(),
@@ -254,14 +302,14 @@ def main():
             # both fused and ordinary gradients before the actual training step.
             unit = {k: [[1.0] * opts.microbatches for _ in range(world)]
                     for k in ("EF", "EB", "F", "B")}
-            calibration = make_plan(world, [0] * opts.microbatches, unit, "serial")
+            calibration = make_plan(world, calibration_owners, unit, "serial")
             zero_grads(model)
             with torch.autocast("cuda", dtype=torch.bfloat16):
                 measured = executor.run(calibration)
-            profiles[signature] = profile_costs(measured, world, opts.microbatches)
+            profiles[signature] = profile_costs(measured, world, calibration_owners)
         costs = profiles[signature]
         if opts.encoder_placement == "round-robin":
-            plan = make_plan(world, [m % world for m in range(opts.microbatches)], costs,
+            plan = make_plan(world, fixed_owners, costs,
                              "serial" if opts.schedule == "serial-reference" else "bubble")
         else:
             plan = (make_plan(world, [0] * opts.microbatches, costs, "serial")
@@ -328,7 +376,8 @@ def main():
             (out / ("profile-%03d.json" % step)).write_text(json.dumps(
                 {"source": "CUDA calibration without optimizer update",
                  "unit": "ms", "costs": costs,
-                 "encoder_cost_assumption": "rank-0 measurements reused on identical GPU replicas"},
+                 "encoder_calibration_owners": calibration_owners,
+                 "encoder_cost_assumption": "owner measurements reused on identical GPU replicas"},
                 indent=2) + "\n")
             with (out / "metrics.jsonl").open("a") as f:
                 f.write(json.dumps(record) + "\n")
