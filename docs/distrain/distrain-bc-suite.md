@@ -128,6 +128,23 @@ above the median and why p95 exceeds p50. Quote the median.
 Records: `$WS/runs/partc_suite_v1/runs/disagg_m2_pc_<case>.jsonl`, summary
 `$WS/runs/partc_suite_v1/summary.json`.
 
+## Encoder DP=2 on both axes
+
+Same cases, `ENC_GPUS=2 + LLM_PP=2` (4 GPUs) instead of `ENC_GPUS=1 + PP=2` (3 GPUs), 28 layers, M=2:
+
+| case | DP=1 step p50 | DP=2 step p50 | DP=2 samples/s | all-reduce (median) | share of step | throughput change |
+| --- | --- | --- | --- | --- | --- | --- |
+| resolution_full_high | 0.526 s | 0.946 s | 2.08 | 468 ms | 49 % | **-43 %** |
+| image_count_high | 0.753 s | 1.075 s | 1.74 | 451 ms | 42 % | **-26 %** |
+
+The all-reduce costs ~0.45-0.47 s per step on **both** axes, so it is a fixed tax rather than a
+function of the workload: half of a 0.95 s step on the resolution dataset, two-fifths of a 1.15 s
+step on the image-count case. The encoder forward itself is not slower (86 ms / 101 ms median per
+microbatch — each replica holds half of them), and nothing is lost: 1020 / 1020 and 60 / 60
+per-image gradient checks pass. Encoder DP buys no throughput here and costs 26-43 % of it.
+
+Records: `$WS/runs/partb_suite_v1/runs_dp2/`, `$WS/runs/partc_suite_v1/runs_dp2/`.
+
 ## What the numbers say
 
 - **Step time is set by sequence length, not by image count or resolution.** The C cases carry

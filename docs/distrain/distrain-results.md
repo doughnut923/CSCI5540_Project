@@ -142,6 +142,11 @@ Part C image-count grid, 16 samples per count, 576 visual tokens at every N:
 | 4 | 613 | 0.711 s | 2.70 | 100 ms | 64 / 64 |
 | 8 | 621 | 0.729 s | 2.65 | 104 ms | 128 / 128 |
 
+Encoder DP=2 (4 GPUs instead of 3) on the same cases: `resolution_full_high` 0.946 s p50 / 2.08
+samples/s, `image_count_high` 1.075 s / 1.74 — throughput down 43 % and 26 %. The all-reduce is a
+fixed ~0.45-0.47 s per step on both axes (42-49 % of the step), not a function of the workload, and
+nothing is lost (per-image gradient checks 1020/1020 and 60/60).
+
 Every row trains: no skipped or non-finite step and both weight norms move. Not comparable with the
 Optimus pilot's numbers or with sections 1-2 — different GPU count, optimizer placement and
 batching.

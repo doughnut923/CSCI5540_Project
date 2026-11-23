@@ -124,3 +124,21 @@ Plot one step with `track_b_cluster/scripts/plot_pipeline_gantt.py --input <json
 2. Bucketed-bf16 encoder exchange (would cut ~0.45 s to ~0.1 s, makes `ENC>1` viable).
 3. Checkpoint loading for both units — the only way to compare loss across layouts.
 4. BigMac (`MODE=1`) and Optimus arms are not ours and are not measured here.
+
+## Where the measurements stand
+
+Everything below is measured, gated and documented; the arm has no unmeasured configuration left
+except the ones listed under "Still open".
+
+| axis | rows | doc |
+| --- | --- | --- |
+| pipeline depth on the pilot plan | `ENC=1+PP=2` (3 GPUs), `ENC=1+PP=4` (5), `ENC=2+PP=2` (4) | `distrain-results.md` §1 |
+| Part B resolution, full datasets | 375 samples per level, 3 GPUs | `distrain-bc-suite.md` |
+| Part C image count, full grid | N = 1,2,3,4,8 × 16 samples, 3 GPUs | `distrain-bc-suite.md` |
+| encoder DP=2 on both axes | `resolution_full_high`, `image_count_high`, 4 GPUs | `distrain-bc-suite.md` |
+
+One run was still queued when this was written: `ENC=1 + LLM_PP=7` on 8 GPUs (M=4, 10 steps, pilot
+plan), waiting for a whole node. It is the only arm configuration at 8 GPUs that does not need a
+depth change, and its purpose is to finish the depth curve (PP=2 0.932 s, PP=4 0.830 s → PP=7 ?). If
+the record `disagg_m4_8g_enc1pp7_m4.jsonl` exists, run `collect_step_metrics.py --world-size 8` on it
+and add the row to §1; if it does not, the depth curve stops at PP=4 and that should be said.
