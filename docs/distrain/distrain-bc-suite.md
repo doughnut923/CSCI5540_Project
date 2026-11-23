@@ -84,6 +84,50 @@ variance differently, and is the remaining measurement for that arm, not this on
 Records: `$WS/runs/partb_suite_v1/runs/disagg_m2_partb_resolution_full_<level>.jsonl`, summary
 `$WS/runs/partb_suite_v1/summary.json`.
 
+## Results: Part C image-count cases
+
+Part C fixes the visual-token budget at **576 per sample** and varies how many images carry it:
+each image is padded to 576/N tokens (`padded_control`). Sequence length moves only by the two
+marker tokens per extra image — 607, 609, 611, 613, 621 for N = 1, 2, 3, 4, 8.
+
+Per-count cases, 16 samples each, all consumed:
+
+| N | seq len | step p50 | samples/s | encoder fwd (median) | per image | per-image gradient checks |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 607 | 0.782 s | 2.56 | 105.2 ms | 105.2 ms | 16 / 16 |
+| 2 | 609 | 0.728 s | 2.65 | 99.3 ms | 49.7 ms | 32 / 32 |
+| 3 | 611 | 0.713 s | 2.81 | 99.8 ms | 33.3 ms | 48 / 48 |
+| 4 | 613 | 0.711 s | 2.70 | 100.3 ms | 25.1 ms | 64 / 64 |
+| 8 | 621 | 0.729 s | 2.65 | 104.1 ms | 13.0 ms | 128 / 128 |
+
+The three mixes PR #5 ran, byte-identical manifests, 12 samples each:
+
+| case | N | step p50 | samples/s | encoder fwd (median) | gradient checks |
+| --- | --- | --- | --- | --- | --- |
+| image_count_low | 1 | 0.800 s | 2.40 | 112.1 ms | 16 / 16 |
+| image_count_medium | 1, 2, 3 | 0.804 s | 2.07 | 105.3 ms | 30 / 30 |
+| image_count_high | 1, 2, 4, 8 | 0.753 s | 2.34 | 105.3 ms | 60 / 60 |
+
+**Reading.** At a fixed token budget the encoder cost follows **tokens, not images**: the forward
+stays 99-105 ms across N = 1..8 (±3 %), so per-image cost falls as 1/N and any per-image overhead is
+below the ~10 ms noise floor of an eight-step run. Step p50 lands in 0.711-0.782 s with no
+resolvable trend — the 70 ms spread is the same run-to-run node variance seen in the resolution
+datasets, not an image-count effect. What dominates a step is fixed: encoder backward 47-49 ms per
+interval, LLM 44-56 ms, optimizer 108 ms in the encoder unit.
+
+**Every image reaches the model.** The encoder unit records one gradient norm per image slot from the
+embedding gradient it receives back: 16 checks at N=1 up to 128 at N=8, all finite and positive,
+including the eight-image samples. Part C listed `gradients` as unmeasured; this closes it on this
+arm, and matches the shape of the check the Optimus pilot ran (its 12 / 24 / 45).
+
+One measurement artifact, stated rather than smoothed: in six of the eight cases a single encoder
+forward of 0.32-0.37 s appears at the same place (second microbatch of the seventh measured step),
+three times the median. Cause not identified — it is why the mean (121-126 ms in the mixes) sits
+above the median and why p95 exceeds p50. Quote the median.
+
+Records: `$WS/runs/partc_suite_v1/runs/disagg_m2_pc_<case>.jsonl`, summary
+`$WS/runs/partc_suite_v1/summary.json`.
+
 ## What the numbers say
 
 - **Step time is set by sequence length, not by image count or resolution.** The C cases carry

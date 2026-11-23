@@ -104,8 +104,9 @@ with the naive exchange it is 1.4-2x slower. Bucketed-bf16 exchange is the cheap
 
 Run on this arm at 3 GPUs, 28 layers, M=2. Full tables, the mixed-length probe and the caveats live
 in `docs/distrain/distrain-bc-suite.md`. Two facts shape every row: the arm buckets samples by
-length (the MCore/PMP path rejects a step that carries two lengths), and step cost is flat up to
-about 254 tokens, so it tracks sequence length rather than image count.
+length (the MCore/PMP path rejects a step that carries two lengths), and at a fixed visual-token
+budget the cost tracks tokens rather than image count — resolution variance costs 7.6 % per step,
+while image count N = 1..8 is flat.
 
 Part B resolution datasets, **full size** — 750 images each, 375 two-image samples, all samples
 consumed:
@@ -119,17 +120,27 @@ consumed:
 Equal mean tokens, 7.6 % slower per step at high variance, 6 % fewer tokens per second — the mixture
 pays for its 425-token steps (+18 % over 195 tokens) and saves nothing at 83 tokens.
 
-Six-case suite, 12-sample pilot cases (the resolution rows reproduce Part B's ratios on 24 of its
-750 images and are superseded by the full run above):
+Six-case suite, 12-sample pilot cases (all superseded by the full runs above: resolution by the
+Part B section, image count by the Part C section):
 
 | case | seq lengths | step p50 | samples/s | bubble |
 | --- | --- | --- | --- | --- |
 | resolution_low *(pilot)* | 195 | 0.498 s | 4.03 | 41.2 % |
 | resolution_medium *(pilot)* | 139, 195, 254 | 0.543 s | 3.01 | 44.6 % |
 | resolution_high *(pilot)* | 83, 254 | 0.513 s | 3.19 | 43.4 % |
-| image_count_low | 607 | 0.753 s | 2.55 | 46.7 % |
-| image_count_medium | 607, 609, 611 | 0.765 s | 2.43 | 46.9 % |
-| image_count_high | 607, 609, 613, 621 | 0.719 s | 2.47 | 46.4 % |
+| image_count_low *(pilot)* | 607 | 0.753 s | 2.55 | 46.7 % |
+| image_count_medium *(pilot)* | 607, 609, 611 | 0.765 s | 2.43 | 46.9 % |
+| image_count_high *(pilot)* | 607, 609, 613, 621 | 0.719 s | 2.47 | 46.4 % |
+
+Part C image-count grid, 16 samples per count, 576 visual tokens at every N:
+
+| N | seq len | step p50 | samples/s | encoder fwd (median) | image-gradient checks |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 607 | 0.782 s | 2.56 | 105 ms | 16 / 16 |
+| 2 | 609 | 0.728 s | 2.65 | 99 ms | 32 / 32 |
+| 3 | 611 | 0.713 s | 2.81 | 100 ms | 48 / 48 |
+| 4 | 613 | 0.711 s | 2.70 | 100 ms | 64 / 64 |
+| 8 | 621 | 0.729 s | 2.65 | 104 ms | 128 / 128 |
 
 Every row trains: no skipped or non-finite step and both weight norms move. Not comparable with the
 Optimus pilot's numbers or with sections 1-2 — different GPU count, optimizer placement and
