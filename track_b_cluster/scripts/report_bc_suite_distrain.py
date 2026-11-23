@@ -48,6 +48,8 @@ def summarise(rows):
             r["pipeline_bubble_ratio"] for r in rows),
         "peak_allocated_gib": max(peaks) / 2 ** 30,
         "encoder_forward_ms_mean": (statistics.mean(encoder_ms) if encoder_ms else None),
+        # Median too: one slow forward (allocator or scheduling stall) moves the mean ~15 ms.
+        "encoder_forward_ms_median": (statistics.median(encoder_ms) if encoder_ms else None),
         # A bucketed step has one length, so this is the cost per length the case exercised.
         "step_time_s_by_sequence_length": {
             str(length): {"steps": len(values), "p50": percentile(sorted(values), 50)}
@@ -132,7 +134,7 @@ def main():
             item["case"], summary["steps"], summary["step_time_s"]["mean"],
             summary["step_time_s"]["p50"], summary["step_time_s"]["p95"],
             summary["throughput_samples_per_s"], 100 * summary["pipeline_bubble_ratio_mean"],
-            summary["encoder_forward_ms_mean"], summary["inputs"]["image_counts"],
+            summary["encoder_forward_ms_median"], summary["inputs"]["image_counts"],
             summary["inputs"]["sequence_lengths"], summary["inputs"]["samples_consumed"],
             "" if item["input_coverage_pass"] and item["correctness_pass"] else "  FAIL"))
     print(json.dumps({"pass": result["pass"], "cases": result["case_count"]}))
