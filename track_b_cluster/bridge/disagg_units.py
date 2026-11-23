@@ -322,6 +322,9 @@ def main():
                 counts = (step_data[mb].get("input_observation") or {}).get(
                     "visual_tokens_per_image")
                 if counts:
+                    if sum(counts) != grad.shape[0]:
+                        raise RuntimeError("image slices %s do not sum to the %d embedding rows"
+                                           % (counts, grad.shape[0]))
                     offset, norms = 0, []
                     for count in counts:
                         norms.append(float(grad[offset:offset + count].float().norm()))
