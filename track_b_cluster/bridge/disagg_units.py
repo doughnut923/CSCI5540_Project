@@ -310,12 +310,23 @@ def main():
                 shm.touch("emb_%d_%d.ok" % (it, mb))
                 embs[mb] = emb
 
+            image_grads = {}
             for mb in my_mbs:
                 shm.wait("gemb_%d_%d.ok" % (it, mb))
                 grad = shm.load("gemb_%d_%d.pt" % (it, mb)).to(
                     device=device, dtype=torch.bfloat16)
                 _, t_bwd = timed(lambda: embs[mb].backward(grad))
                 raw.append((rank, "bwd") + t_bwd)
+                # Per-image slice of the returned embedding gradient: proves each image
+                # reached the model, not just the processor (Part C's open measurement).
+                counts = (step_data[mb].get("input_observation") or {}).get(
+                    "visual_tokens_per_image")
+                if counts:
+                    offset, norms = 0, []
+                    for count in counts:
+                        norms.append(float(grad[offset:offset + count].float().norm()))
+                        offset += count
+                    image_grads[step_data[mb]["sample_id"]] = norms
 
             # Real encoder DP averages gradients across the replicas; that cost is part
             # of the step, so measure it rather than hide it. World 1 means no DP.
@@ -354,7 +365,7 @@ def main():
             torch.distributed.all_gather_object(
                 gathered, {"intervals": merged, "step_time_s": step_time,
                            "opt": opt_stats, "peak": torch.cuda.max_memory_allocated(),
-                           "param_norm0": param_norm0})
+                           "param_norm0": param_norm0, "image_grads": image_grads})
             torch.distributed.barrier()
             if rank == 0:
                 flat = []
@@ -362,9 +373,13 @@ def main():
                 for chunk in gathered:
                     flat.extend(chunk["intervals"])
                     worst = max(worst, chunk["step_time_s"])
+                image_grad_norms = {}
+                for chunk in gathered:
+                    image_grad_norms.update(chunk.get("image_grads") or {})
                 shm.write_json("iv_%d.json" % it,
                                {"intervals": flat, "world": world, "step_time_s": worst,
                                 "opt": gathered[0]["opt"],
+                                "image_grad_norms": image_grad_norms,
                                 "param_norm0_by_rank": {str(r): gathered[r]["param_norm0"]["total"]
                                                         for r in range(world)},
                                 "module_norm0_by_rank": {str(r): gathered[r]["param_norm0"]["modules"]
@@ -533,6 +548,7 @@ def main():
                         "microbatch_losses": mb_list,
                         "sample_ids": [b["sample_id"] for b in step_data],
                         "input_observations": [b["input_observation"] for b in step_data],
+                        "image_embedding_grad_norms": enc_side.get("image_grad_norms") or {},
                         "lr": opt_stats["lr"],
                         "grad_norm": opt_stats["grad_norm"],
                         "grad_norm_total": math.sqrt(
