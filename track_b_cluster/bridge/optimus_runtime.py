@@ -219,7 +219,9 @@ def collect_main_grads(module):
             elif getattr(p, "main_grad", None) is None:
                 p.main_grad = p.grad.detach().float().clone()
             elif p.grad is not p.main_grad:
-                p.main_grad.add_(p.grad.detach().float())
+                # CUDA add promotes each input element to FP32 while loading it.
+                # This keeps FP32 accumulation without an embedding-sized cast buffer.
+                p.main_grad.add_(p.grad.detach())
             p.grad = None
 
 
