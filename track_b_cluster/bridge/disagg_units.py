@@ -42,7 +42,7 @@ def env_int(name, default):
 
 
 def mcore_argv(num_layers, pp_size, num_microbatches):
-    return [
+    argv = [
         "--num-layers", str(num_layers),
         "--hidden-size", "1536",
         "--ffn-hidden-size", "8960",
@@ -90,6 +90,18 @@ def mcore_argv(num_layers, pp_size, num_microbatches):
         "--load", os.environ["QWEN2VL_HF_DIR"],
         "--save", "/tmp/disagg_unused",
     ]
+    # Uneven pipeline split for depths that do not divide the layer count, e.g. 28 over
+    # 6 stages as 4|5|5|5|5|4. Megatron's default split asserts on divisibility; these two
+    # flags take the first/last stage out of the even split and divide the rest. The
+    # encoder unit runs a one-layer, one-stage model, so it must not receive them.
+    first = os.environ.get("PP_FIRST_LAYERS")
+    last = os.environ.get("PP_LAST_LAYERS")
+    if pp_size > 1 and (first or last):
+        if first:
+            argv += ["--decoder-first-pipeline-num-layers", first]
+        if last:
+            argv += ["--decoder-last-pipeline-num-layers", last]
+    return argv
 
 
 class Shm:
