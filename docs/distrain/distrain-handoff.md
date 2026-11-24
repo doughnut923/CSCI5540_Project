@@ -96,6 +96,11 @@ Plot one step with `track_b_cluster/scripts/plot_pipeline_gantt.py --input <json
   timing is. Cross-config loss comparison needs a shared checkpoint.
 - **Encoder DP costs more than it saves.** `ENC=2` adds 0.4-0.5 s per step (40 % of the step) and
   buys nothing on this hardware.
+- **Encoder DP requires `NUM_MICROBATCHES` to be a multiple of `ENC_GPUS`.** The encoder world is a
+  plain data-parallel group, so `ENC=4` with M=2 dies at Megatron init with
+  `global batch size (2) is not divisible by micro batch size (1) times data parallel size (4)`, and
+  the other unit then waits 15 minutes for `ready_enc`. The harness now refuses this at startup.
+  `ENC=4` needs M=4; `ENC=2` works with M=2.
 - **`PP=2` with 32 layers uses ~20.7 GiB per GPU.** Very little headroom; `PP=4` is safe.
 - **Exclude `gpu54` and `projgpu33`.** The first silently kills jobs, the second is shared and OOMs
   the optimizer. Both are already in the sbatch `--exclude`.

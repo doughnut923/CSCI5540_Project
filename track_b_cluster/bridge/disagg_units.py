@@ -186,6 +186,12 @@ def main():
     # torchrun sets these; torch.distributed itself is initialised by Megatron below.
     world = int(os.environ["WORLD_SIZE"])
     rank = int(os.environ["RANK"])
+    if role == "enc" and num_mb % world:
+        # The encoder world is a plain data-parallel group: Megatron rejects a global
+        # batch it cannot split evenly, and the failure surfaces 15 min later as a
+        # ready_enc timeout on the other unit. Fail at the source instead.
+        raise SystemExit("NUM_MICROBATCHES (%d) must be a multiple of ENC_GPUS (%d)"
+                         % (num_mb, world))
 
     mcore_layers = 1 if role == "enc" else num_layers
     mcore_pp = 1 if role == "enc" else llm_pp
