@@ -145,6 +145,34 @@ per-image gradient checks pass. Encoder DP buys no throughput here and costs 26-
 
 Records: `$WS/runs/partb_suite_v1/runs_dp2/`, `$WS/runs/partc_suite_v1/runs_dp2/`.
 
+## Encoder DP=4 at 8 GPUs (`ENC=4 + PP=4`, M=4)
+
+Five gated runs, 28 layers, M=4 (M must be a multiple of `ENC_GPUS`, so DP=4 needs M=4):
+
+| case | steps | step p50 | samples/s | encoder fwd (median) | all-reduce (median) | bubble | peak | per-image checks |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| resolution_full_low | 94 | 1.702 s | 2.33 | 87 ms | 1 208 ms | 51.2 % | 14.0 GiB | 752 |
+| resolution_full_medium | 186 | 1.733 s | 2.27 | 86 ms | 1 224 ms | 51.4 % | 14.0 GiB | 1 488 |
+| resolution_full_high | 129 | 1.735 s | 2.29 | 83 ms | 1 218 ms | 51.4 % | 14.0 GiB | 1 032 |
+| image_count_high | 8 | 1.870 s | 2.02 | 102 ms | 1 234 ms | 53.1 % | 14.5 GiB | 90 |
+| image_count_medium | 8 | 1.919 s | 1.97 | 104 ms | 1 261 ms | 53.1 % | 14.5 GiB | 60 |
+
+**The bubble is flat at 51-53 % across five very different workloads** (162 to 621 tokens, 1 to 8
+images), which is the point: it is structural, not a property of the data. The collective is 67-72 %
+of all recorded work, and it takes the same ~1.2 s whatever the case; the four pipeline stages are
+finished by 0.5-0.6 s of a 1.7-1.9 s step and idle for the rest. Against DP=1 on the same cases the
+bubble rises 8-10 points (resolution_low 41.2 -> 51.2, resolution_high 43.4 -> 51.4) and throughput
+falls 26-43 % — with the standing caveat that a bubble over eight ranks is not the same quantity as
+one over three, so compare within a rank count.
+
+Figure: `dp4_schedules.png` — one representative step per case, stacked, each chosen as the step
+closest to that run's median step time. The green optimizer blocks on the encoder rows sit inside
+the grey collective: `all_reduce` is asynchronous on the host, so AdamW is *submitted* before the
+collective completes, and the plot places intervals at host-submission time plus GPU duration. GPU
+execution is stream-ordered, so the reduction still finishes before the gradients are used.
+
+`image_count_low` is the one case with no DP=4 row; it ran at DP=1 and DP=2 instead.
+
 ## What the numbers say
 
 - **Step time is set by sequence length, not by image count or resolution.** The C cases carry
