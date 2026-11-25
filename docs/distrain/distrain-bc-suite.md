@@ -173,6 +173,34 @@ execution is stream-ordered, so the reduction still finishes before the gradient
 
 `image_count_low` is the one case with no DP=4 row; it ran at DP=1 and DP=2 instead.
 
+## Depth at 8 GPUs: `ENC=1 + PP=7` vs `ENC=2 + PP=6` (M=4)
+
+| dataset | config | step p50 | samples/s | encoder rank 0 busy | last stage busy | bubble |
+| --- | --- | --- | --- | --- | --- | --- |
+| resolution_low | `ENC=1 + PP=7` | **0.791 s** | **4.99** | 79 % | 19 % | 77.3 % |
+| resolution_low | `ENC=2 + PP=6` | 0.986 s | 3.76 | 86 % | 16 % | 68.4 % |
+| resolution_medium | `ENC=1 + PP=7` | **0.828 s** | **4.66** | 80 % | 18 % | 77.7 % |
+| resolution_medium | `ENC=2 + PP=6` | 1.001 s | 3.91 | 86 % | 16 % | 68.2 % |
+| resolution_high | `ENC=1 + PP=7` | **0.821 s** | **4.52** | 78 % | 19 % | 77.9 % |
+| resolution_high | `ENC=2 + PP=6` | 1.012 s | 3.90 | 85 % | 16 % | 68.4 % |
+
+`PP=6` uses the uneven split 4|5|5|5|5|4 (`PP_FIRST_LAYERS=4`, `PP_LAST_LAYERS=4`) — the only way to
+run six stages on 28 layers.
+
+- **`ENC=1 + PP=7` is 16-33 % faster**, and the whole deficit is the collective: 416-431 ms per step in
+  the `ENC=2` rows, zero in the `ENC=1` rows.
+- **The arm is encoder-bound in both.** The encoder rank is the busiest rank (78-86 %) while the last
+  pipeline stage is only 16-19 % busy: four microbatches cannot fill six or seven stages, so the extra
+  depth is over-provisioned.
+- **The bubble ratio ranks these backwards** (77-78 % for the faster config, 68 % for the slower one),
+  because a rank sitting in an all-reduce is counted as busy. Bubble must never be compared across
+  different `ENC_GPUS`; quote step time or throughput.
+- **Encoder DP buys memory, not speed.** At M=4 the image-count cases (576-token samples) exceed the
+  single encoder's budget: `ENC=1` hit 23.54 GiB of 23.56 and OOMed, while `ENC=2` ran at 17.5 GiB
+  because each replica holds half the microbatches. Those three pairs are being repeated at M=2.
+
+Figure: `enc1pp7_schedules.png` — one representative step per resolution dataset, stacked.
+
 ## What the numbers say
 
 - **Step time is set by sequence length, not by image count or resolution.** The C cases carry
