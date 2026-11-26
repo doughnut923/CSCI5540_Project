@@ -219,6 +219,18 @@ absolute sync cost across them.
 
 Figure: `enc1pp7_schedules.png` — one representative step per resolution dataset, stacked.
 
+Figure: `variance_three_configs.png` — step time and bubble against resolution variance for the
+three 8-GPU configs. Two things to read off it:
+
+- **Variance barely matters; the config sets the level.** Bubble is flat across Low/Medium/High for
+  all three (77.3-77.9 %, 68.2-68.4 %, 51.2-51.4 %), so bubble is a property of the placement, not of
+  the data. Step time is flat for both DP configs (within 4 %) and rises only for `ENC=1`
+  (0.801 -> 0.859 -> 0.884 s, +10 %).
+- **The variance effect is only visible where there is no collective.** With `ENC=1` the encoder is on
+  the critical path, so the mixture's 310/425-token buckets cost what they cost (+10 % from Low to
+  High). With DP the fixed 0.4-0.8 s reduction dominates the step and flattens the mixture's effect to
+  noise. This matches the DP=1 measurement at M=2 (0.511 -> 0.550 s, +7.6 %).
+
 ## What the numbers say
 
 - **Step time is set by sequence length, not by image count or resolution.** The C cases carry
