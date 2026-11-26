@@ -197,7 +197,25 @@ run six stages on 28 layers.
   different `ENC_GPUS`; quote step time or throughput.
 - **Encoder DP buys memory, not speed.** At M=4 the image-count cases (576-token samples) exceed the
   single encoder's budget: `ENC=1` hit 23.54 GiB of 23.56 and OOMed, while `ENC=2` ran at 17.5 GiB
-  because each replica holds half the microbatches. Those three pairs are being repeated at M=2.
+  because each replica holds half the microbatches.
+
+### Image count at M=2, where both configs fit
+
+| dataset | `ENC=1+PP=7` mean / p50 | samples/s | `ENC=2+PP=6` mean / p50 | samples/s | all-reduce |
+| --- | --- | --- | --- | --- | --- |
+| image_count_low | **0.912 / 0.869 s** | **2.19** | 1.416 / 1.411 s | 1.41 | 800 ms |
+| image_count_medium | **0.996 / 0.809 s** | **2.01** | 1.788 / 1.404 s | 1.12 | 800 ms |
+| image_count_high | **0.997 / 0.778 s** | **2.01** | 1.606 / 1.420 s | 1.25 | 797 ms |
+
+`ENC=1 + PP=7` is **1.6-1.8x faster** on every image-count dataset, on both mean and p50. Bubble is
+82 % for the winner and 74-75 % for the loser, again the wrong way round.
+
+Two honest notes on this table. The steps are noisy (sd 0.5-1.1 s) because of the encoder stall
+described below, so the mean sits 15-20 % above the p50; and the collective measured **800 ms at M=2
+against 420-430 ms at M=4 on the same 2.6 GB of gradients**, which is unexplained — most likely
+sensitivity of a host-staged reduction with no P2P to whichever co-tenants share the node (the same
+exchange measured 0.41 s and 1.13 s on different days). Compare the pair within a session, not the
+absolute sync cost across them.
 
 Figure: `enc1pp7_schedules.png` — one representative step per resolution dataset, stacked.
 
