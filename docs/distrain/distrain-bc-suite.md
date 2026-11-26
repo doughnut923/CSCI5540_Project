@@ -231,6 +231,22 @@ three 8-GPU configs. Two things to read off it:
   High). With DP the fixed 0.4-0.8 s reduction dominates the step and flattens the mixture's effect to
   noise. This matches the DP=1 measurement at M=2 (0.511 -> 0.550 s, +7.6 %).
 
+Figure: `enc1pp7_variance_trend.png` — `ENC=1 + PP=7` alone, on a scale where its trend is legible:
+
+- **Mean step time 0.801 -> 0.859 -> 0.884 s** (+10.4 % Low -> High), 95 % CI ±0.011 / ±0.023 /
+  ±0.031. Low -> Medium is 2.6x its CI, so that step is real; Medium -> High is inside its CI, so the
+  curve is better described as "Low vs the mixtures" than a straight line.
+- **The cause is the length mixture, not the dataset.** Median step time per sequence length is
+  0.769-0.772 s at 83 and 139 tokens, 0.791-0.795 at 195, 0.795-0.811 at 254, 0.908 at 310 and
+  0.998-1.007 at 425. At equal length the three datasets agree within 2 % (195: 0.791 vs 0.795;
+  425: 0.998 vs 1.007), so the only difference between the curves is how much of each length they
+  contain: Low is 100 % at 195, Medium is uniform over six lengths, High is a third each at 83/254/425.
+- **The knee is at ~254 tokens.** Cost is flat below it and then ~1.2 ms/token (0.795 -> 1.007 s over
+  171 tokens), the same knee the DP=1/M=2 runs showed at 254 tokens — two independent configurations
+  putting the knee in the same place.
+- **Bubble rises only 0.63 points** (77.27 -> 77.71 -> 77.90 %, CI ±0.22/±0.17/±0.22), i.e. monotone
+  but an order of magnitude smaller than the step-time effect.
+
 ## What the numbers say
 
 - **Step time is set by sequence length, not by image count or resolution.** The C cases carry
