@@ -145,6 +145,23 @@ def sample_signature(data):
                   tuple(b["tokens"].shape)) for b in data)
 
 
+def sample_encoder(encoder, count, *, gradients=False):
+    """Copy the same coordinates before and after a gradient reduction."""
+    chunks = {}
+    for name, param in encoder.named_parameters():
+        if param.requires_grad:
+            tensor = (param.main_grad if gradients else param).detach().flatten()
+            indices = sample_indices(tensor.numel(), count, tensor.device)
+            chunks[name] = tensor.index_select(0, indices).float()
+    values = torch.cat(list(chunks.values())).cpu().tolist()
+    snapshot, offset = {}, 0
+    for name, chunk in chunks.items():
+        end = offset + chunk.numel()
+        snapshot[name] = values[offset:end]
+        offset = end
+    return snapshot
+
+
 def profile_costs(result, world, owners):
     count = len(owners)
     costs = {kind: [[None] * count for _ in range(world)] for kind in ("EF", "EB", "F", "B")}
@@ -177,6 +194,8 @@ def main():
                    help="CPU offloads FP32 master weights and AdamW states for the two-GPU quota")
     p.add_argument("--validation-samples", type=int, default=0,
                    help="Save evenly spaced parameter/used-gradient samples after timing")
+    p.add_argument("--trace-first-encoder-gradients", action="store_true",
+                   help="Diagnostic only: sample initial encoder weights and first-step gradients before and after reduction")
     p.add_argument("--schedule", choices=("serial-reference", "optimus-pp"), default="optimus-pp")
     p.add_argument("--batching", choices=("bucket", "manifest"), default="manifest",
                    help="Manifest order preserves mixed sizes/counts within each step")
@@ -188,6 +207,8 @@ def main():
     opts = p.parse_args()
     if opts.steps < 1 or opts.warmup_steps < 0 or opts.microbatches < 1 or opts.validation_samples < 0:
         p.error("steps/microbatches must be positive; warmup must be nonnegative")
+    if opts.trace_first_encoder_gradients and not opts.validation_samples:
+        p.error("encoder gradient tracing requires --validation-samples")
     if not math.isfinite(opts.memory_headroom_gb) or opts.memory_headroom_gb < 0:
         p.error("memory headroom must be finite and nonnegative")
     world = int(os.environ.get("WORLD_SIZE", "1"))
@@ -287,6 +308,9 @@ def main():
                                "encoder PP", "automatic 3D parallel search"])
     if rank == 0:
         (out / "run_config.json").write_text(json.dumps(config, default=str, indent=2) + "\n")
+    encoder_trace = None
+    if opts.trace_first_encoder_gradients:
+        encoder_trace = {"initial_parameter": sample_encoder(model.vision_model, opts.validation_samples)}
     for step in range(opts.warmup_steps + opts.steps):
         data = batches.step_tensors(step, opts.microbatches, device,
                                     qwen.get_ltor_masks_and_position_ids, empty_video)
@@ -326,8 +350,14 @@ def main():
                 result = executor.run(plan, capture_image_grads=opts.validation_samples > 0)
         with profiler.phase("ordinary_grad_collect"):
             collect_main_grads(model)
+        if step == 0 and encoder_trace is not None:
+            encoder_trace["before_reduce"] = sample_encoder(
+                model.vision_model, opts.validation_samples, gradients=True)
         with profiler.phase("encoder_grad_sync"):
             sync_encoder_grads(model.vision_model)
+        if step == 0 and encoder_trace is not None:
+            encoder_trace["after_reduce"] = sample_encoder(
+                model.vision_model, opts.validation_samples, gradients=True)
         with profiler.phase("tied_grad_sync"):
             # Keep the pinned framework's tied-embedding synchronization.
             finalize_model_grads([model])
@@ -371,6 +401,8 @@ def main():
                                  "used_gradient": param.main_grad.flatten()[idx].float().cpu().tolist()}
             (out / ("validation-step%03d-rank%d.json" % (step, rank))).write_text(
                 json.dumps(sampled) + "\n")
+        if step == 0 and encoder_trace is not None:
+            (out / ("encoder-trace-rank%d.json" % rank)).write_text(json.dumps(encoder_trace) + "\n")
         if rank == 0:
             (out / ("plan-%03d.json" % step)).write_text(json.dumps(plan, indent=2) + "\n")
             (out / ("profile-%03d.json" % step)).write_text(json.dumps(
