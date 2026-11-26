@@ -247,6 +247,24 @@ Figure: `enc1pp7_variance_trend.png` — `ENC=1 + PP=7` alone, on a scale where 
 - **Bubble rises only 0.63 points** (77.27 -> 77.71 -> 77.90 %, CI ±0.22/±0.17/±0.22), i.e. monotone
   but an order of magnitude smaller than the step-time effect.
 
+Figure: `variance_two_axes.png` — both heterogeneity axes, same layout. Row 1 is the resolution
+axis above; row 2 is Part C's image-count axis at M=2 (8 steps per case, the only microbatch count at
+which both configs fit):
+
+| dataset | `ENC=1+PP=7` mean | `ENC=2+PP=6` mean |
+| --- | --- | --- |
+| image_count_low (N=1) | **0.912 s** | 1.416 s |
+| image_count_medium (N=1,2,3) | **0.996 s** | 1.788 s |
+| image_count_high (N=1,2,4,8) | **0.997 s** | 1.606 s |
+
+Bubble is flat again (82.0 / 82.0 / 81.8 and 74.2 / 75.2 / 75.1). The image-count axis moves the
+step by **+9 %** for `ENC=1` (0.912 -> 0.997 s), against the **1.6-1.8x** gap between configs: the
+same conclusion as the resolution axis, the placement dominates and the data mix is a single-digit
+effect. The `ENC=2` row is noisy (one `image_count_medium` step stalled, CI ±0.34 s) and should be
+read as "no trend resolved", not as a peak at Medium. The bottom-right panel is the per-image-count
+curve from the 3-GPU `ENC=1+PP=2` runs: 0.782 s at N=1 falling to 0.711 s at N=4 and 0.729 s at N=8,
+i.e. one large image costs ~9 % more than four small ones at the same 576-token budget.
+
 ## What the numbers say
 
 - **Step time is set by sequence length, not by image count or resolution.** The C cases carry
