@@ -247,8 +247,8 @@ Figure: `enc1pp7_variance_trend.png` — `ENC=1 + PP=7` alone, on a scale where 
 - **Bubble rises only 0.63 points** (77.27 -> 77.71 -> 77.90 %, CI ±0.22/±0.17/±0.22), i.e. monotone
   but an order of magnitude smaller than the step-time effect.
 
-Figure: `variance_two_axes.png` — both heterogeneity axes, same layout. Row 1 is the resolution
-axis above; row 2 is Part C's image-count axis at M=2 (8 steps per case, the only microbatch count at
+Figure: `variance_two_axes.png` — both heterogeneity axes, same layout. Row 1 is the resolution axis
+above; row 2 is Part C's image-count axis at M=2 (8 steps per case, the only microbatch count at
 which both configs fit):
 
 | dataset | `ENC=1+PP=7` mean | `ENC=2+PP=6` mean |
@@ -264,6 +264,17 @@ effect. The `ENC=2` row is noisy (one `image_count_medium` step stalled, CI ±0.
 read as "no trend resolved", not as a peak at Medium. The bottom-right panel is the per-image-count
 curve from the 3-GPU `ENC=1+PP=2` runs: 0.782 s at N=1 falling to 0.711 s at N=4 and 0.729 s at N=8,
 i.e. one large image costs ~9 % more than four small ones at the same 576-token budget.
+
+Figure: `enc2pp6_schedule_step17.png` — one step of the `ENC=2 + PP=6` config (uneven split
+4|5|5|5|5|4), step 17 of `resolution_full_medium`, 1.001 s, bubble 67.6 %. Two encoder ranks each take
+two microbatches, the six pipeline stages finish by ~0.45 s, and the grey all-reduce runs to the end of
+the step. The two encoder replicas are busy the whole time — with the collective, that is 86 % "busy"
+against 22-23 % for the pipeline stages, which is why this config's bubble looks better than
+`ENC=1`'s while its throughput is 20-30 % worse.
+
+Machine-readable results for every row above: `sweep_results.json` (17 records, mean/p50/sd/min/max,
+throughput, bubble, encoder and all-reduce medians, peak memory, sample and gradient-check counts, and
+the source record path for each).
 
 ## What the numbers say
 
