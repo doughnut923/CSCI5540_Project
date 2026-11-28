@@ -115,7 +115,7 @@ def main():
         from pp_executor.mcore_patch import install
         install()
 
-    sys.argv = ["pp2_equiv"] + mcore_argv(512)
+    sys.argv = ["pp2_equiv"] + mcore_argv(env_int("SEQ_LENGTH", 512))
     from megatron.training.initialize import initialize_megatron
     from megatron_patch.arguments import get_patch_args
     initialize_megatron(extra_args_provider=get_patch_args)
