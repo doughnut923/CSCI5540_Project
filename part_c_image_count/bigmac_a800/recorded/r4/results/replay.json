@@ -1,0 +1,62 @@
+{
+  "BigMac vs BigMac repeat": {
+    "losses": [
+      [
+        3.9280035495758057,
+        2.904566526412964
+      ],
+      [
+        3.9280035495758057,
+        2.904566526412964
+      ]
+    ],
+    "parameters": 7864320,
+    "full_gradient_relative_l2": 0.0,
+    "full_gradient_cosine": 1.0000000000001574,
+    "full_gradient_max_abs": 0.0,
+    "grad_sign_flips": 0,
+    "largest_flipped_grad_abs": 0.0,
+    "weights_outside_gate": 0,
+    "weight_max_abs": 0.0
+  },
+  "Optimus vs Optimus repeat": {
+    "losses": [
+      [
+        3.9280035495758057,
+        2.904566526412964
+      ],
+      [
+        3.9280035495758057,
+        2.904566526412964
+      ]
+    ],
+    "parameters": 7864320,
+    "full_gradient_relative_l2": 0.0,
+    "full_gradient_cosine": 1.0000000000001574,
+    "full_gradient_max_abs": 0.0,
+    "grad_sign_flips": 0,
+    "largest_flipped_grad_abs": 0.0,
+    "weights_outside_gate": 0,
+    "weight_max_abs": 0.0
+  },
+  "BigMac vs Optimus": {
+    "losses": [
+      [
+        3.9280035495758057,
+        2.904566526412964
+      ],
+      [
+        3.9280035495758057,
+        2.904566526412964
+      ]
+    ],
+    "parameters": 7864320,
+    "full_gradient_relative_l2": 0.0,
+    "full_gradient_cosine": 1.0000000000001574,
+    "full_gradient_max_abs": 0.0,
+    "grad_sign_flips": 0,
+    "largest_flipped_grad_abs": 0.0,
+    "weights_outside_gate": 0,
+    "weight_max_abs": 0.0
+  }
+}

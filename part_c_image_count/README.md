@@ -1,6 +1,10 @@
-# Image count heterogeneity: processor feasibility pilot
+# Image-count heterogeneity
 
-This folder contains Group 8's image-count input-pipeline check. It is separate from the repository's image-resolution data-preparation script. It does not implement a BigMac integration or run training.
+The [two-A800 BigMac benchmark](bigmac_a800/README.md) reports step time, throughput, peak memory, and GPU idle time when training on single-image and multi-image samples.
+
+## Processor feasibility pilot
+
+This pilot covers Group 8's image-count input-pipeline check. It is separate from the repository's image-resolution data-preparation script. It does not implement a BigMac integration or run training.
 
 **Planned group model:** `Qwen/Qwen2-VL-2B-Instruct`. The checks use tokenizer/config revision `895c3a49bc3fa70a340399125c650a463535e71c`. Full-model training-system integration has not been run by this pilot. The proposal originally listed a provisional LLaVA-style model; the group now plans to use Qwen2-VL.
 
