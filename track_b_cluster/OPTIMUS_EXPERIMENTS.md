@@ -187,3 +187,11 @@ against the internal serial reference. Preserve the first failure and its logs
 if the memory, launch or correctness check fails. Treat the result as a
 correctness record for this layout and input. Formal throughput measurements
 use the group's common settings and a separate run.
+
+## Verified PP=8 image-count High timing (2026-11-27)
+
+Job `31748` passed both the two-step replay and the nine-step paired check
+for the four-microbatch timing configuration. Three Optimus timing repeats
+pooled to 1.7218 samples/s and 2.3231 seconds per step on one node with
+eight RTX 3090s. See the [reproduction record](reproduction/optimus_pp8_20261127/README.md)
+for the exact configuration, sampled comparisons and per-rank memory.
