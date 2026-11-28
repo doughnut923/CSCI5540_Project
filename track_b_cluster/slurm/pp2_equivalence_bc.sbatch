@@ -13,6 +13,10 @@
 #   SMOKE=1: resolution_full_low and image_count_high, 2 steps, to check the
 #            uneven PP=8 split, the optimizer step and the 576-token memory.
 # Set PC_MB=2 if a Part C M=4 step does not fit on rank 0.
+#
+# MODE=0 is the working path: MCore's native schedule with the encoder in stage 0.
+# MODE=1 (BigMac pp_executor) deadlocks on this model even at PP=4/28 layers; the
+# VE executor it needs is not wired in pp2_equivalence.py. Keep it for a retry only.
 set -euo pipefail
 : "${WS:=/research/d7/fyp26/lkchau3/workspaces/cyfok3}"
 : "${BIND_ROOT:=/research}"
@@ -22,6 +26,7 @@ SUITE_C=${SUITE_C:-$PROJ/runs/partc_suite_v1}
 OUT_DIR=${OUT_DIR:-$PROJ/runs/bigmac_fused_bc${SMOKE:+_smoke}_v1}
 B_MB=${B_MB:-4}
 PC_MB=${PC_MB:-4}
+MODE=${MODE:-0}
 LOG=$WS/containers/fused-bc${SMOKE:+-smoke}.log
 exec > "$LOG" 2>&1
 set -x
@@ -39,7 +44,7 @@ fi
 
 run() {  # manifest tag microbatches steps full_coverage
   MANIFEST=$1 TAG=$2 NUM_MICROBATCHES=$3 BENCH_STEPS=$4 FULL_COVERAGE=$5 \
-  MODE=1 PP=8 NUM_LAYERS=28 PP_FIRST_LAYERS=2 PP_LAST_LAYERS=2 \
+  MODE=$MODE PP=8 NUM_LAYERS=28 PP_FIRST_LAYERS=2 PP_LAST_LAYERS=2 \
   TRAIN_STEP=1 WARMUP_STEPS=1 SEQ_LENGTH=1024 OUT_DIR=$OUT_DIR \
   bash "$PROJ/track_b_cluster/slurm/pp2_equivalence.sbatch"
 }
@@ -48,5 +53,9 @@ for case in $B_CASES; do
   run "$SUITE_B/$case/manifest.json" "fused_b_${case#resolution_full_}" "$B_MB" "$B_STEPS" "$B_FULL"
 done
 for case in $PC_CASES; do
-  run "$SUITE_C/$case/manifest.json" "fused_c_${case#image_count_}" "$PC_MB" "$PC_STEPS" 0
+  tag="fused_c_${case#image_count_}"
+  if ! run "$SUITE_C/$case/manifest.json" "$tag" "$PC_MB" "$PC_STEPS" 0; then
+    echo "Part C $case failed at M=$PC_MB; retrying at M=2" >&2
+    run "$SUITE_C/$case/manifest.json" "${tag}_m2" 2 "$PC_STEPS" 0
+  fi
 done
