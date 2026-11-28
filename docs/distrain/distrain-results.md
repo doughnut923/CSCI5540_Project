@@ -1,4 +1,7 @@
-# DistTrain arm — measured results (Qwen2-VL-2B, 8x RTX 3090)
+# DistTrain arm — pilot and placement results (Qwen2-VL-2B)
+
+> Side reference. This file is the 3–5 GPU pilot and placement history on the 24-sample manifest.
+> The 8-GPU B/C results are in `distrain-bc-suite.md` and supersede its workload section.
 
 Every number here was produced by `track_b_cluster/bridge/disagg_units.py` (disaggregated
 encoder unit + LLM unit) or `track_b_cluster/bridge/pp2_equivalence.py` (fused baseline) on the
