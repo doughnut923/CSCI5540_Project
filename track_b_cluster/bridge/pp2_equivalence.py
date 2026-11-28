@@ -35,7 +35,7 @@ def mcore_argv(seq_length):
     num_layers = os.environ.get("NUM_LAYERS", "28")
     pp_size = os.environ.get("PP_SIZE", "2")
     num_microbatches = os.environ.get("NUM_MICROBATCHES", "2")
-    return [
+    argv = [
         "--num-layers", num_layers,
         "--hidden-size", "1536",
         "--ffn-hidden-size", "8960",
@@ -83,10 +83,18 @@ def mcore_argv(seq_length):
         "--load", os.environ["QWEN2VL_HF_DIR"],
         "--save", "/tmp/pp2_unused",
     ]
+    first = os.environ.get("PP_FIRST_LAYERS")
+    last = os.environ.get("PP_LAST_LAYERS")
+    if first:
+        argv += ["--decoder-first-pipeline-num-layers", first]
+    if last:
+        argv += ["--decoder-last-pipeline-num-layers", last]
+    return argv
 
 
 # Keep these names importable for existing launchers and integrations.
 from manifest_data import ManifestBatches, build_sample, load_processor
+from disagg_units import MainGradAdamW  # same AdamW-over-main_grad step as the arm
 
 
 def main():
@@ -99,6 +107,8 @@ def main():
     bench_steps = env_int("BENCH_STEPS", 0)
     warmup_steps = env_int("WARMUP_STEPS", 2)
     num_microbatches = env_int("NUM_MICROBATCHES", 2)
+    train_step = os.environ.get("TRAIN_STEP", "0") in ("1", "true", "yes", "on")
+    full_coverage = os.environ.get("FULL_COVERAGE", "0") in ("1", "true", "yes", "on")
 
     # Must happen before megatron initializes, so the patch is in place on import.
     if mode in ("1", "true", "yes", "on"):
@@ -141,6 +151,11 @@ def main():
     empty_video = torch.zeros((0, 3), dtype=torch.long, device=device)
     step_data = batches.step_tensors(0, num_microbatches, device,
                                      get_ltor_masks_and_position_ids, empty_video)
+    if full_coverage:
+        bench_steps = batches.cover_steps(num_microbatches)
+    step_opt = None
+    if train_step:
+        step_opt = MainGradAdamW(model, args, warmup_steps + bench_steps)
 
     # --- bubble instrumentation -------------------------------------------------
     # busy_events holds one (kind, start, end) CUDA-event triple per measured interval.
@@ -256,6 +271,30 @@ def main():
     steps = warmup_steps + bench_steps if bench_steps > 0 else 1
     records = []
     last_local_loss = float("nan")
+    last_opt_stats = None
+
+    # Weight fingerprint before the first update, for comparing against the arm.
+    def _module_norms(module):
+        out = {}
+        if module is not None:
+            for name, child in module.named_children():
+                total = torch.zeros(1, device=device)
+                for p in child.parameters():
+                    total += p.detach().float().pow(2).sum()
+                out[name] = float(total)
+            total = torch.zeros(1, device=device)
+            for p in module.parameters():
+                total += p.detach().float().pow(2).sum()
+            out["_self"] = float(total)
+        return out
+
+    norm0 = torch.zeros(1, device=device)
+    for param in model.parameters():
+        norm0 += param.detach().float().pow(2).sum()
+    norm0_by_rank = [None] * pp_size
+    torch.distributed.all_gather_object(
+        norm0_by_rank, {"total": float(norm0), "modules": _module_norms(model)})
+    param_norm0_by_rank = {str(r): norm0_by_rank[r]["total"] for r in range(pp_size)}
 
     for step_idx in range(steps):
         step_data = batches.step_tensors(step_idx, num_microbatches, device,
@@ -282,6 +321,8 @@ def main():
                 micro_batch_size=1,
                 forward_only=False,
             )
+        if step_opt is not None:
+            last_opt_stats = step_opt.step()
 
         values = [v for v in (_loss_of(x) for x in (out or [])) if v is not None]
         # Only the last pipeline stage produces losses; broadcast so every rank agrees.
@@ -353,6 +394,8 @@ def main():
                     "num_microbatches": num_microbatches,
                     "mode": "pp_executor" if mode in ("1", "true", "yes", "on")
                             else "native",
+                    "optimizer_stepped": step_opt is not None,
+                    "optimizer": last_opt_stats,
                 })
 
     total = torch.zeros(1, device=device)
@@ -363,28 +406,13 @@ def main():
     torch.distributed.all_reduce(total, op=torch.distributed.ReduceOp.SUM)
     grad_norm = math.sqrt(float(total))
 
-    # Initial-weight fingerprint per rank, for comparing against the disaggregated split.
-    def _module_norms(module):
-        out = {}
-        if module is not None:
-            for name, child in module.named_children():
-                total = torch.zeros(1, device=device)
-                for p in child.parameters():
-                    total += p.detach().float().pow(2).sum()
-                out[name] = float(total)
-            total = torch.zeros(1, device=device)
-            for p in module.parameters():
-                total += p.detach().float().pow(2).sum()
-            out["_self"] = float(total)
-        return out
-
-    norm0 = torch.zeros(1, device=device)
+    # Weight fingerprint after the run: unchanged without TRAIN_STEP, updated with it.
+    final_norm = torch.zeros(1, device=device)
     for param in model.parameters():
-        norm0 += param.detach().float().pow(2).sum()
-    norm0_by_rank = [None] * pp_size
-    torch.distributed.all_gather_object(
-        norm0_by_rank, {"total": float(norm0), "modules": _module_norms(model)})
-    param_norm0_by_rank = {str(r): norm0_by_rank[r]["total"] for r in range(pp_size)}
+        final_norm += param.detach().float().pow(2).sum()
+    final_by_rank = [None] * pp_size
+    torch.distributed.all_gather_object(final_by_rank, float(final_norm))
+    param_norm_final_by_rank = {str(r): final_by_rank[r] for r in range(pp_size)}
 
     result = {
         "mode": "pp_executor" if mode in ("1", "true", "yes", "on") else "native",
@@ -400,6 +428,9 @@ def main():
         "microbatch_losses": last_mb_losses,
         "param_norm0_by_rank": param_norm0_by_rank,
         "module_norm0_by_rank": {str(r): norm0_by_rank[r]["modules"] for r in range(pp_size)},
+        "param_norm_final_by_rank": param_norm_final_by_rank,
+        "optimizer_stepped": step_opt is not None,
+        "optimizer": last_opt_stats,
         "grad_norm": grad_norm,
         "finite": bool(math.isfinite(step_loss) and math.isfinite(grad_norm)),
         "measured": [f"PP={pp_size} forward+backward loss and grad norm"],

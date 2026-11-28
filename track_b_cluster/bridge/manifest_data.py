@@ -134,6 +134,11 @@ class ManifestBatches:
         base = (step // len(self.groups)) * num_mb
         return [group[(base + mb) % len(group)] for mb in range(num_mb)]
 
+    def cover_steps(self, num_mb):
+        """Steps until every sample has been visited once at this microbatch count."""
+        visits = max((len(g) + num_mb - 1) // num_mb for g in self.groups)
+        return visits * len(self.groups)
+
     def build(self, step, num_mb):
         if self.processor is None:
             self.processor = load_processor(self.hf_dir)

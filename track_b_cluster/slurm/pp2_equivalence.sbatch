@@ -18,7 +18,7 @@ MODE=${MODE:-0}
 BENCH_STEPS=${BENCH_STEPS:-0}
 WARMUP_STEPS=${WARMUP_STEPS:-2}
 NPROC=${PP:-2}
-LOG=$WS/containers/pp2-equiv-${MODE}.log
+LOG=$WS/containers/pp2-equiv-${MODE}${TAG:+-$TAG}.log
 exec > "$LOG" 2>&1
 set -x
 
@@ -26,7 +26,7 @@ SIF=$WS/containers/ngc-pytorch-25.03-py3.sif
 PMP=$WS/third_party/BigMac/third_party/Pai-Megatron-Patch
 BACKEND=$PMP/backends/megatron/Megatron-LM-250624
 HF=$WS/models/Qwen2-VL-2B-Instruct
-OUT=$PROJ/runs/track_b_n2_pilot_measured_v1/pp2_equivalence_${TAG:-mode${MODE}}.json
+OUT=${OUT_DIR:-$PROJ/runs/track_b_n2_pilot_measured_v1}/pp2_equivalence_${TAG:-mode${MODE}}.json
 
 export PYTHONPATH="$BACKEND:$PMP/examples:$PMP/examples/qwen2_vl:$PMP:$WS/third_party/BigMac:$WS/venvs/trackb_pydeps"
 export SINGULARITYENV_LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu
@@ -38,13 +38,17 @@ export SINGULARITYENV_TOKENIZERS_PARALLELISM=false
 export SINGULARITYENV_PYTHONUNBUFFERED=1
 export SINGULARITYENV_USE_PP_EXECUTOR=$MODE
 export SINGULARITYENV_PROJ_ROOT=$PROJ
-export SINGULARITYENV_MANIFEST=$PROJ/runs/track_b_n2_pilot_measured_v1/pilot_manifest.json
+export SINGULARITYENV_MANIFEST=${MANIFEST:-$PROJ/runs/track_b_n2_pilot_measured_v1/pilot_manifest.json}
 export SINGULARITYENV_QWEN2VL_HF_DIR=$HF
 export SINGULARITYENV_NUM_LAYERS=$NUM_LAYERS
 export SINGULARITYENV_NUM_MICROBATCHES=$NUM_MICROBATCHES
 export SINGULARITYENV_PP_SIZE=$NPROC
+export SINGULARITYENV_PP_FIRST_LAYERS=${PP_FIRST_LAYERS:-}
+export SINGULARITYENV_PP_LAST_LAYERS=${PP_LAST_LAYERS:-}
 export SINGULARITYENV_BENCH_STEPS=$BENCH_STEPS
 export SINGULARITYENV_WARMUP_STEPS=$WARMUP_STEPS
+export SINGULARITYENV_TRAIN_STEP=${TRAIN_STEP:-0}
+export SINGULARITYENV_FULL_COVERAGE=${FULL_COVERAGE:-0}
 
 singularity exec --nv \
   --bind /lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1 \
