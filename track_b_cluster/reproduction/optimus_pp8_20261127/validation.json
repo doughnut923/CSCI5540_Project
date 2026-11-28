@@ -1,0 +1,361 @@
+{
+  "slurm": {
+    "id": 31748,
+    "state": "COMPLETED",
+    "exit_code": "0:0",
+    "node": "gpu3",
+    "gpu_count": 8,
+    "start": "2026-11-27T06:46:50+08:00",
+    "end": "2026-11-27T06:59:44+08:00",
+    "elapsed_s": 774
+  },
+  "archive_sha256": "a639155a6fae0a20089be899b18a3676d02277e24e629b724af5e477c0fa415b",
+  "source_commit": "afa751384bbf753e045b387443301dd8bf83ef72",
+  "memory_metric": "PyTorch peak allocated bytes / 2**30",
+  "replay": {
+    "pass": true,
+    "execution_pass": true,
+    "memory_pass": true,
+    "numerical_parity_pass": true,
+    "case": "image_count_high",
+    "source_commit": "afa751384bbf753e045b387443301dd8bf83ef72",
+    "input_plan_sha256": "653879df3f23e282c686cb8efc7eee4de1677fb7112097436360100a4f59d27e",
+    "device_memory_MiB": 24576,
+    "parity": {
+      "pass": true,
+      "rtol": 0.001,
+      "atol": 1e-05,
+      "comparison_scope": "loss, global gradient norm and sampled parameters/used gradients",
+      "max_abs_difference": {
+        "loss": 0,
+        "grad_norm": 0,
+        "parameter": 0,
+        "used_gradient": 0
+      },
+      "values_checked": {
+        "parameter": 106464,
+        "used_gradient": 106464
+      },
+      "steps": 2,
+      "encoder_owners": [
+        [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      ],
+      "optimizer_device": "cuda",
+      "full_optimus_reproduction": false,
+      "errors": []
+    },
+    "arms": {
+      "serial-reference": {
+        "optimizer_updates": 2,
+        "peak_allocated_GiB_by_rank": {
+          "0": 21.121867656707764,
+          "1": 19.180950164794922,
+          "2": 18.968568801879883,
+          "3": 18.7577223777771,
+          "4": 18.54266929626465,
+          "5": 18.328140258789062,
+          "6": 18.11878252029419,
+          "7": 20.711031436920166
+        },
+        "max_peak_allocated_GiB": 21.121867656707764,
+        "min_startup_optimizer_headroom_GiB": 5.951984405517578,
+        "image_gradient_checks": 60,
+        "changed_parameter_samples_by_rank": [
+          4712,
+          4825,
+          4825,
+          4844,
+          4839,
+          4838,
+          4841,
+          4711
+        ]
+      },
+      "optimus-pp": {
+        "optimizer_updates": 2,
+        "peak_allocated_GiB_by_rank": {
+          "0": 21.121867656707764,
+          "1": 19.18651008605957,
+          "2": 18.970183849334717,
+          "3": 18.7577223777771,
+          "4": 18.54127597808838,
+          "5": 18.32815170288086,
+          "6": 18.11878252029419,
+          "7": 20.710550785064697
+        },
+        "max_peak_allocated_GiB": 21.121867656707764,
+        "min_startup_optimizer_headroom_GiB": 5.951984405517578,
+        "image_gradient_checks": 60,
+        "changed_parameter_samples_by_rank": [
+          4712,
+          4825,
+          4825,
+          4844,
+          4839,
+          4838,
+          4841,
+          4711
+        ]
+      }
+    }
+  },
+  "same_schedule": {
+    "pass": true,
+    "execution_pass": null,
+    "memory_pass": null,
+    "numerical_parity_pass": null,
+    "steps": 2,
+    "values_checked": {
+      "parameter": 106464,
+      "used_gradient": 106464
+    },
+    "max_abs_difference": {
+      "loss": 0,
+      "grad_norm": 0,
+      "parameter": 0,
+      "used_gradient": 0
+    },
+    "errors": [],
+    "peaks_by_arm": {},
+    "image_checks": {}
+  },
+  "candidate": {
+    "pass": true,
+    "case": "image_count_high",
+    "parity": {
+      "pass": true,
+      "rtol": 0.001,
+      "atol": 1e-05,
+      "comparison_scope": "loss, global gradient norm and sampled parameters/used gradients",
+      "max_abs_difference": {
+        "loss": 0,
+        "grad_norm": 0,
+        "parameter": 0,
+        "used_gradient": 0
+      },
+      "values_checked": {
+        "parameter": 479088,
+        "used_gradient": 479088
+      },
+      "steps": 9,
+      "encoder_owners": [
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          0,
+          1,
+          2,
+          3
+        ],
+        [
+          0,
+          1,
+          2,
+          3
+        ]
+      ],
+      "optimizer_device": "cuda",
+      "full_optimus_reproduction": false,
+      "errors": []
+    },
+    "coverage": {
+      "input_coverage_pass": true,
+      "input_budget_pass": true,
+      "input_sequence_coverage_pass": true
+    }
+  },
+  "measurements": [
+    {
+      "repeat": 1,
+      "updates": 9,
+      "measured_steps": 8,
+      "distinct": 12,
+      "samples": 32,
+      "step_mean_s": 2.3053578180843033,
+      "peak_GiB_by_rank": {
+        "0": 20.67913818359375,
+        "1": 18.518030166625977,
+        "2": 18.51790952682495,
+        "3": 18.518030166625977,
+        "4": 17.888134002685547,
+        "5": 17.888473987579346,
+        "6": 17.890255451202393,
+        "7": 20.72321319580078
+      },
+      "throughput_samples_per_s": 1.7350885700354766,
+      "skipped_steps": 0,
+      "nan_or_inf_steps": 0
+    },
+    {
+      "repeat": 2,
+      "updates": 9,
+      "measured_steps": 8,
+      "distinct": 12,
+      "samples": 32,
+      "step_mean_s": 2.3120801255572587,
+      "peak_GiB_by_rank": {
+        "0": 20.67913818359375,
+        "1": 18.518030166625977,
+        "2": 18.518030166625977,
+        "3": 18.518030166625977,
+        "4": 17.888134002685547,
+        "5": 17.888473987579346,
+        "6": 17.890255451202393,
+        "7": 20.72321319580078
+      },
+      "throughput_samples_per_s": 1.7300438491663077,
+      "skipped_steps": 0,
+      "nan_or_inf_steps": 0
+    },
+    {
+      "repeat": 3,
+      "updates": 9,
+      "measured_steps": 8,
+      "distinct": 12,
+      "samples": 32,
+      "step_mean_s": 2.351823133241851,
+      "peak_GiB_by_rank": {
+        "0": 20.67913818359375,
+        "1": 18.518030166625977,
+        "2": 18.51790952682495,
+        "3": 18.518030166625977,
+        "4": 17.888134002685547,
+        "5": 17.888473987579346,
+        "6": 17.890255451202393,
+        "7": 20.72321319580078
+      },
+      "throughput_samples_per_s": 1.7008081702497047,
+      "skipped_steps": 0,
+      "nan_or_inf_steps": 0
+    }
+  ],
+  "pooled": {
+    "samples": 96,
+    "measured_steps": 24,
+    "step_mean_s": 2.3230870256278044,
+    "throughput_samples_per_s": 1.721846816702451,
+    "peak_GiB_by_rank": {
+      "0": 20.67913818359375,
+      "1": 18.518030166625977,
+      "2": 18.518030166625977,
+      "3": 18.518030166625977,
+      "4": 17.888134002685547,
+      "5": 17.888473987579346,
+      "6": 17.890255451202393,
+      "7": 20.72321319580078
+    }
+  },
+  "recorded_timing_config": {
+    "source_commit": "afa751384bbf753e045b387443301dd8bf83ef72",
+    "pmp_commit": "3413f297e9666aa75c681bb588a7a61d92a33e5b",
+    "mcore_commit": "2220aa0d4a63dd6bb221d438152f05c2dd7e9a9e",
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "optimizer": {
+      "name": "AdamW",
+      "lr": 0.0001,
+      "min_lr": 1e-05,
+      "betas": [
+        0.9,
+        0.95
+      ],
+      "eps": 1e-08,
+      "weight_decay": 0.01,
+      "clip_grad": 1.0,
+      "loss_reduction": "mean-of-microbatch-means"
+    },
+    "optimizer_device": "cuda",
+    "layers": 28,
+    "llm_parallelism": {
+      "pp": 8,
+      "tp": 1,
+      "dp": 1,
+      "layers_by_rank": [
+        2,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        2
+      ]
+    },
+    "encoder_parallelism": {
+      "pp": 1,
+      "tp": 1,
+      "dp": 8
+    },
+    "microbatches": 4,
+    "steps": 8,
+    "warmup_steps": 1,
+    "batching": "bucket",
+    "encoder_placement": "round-robin",
+    "deterministic": true,
+    "seq_length": 1024,
+    "validation_samples": 0,
+    "manifest_sha256": "bd58357cb313dc3da892849d802a0f5e004fd8b94ea57e13bd498ab23600e1d1",
+    "input_plan_sha256": "6f7443cf6023794243615d8c8cbad904808681e89cb61576807e003289dd4362",
+    "sample_order_sha256": "d88431f66517fe7defaf9f239e0c9b8023231df3f842e477b09fd1ba8c1a2f68",
+    "sample_multiset_sha256": "371c1e9d710ed34a6c928e1b7c1f74786745e76b34ba1fbdf8ab953761829daa"
+  },
+  "timing_steps_file": "timing-steps.jsonl"
+}

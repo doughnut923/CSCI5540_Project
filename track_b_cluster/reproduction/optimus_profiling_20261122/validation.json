@@ -1,0 +1,166 @@
+{
+  "cpu_tests_passed": 12,
+  "date": "2026-11-22",
+  "pass": true,
+  "scope": "Two-case synchronized bottleneck diagnosis, one run each; not an overlap or speedup benchmark",
+  "source_commit": "bcb82b8128be9ba30e6e046efba85a5e106fc55c",
+  "gpu": "2 x RTX 3090 (24 GiB)",
+  "driver": "610.57.04",
+  "allocation": 29938,
+  "optimizer_device": "cpu",
+  "microbatches": 2,
+  "layers": 28,
+  "warmup_steps": 1,
+  "measured_steps": 8,
+  "validation_samples": 0,
+  "profile_step_phases": true,
+  "performance_claim": false,
+  "results": {
+    "image_count_high": {
+      "pass": true,
+      "source_commit": "bcb82b8128be9ba30e6e046efba85a5e106fc55c",
+      "case_manifest_sha256": "bd58357cb313dc3da892849d802a0f5e004fd8b94ea57e13bd498ab23600e1d1",
+      "diagnostic_only": true,
+      "adds_cuda_synchronization": true,
+      "performance_claim": false,
+      "measured_steps": 8,
+      "step_time_s_mean": 13.388057977339486,
+      "step_time_s_stdev": 0.13114624645602516,
+      "critical_rank_counts": {
+        "1": 2,
+        "0": 6
+      },
+      "phase_mean_s": {
+        "model_schedule": 0.6112306234717835,
+        "ordinary_grad_collect": 0.0015378388343378901,
+        "encoder_grad_sync": 0.3846305873594247,
+        "tied_grad_sync": 0.12990640496718697,
+        "global_grad_norm": 0.01837957772659138,
+        "optimizer": 12.242312916961964,
+        "unattributed": 6.002801819704473e-05
+      },
+      "phase_fraction_of_step": {
+        "model_schedule": 0.04565491309541289,
+        "ordinary_grad_collect": 0.000114866460612945,
+        "encoder_grad_sync": 0.02872937867541709,
+        "tied_grad_sync": 0.009703155243804999,
+        "global_grad_norm": 0.0013728337416599552,
+        "optimizer": 0.9144203690843885,
+        "unattributed": 4.483698703624353e-06
+      },
+      "optimizer_child_mean_s": {
+        "gradient_prepare": 1.7494308582972735,
+        "lr_and_clip": 0.5237080379738472,
+        "adamw_update": 8.712950808607275,
+        "parameter_copyback": 1.2554787228873465,
+        "diagnostics": 0.000667028478346765
+      },
+      "optimizer_child_fraction_of_optimizer": {
+        "gradient_prepare": 0.14290035470939505,
+        "lr_and_clip": 0.04277852081760135,
+        "adamw_update": 0.7117078992920782,
+        "parameter_copyback": 0.10255241239160422,
+        "diagnostics": 5.448549492821606e-05
+      },
+      "dominant_phase": "optimizer",
+      "optimizer_device": "cpu",
+      "notes": [
+        "Each step uses phases from the rank with the maximum complete-step wall time.",
+        "Optimizer children are inclusive in the optimizer parent; do not add both.",
+        "Model schedule includes compute, P2P/waits, and runtime measurement/collection.",
+        "Phase synchronization changes overlap; these are bottleneck diagnostics, not scheduling speedups."
+      ]
+    },
+    "resolution_high": {
+      "pass": true,
+      "source_commit": "bcb82b8128be9ba30e6e046efba85a5e106fc55c",
+      "case_manifest_sha256": "7674ab20d81e7f36334d26ab949a5ec3319d888da6c4b93388cf828b577f2946",
+      "diagnostic_only": true,
+      "adds_cuda_synchronization": true,
+      "performance_claim": false,
+      "measured_steps": 8,
+      "step_time_s_mean": 12.871315481956117,
+      "step_time_s_stdev": 0.1524261702524076,
+      "critical_rank_counts": {
+        "0": 6,
+        "1": 2
+      },
+      "phase_mean_s": {
+        "model_schedule": 0.3271667685476132,
+        "ordinary_grad_collect": 0.001514246774604544,
+        "encoder_grad_sync": 0.38445614775992,
+        "tied_grad_sync": 0.12996675219619647,
+        "global_grad_norm": 0.01827510990551673,
+        "optimizer": 12.009875360381557,
+        "unattributed": 6.109639070928097e-05
+      },
+      "phase_fraction_of_step": {
+        "model_schedule": 0.025418285256565868,
+        "ordinary_grad_collect": 0.00011764506718270699,
+        "encoder_grad_sync": 0.029869219529183064,
+        "tied_grad_sync": 0.010097394658564051,
+        "global_grad_norm": 0.0014198323342424493,
+        "optimizer": 0.9330728764451321,
+        "unattributed": 4.7467091296868635e-06
+      },
+      "optimizer_child_mean_s": {
+        "gradient_prepare": 1.7310377104731742,
+        "lr_and_clip": 0.5286009579722304,
+        "adamw_update": 8.468008344236296,
+        "parameter_copyback": 1.281466029875446,
+        "diagnostics": 0.0006808583566453308
+      },
+      "optimizer_child_fraction_of_optimizer": {
+        "gradient_prepare": 0.14413452750588568,
+        "lr_and_clip": 0.04401385877125678,
+        "adamw_update": 0.7050871129079949,
+        "parameter_copyback": 0.10670102656541922,
+        "diagnostics": 5.669154226956938e-05
+      },
+      "dominant_phase": "optimizer",
+      "optimizer_device": "cpu",
+      "notes": [
+        "Each step uses phases from the rank with the maximum complete-step wall time.",
+        "Optimizer children are inclusive in the optimizer parent; do not add both.",
+        "Model schedule includes compute, P2P/waits, and runtime measurement/collection.",
+        "Phase synchronization changes overlap; these are bottleneck diagnostics, not scheduling speedups."
+      ]
+    }
+  },
+  "prior_unprofiled_scalar_check": {
+    "pass": true,
+    "steps": 9,
+    "case": "image_count_high",
+    "max_abs_difference": {
+      "loss": 0.0,
+      "grad_norm": 0.0
+    },
+    "scope": "loss, global gradient norm and sample order only; parameters were not sampled in the profiling run"
+  },
+  "code_sha256": {
+    "optimus_qwen.py": "6987078cea23ea1bdec7d9923315dfd76afbb628ba9325465b1b2ce49369926a",
+    "optimus_runtime.py": "b9d1ffa0f3e46c77eb0d17d40637a0069a22bd0af2c8defd2dcab8db8a0ac8ef",
+    "optimus_schedule.py": "28592cb83afc6a23864c79fdc2ff52c11d9e998cc7881c352cf0175b30489aea",
+    "manifest_data.py": "382b8a485f4af67c3bc50afee2228dbcb2be3a29a8f7dd663b70a3aacc6a752d",
+    "optimus_optimizer.py": "0f40047b319eb9d549aed809cc0332642d85d5d2777166b74fc976960ac45971",
+    "optimus_config.py": "da16b6666367630a66a9ec9563f064cf62bcfbc1776b6c31c4f9db5599cc452e",
+    "optimus_experiment.py": "1cb5ea5a4435f42a32638646234e8b91dea2f3bc1f3c8f4234ffcf6157cf6bec",
+    "optimus_profiling.py": "2d221946398b8e3b89c0998e80e5c55e628cd22c92beb4eaac6ffa652685448d",
+    "pp2_equivalence.py": "6ca01ece6b9a24cd51954acadf6bbf0704e13a9c56cf12f6ccc2a928b3391484"
+  },
+  "pmp_commit": "3413f297e9666aa75c681bb588a7a61d92a33e5b",
+  "mcore_commit": "2220aa0d4a63dd6bb221d438152f05c2dd7e9a9e",
+  "prepared_environment_record": "../native_pp2_smoke/environment.json",
+  "archive_sha256": "c3e662d97e628d89789117f0ac32d4e3c2c3bf8bc5e5653af582178702f35d55",
+  "local_evidence": "project/optimus-profiling-20261122/evidence-29938",
+  "limitations": [
+    "phase boundaries add CUDA synchronization",
+    "model schedule includes P2P and measurement overhead",
+    "CPU optimizer offload; no cross-backend comparison",
+    "one repeat and eight measured steps per case"
+  ],
+  "allocated_cpu_cores": 8,
+  "training_step_cpu_cores": 6,
+  "torchrun_reported_omp_num_threads": 1,
+  "threading_note": "torchrun log reports its OMP_NUM_THREADS=1 default; runtime torch.get_num_threads was not separately recorded."
+}

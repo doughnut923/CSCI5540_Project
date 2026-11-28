@@ -1,0 +1,100 @@
+{
+  "pass": true,
+  "rtol": 0.001,
+  "atol": 1e-05,
+  "comparison_scope": "loss, global gradient norm and sampled parameters/used gradients",
+  "max_abs_difference": {
+    "loss": 0.0,
+    "grad_norm": 0.0,
+    "parameter": 0.0,
+    "used_gradient": 0.0
+  },
+  "values_checked": {
+    "parameter": 31392,
+    "used_gradient": 31392
+  },
+  "steps": 2,
+  "encoder_owners": [
+    [
+      1,
+      0,
+      1,
+      0
+    ],
+    [
+      1,
+      0,
+      1,
+      0
+    ]
+  ],
+  "optimizer_device": "cpu",
+  "full_optimus_reproduction": false,
+  "errors": [],
+  "date": "2026-11-20",
+  "gpu": "2 x RTX 3090 (24 GiB each)",
+  "driver": "610.57.04",
+  "torch": "2.7.0a0+7c8ec84dab.nv25.03",
+  "initialization": "seeded-random; config/tokenizer from model-dir",
+  "model_layers": 28,
+  "microbatches_per_step": 4,
+  "source_commit": "5de2776c20395defd584b9fb40eaac47acecaa55",
+  "implementation": "optimus-inspired-pp-whole-encoder",
+  "exit_code": 0,
+  "evidence_archive_sha256": "d69da4ac94f210dfbc4c51fe1b295f64610d6806577b4c43ff5b213ec5a5a50a",
+  "manifest_sha256": "6824f762cdfff4ba269c5ab748fbcf09579ee022953bf486127a8760dd746373",
+  "model_config_sha256": "422adefa19e62dd175961cec85bc0400344fe5bf9b22bd1182e05aaae78556e0",
+  "raw_evidence": "project/optimus-gpu-validation/attempt3 (local project evidence directory)",
+  "performance_claim": false,
+  "scope": "Random-initialized Qwen2-VL-2B architecture, 28 layers, same two-photo sample repeated; two optimizer updates; CPU-offloaded AdamW.",
+  "observations": {
+    "serial-reference": [
+      {
+        "step": 0,
+        "loss": 12.519957542419434,
+        "grad_norm": 854.281986329445,
+        "step_time_s": 19.48629632196389,
+        "max_memory_allocated_bytes_by_rank": {
+          "0": 11582368768,
+          "1": 9624014336
+        },
+        "optimizer_updates": 1
+      },
+      {
+        "step": 1,
+        "loss": 9.399199485778809,
+        "grad_norm": 400.9212604800243,
+        "step_time_s": 13.207693147007376,
+        "max_memory_allocated_bytes_by_rank": {
+          "0": 11582369280,
+          "1": 9624014848
+        },
+        "optimizer_updates": 2
+      }
+    ],
+    "optimus-pp": [
+      {
+        "step": 0,
+        "loss": 12.519957542419434,
+        "grad_norm": 854.281986329445,
+        "step_time_s": 21.937371765030548,
+        "max_memory_allocated_bytes_by_rank": {
+          "0": 11028325376,
+          "1": 10179738112
+        },
+        "optimizer_updates": 1
+      },
+      {
+        "step": 1,
+        "loss": 9.399199485778809,
+        "grad_norm": 400.9212604800243,
+        "step_time_s": 13.00497462390922,
+        "max_memory_allocated_bytes_by_rank": {
+          "0": 11028325888,
+          "1": 10179414528
+        },
+        "optimizer_updates": 2
+      }
+    ]
+  }
+}

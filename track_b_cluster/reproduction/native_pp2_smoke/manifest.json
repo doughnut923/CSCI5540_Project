@@ -1,0 +1,20 @@
+{
+  "purpose": "Native PP=2 pipeline smoke test. Not the original Yin pilot or a numerical reproduction of its loss.",
+  "samples": [
+    {
+      "sample_id": "repository_photos_two_128",
+      "images": [
+        {
+          "path_relative_to_repo_root": "part_a_model_check/fixtures/photos/imagenet_row_0000.jpg",
+          "resolution": 128,
+          "sha256": "abf8e6170852042df23127ff6f00f861dadd48ba746cab0cddce6ff8843149d4"
+        },
+        {
+          "path_relative_to_repo_root": "part_a_model_check/fixtures/photos/imagenet_row_2500.jpg",
+          "resolution": 128,
+          "sha256": "5de18b0524d390304288298a2ae24fdaf869dc9f7b16aa15a061ad6dd1e2e469"
+        }
+      ]
+    }
+  ]
+}

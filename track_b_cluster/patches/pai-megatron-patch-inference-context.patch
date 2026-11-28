@@ -1,0 +1,38 @@
+--- a/megatron_patch/model/qwen2_vl/attention.py
++++ b/megatron_patch/model/qwen2_vl/attention.py
+@@ -344,10 +344,16 @@
+         attention_bias=None,
+         packed_seq_params=None,
+         sequence_len_offset=None,
++        inference_context=None,
+     ):
+         """
+         Perform a forward pass through the attention module.
+         """
++        # MCore renamed inference_params; the training path supplies None.
++        if inference_context is not None:
++            if inference_params is not None and inference_params is not inference_context:
++                raise ValueError("Conflicting inference parameters and context")
++            inference_params = inference_context
+
+         # hidden_states: [sq, b, h]
+         if self.config.flash_decode:
+--- a/megatron_patch/model/qwen2_vl/attention_vision.py
++++ b/megatron_patch/model/qwen2_vl/attention_vision.py
+@@ -343,10 +343,16 @@
+         attention_bias=None,
+         packed_seq_params=None,
+         sequence_len_offset=None,
++        inference_context=None,
+     ):
+         """
+         Perform a forward pass through the attention module.
+         """
++        # MCore renamed inference_params; the training path supplies None.
++        if inference_context is not None:
++            if inference_params is not None and inference_params is not inference_context:
++                raise ValueError("Conflicting inference parameters and context")
++            inference_params = inference_context
+
+         # hidden_states: [sq, b, h]
+         if self.config.flash_decode:

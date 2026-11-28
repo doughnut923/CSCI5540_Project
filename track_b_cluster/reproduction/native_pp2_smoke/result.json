@@ -1,0 +1,21 @@
+{
+  "mode": "native",
+  "use_pp_executor_env": "0",
+  "pp_rank": 0,
+  "pp_size": 2,
+  "pp_size_env": "2",
+  "num_layers": "28",
+  "sample_id": "repository_photos_two_128",
+  "num_microbatches": 2,
+  "seq_length": 82,
+  "loss": 6.259978771209717,
+  "grad_norm": 852.1813920756542,
+  "finite": true,
+  "measured": [
+    "PP=2 forward+backward loss and grad norm"
+  ],
+  "unmeasured": [
+    "encoder nesting (VE executor)",
+    "training convergence"
+  ]
+}

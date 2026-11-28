@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-20",
+  "test": "python -m unittest -v test_optimus",
+  "exit_code": 0,
+  "python": "3.12.7",
+  "torch": "2.6.0",
+  "device": "CPU",
+  "distributed_backend": "gloo",
+  "world_sizes": [
+    2,
+    4
+  ],
+  "optimizer_updates_per_world": 3,
+  "asserted_parameter_atol": 1e-06,
+  "checks": [
+    "schedule dependencies and resource exclusion",
+    "missing/invalid plan rejection",
+    "uneven encoder ownership and idle replicas",
+    "all parameter gradients versus unpartitioned reference",
+    "three consecutive AdamW updates versus unpartitioned reference",
+    "fused main_grad dummy handling",
+    "shared manifest missing-token-metadata and next-token target shift",
+    "large-parameter integer sampling indices",
+    "mixed sequence lengths preserve manifest ordering",
+    "ordinary BF16 gradients accumulate in FP32 after each microbatch"
+  ],
+  "gpu_validated": false,
+  "full_optimus_reproduction": false,
+  "source_sha256": {
+    "track_b_cluster/bridge/optimus_qwen.py": "06dfe40a6a09785fb160ad3013d954743ded5077d80858b00531500d30b82310",
+    "track_b_cluster/bridge/optimus_schedule.py": "28592cb83afc6a23864c79fdc2ff52c11d9e998cc7881c352cf0175b30489aea",
+    "track_b_cluster/bridge/optimus_runtime.py": "b9d1ffa0f3e46c77eb0d17d40637a0069a22bd0af2c8defd2dcab8db8a0ac8ef",
+    "track_b_cluster/bridge/manifest_data.py": "c502c3ed7fdf9d04b674dfde3ecfcc3367736876336a4a098c331c5d95a5ea7e",
+    "track_b_cluster/bridge/training_common.py": "146b201f337cb0bf6f303eff2fc5751562a656c8029c8579bd145281cb8a3e8b",
+    "track_b_cluster/bridge/test_optimus.py": "27fab856067f2ae74b7583b5d08e2aa478e265a09d0e2a8e1c855a4808895f0a"
+  },
+  "test_count": 8,
+  "source_commit": "0a79f17"
+}

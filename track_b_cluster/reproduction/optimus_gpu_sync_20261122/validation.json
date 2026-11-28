@@ -1,0 +1,369 @@
+{
+  "date": "2026-11-22",
+  "pass": true,
+  "scope": "Targeted image-count-high check after the upstream synchronization; not a full six-case rerun",
+  "source_commit": "1c977ec91da5d09a1703bdd826cf6481ec53a34d",
+  "upstream_commit": "a49368b8dad76700c573a550b1f2453b1bd73149",
+  "implementation": "optimus-inspired-pp-whole-encoder",
+  "gpu": "2 x NVIDIA GeForce RTX 3090 (24 GiB)",
+  "driver": "610.57.04",
+  "allocation": 29923,
+  "torch": "2.7.0a0+7c8ec84dab.nv25.03",
+  "optimizer_device": "cpu",
+  "optimizer": {
+    "name": "AdamW",
+    "lr": 0.0001,
+    "min_lr": 1e-05,
+    "betas": [
+      0.9,
+      0.95
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.01,
+    "clip_grad": 1.0,
+    "loss_reduction": "mean-of-microbatch-means"
+  },
+  "layers": 28,
+  "microbatches": 2,
+  "warmup_steps": 1,
+  "measured_steps": 8,
+  "seq_length": 1024,
+  "deterministic": true,
+  "encoder_placement": "round-robin",
+  "same_measured_sample_multiset": true,
+  "sample_multiset_sha256": "90955d2c51efe4b3817a28b86f01c328f6064f90f5b0de78bfd7be9408be9f7f",
+  "results": [
+    {
+      "order": "bucket",
+      "case": "image_count_high",
+      "axis": "image_count",
+      "repeat": "repeat-0",
+      "parity": {
+        "pass": true,
+        "rtol": 0.001,
+        "atol": 1e-05,
+        "comparison_scope": "loss, global gradient norm and sampled parameters/used gradients",
+        "max_abs_difference": {
+          "loss": 0.0,
+          "grad_norm": 0.0,
+          "parameter": 0.0,
+          "used_gradient": 0.0
+        },
+        "values_checked": {
+          "parameter": 141264,
+          "used_gradient": 141264
+        },
+        "steps": 9,
+        "encoder_owners": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "optimizer_device": "cpu",
+        "full_optimus_reproduction": false,
+        "errors": []
+      },
+      "input_coverage_pass": true,
+      "input_budget_pass": true,
+      "input_sequence_coverage_pass": true,
+      "runs": {
+        "serial-reference": {
+          "sample_multiplicity": {
+            "image_count_high_000": 2,
+            "image_count_high_001": 2,
+            "image_count_high_002": 2,
+            "image_count_high_003": 1,
+            "image_count_high_004": 1,
+            "image_count_high_005": 1,
+            "image_count_high_006": 1,
+            "image_count_high_007": 1,
+            "image_count_high_008": 1,
+            "image_count_high_009": 1,
+            "image_count_high_010": 1,
+            "image_count_high_011": 2
+          },
+          "distinct_samples": 12,
+          "steps": 8,
+          "step_time_s_mean": 13.357640271104174,
+          "step_time_s_stdev": 0.14217958252609375,
+          "throughput_samples_per_s": 0.14972704455340713,
+          "peak_allocated_bytes": 14955087360,
+          "encoder_forward_ms_mean": 106.23167920461856,
+          "encoder_forward_ms_stdev": 5.4596397726191785,
+          "visual_tokens_mean": 576,
+          "image_counts_exercised": [
+            1,
+            2,
+            4,
+            8
+          ],
+          "sequence_lengths_exercised": [
+            607,
+            609,
+            613,
+            621
+          ],
+          "image_gradient_checks": 60
+        },
+        "optimus-pp": {
+          "sample_multiplicity": {
+            "image_count_high_000": 2,
+            "image_count_high_001": 2,
+            "image_count_high_002": 2,
+            "image_count_high_003": 1,
+            "image_count_high_004": 1,
+            "image_count_high_005": 1,
+            "image_count_high_006": 1,
+            "image_count_high_007": 1,
+            "image_count_high_008": 1,
+            "image_count_high_009": 1,
+            "image_count_high_010": 1,
+            "image_count_high_011": 2
+          },
+          "distinct_samples": 12,
+          "steps": 8,
+          "step_time_s_mean": 13.512871907762019,
+          "step_time_s_stdev": 0.2567950804793783,
+          "throughput_samples_per_s": 0.14800702719983355,
+          "peak_allocated_bytes": 14955087360,
+          "encoder_forward_ms_mean": 107.07180845364928,
+          "encoder_forward_ms_stdev": 5.3273812168469705,
+          "visual_tokens_mean": 576,
+          "image_counts_exercised": [
+            1,
+            2,
+            4,
+            8
+          ],
+          "sequence_lengths_exercised": [
+            607,
+            609,
+            613,
+            621
+          ],
+          "image_gradient_checks": 60
+        }
+      }
+    },
+    {
+      "order": "mixed",
+      "case": "image_count_high",
+      "axis": "image_count",
+      "repeat": "repeat-0",
+      "parity": {
+        "pass": true,
+        "rtol": 0.001,
+        "atol": 1e-05,
+        "comparison_scope": "loss, global gradient norm and sampled parameters/used gradients",
+        "max_abs_difference": {
+          "loss": 0.0,
+          "grad_norm": 0.0,
+          "parameter": 0.0,
+          "used_gradient": 0.0
+        },
+        "values_checked": {
+          "parameter": 141264,
+          "used_gradient": 141264
+        },
+        "steps": 9,
+        "encoder_owners": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "optimizer_device": "cpu",
+        "full_optimus_reproduction": false,
+        "errors": []
+      },
+      "input_coverage_pass": true,
+      "input_budget_pass": true,
+      "input_sequence_coverage_pass": true,
+      "runs": {
+        "serial-reference": {
+          "sample_multiplicity": {
+            "image_count_high_000": 2,
+            "image_count_high_001": 2,
+            "image_count_high_002": 2,
+            "image_count_high_003": 1,
+            "image_count_high_004": 1,
+            "image_count_high_005": 1,
+            "image_count_high_006": 1,
+            "image_count_high_007": 1,
+            "image_count_high_008": 1,
+            "image_count_high_009": 1,
+            "image_count_high_010": 1,
+            "image_count_high_011": 2
+          },
+          "distinct_samples": 12,
+          "steps": 8,
+          "step_time_s_mean": 13.524842029932188,
+          "step_time_s_stdev": 0.30140779330642353,
+          "throughput_samples_per_s": 0.1478760340101383,
+          "peak_allocated_bytes": 14955625472,
+          "encoder_forward_ms_mean": 106.75295973545872,
+          "encoder_forward_ms_stdev": 6.948306767149394,
+          "visual_tokens_mean": 576,
+          "image_counts_exercised": [
+            1,
+            2,
+            4,
+            8
+          ],
+          "sequence_lengths_exercised": [
+            607,
+            609,
+            613,
+            621
+          ],
+          "image_gradient_checks": 60
+        },
+        "optimus-pp": {
+          "sample_multiplicity": {
+            "image_count_high_000": 2,
+            "image_count_high_001": 2,
+            "image_count_high_002": 2,
+            "image_count_high_003": 1,
+            "image_count_high_004": 1,
+            "image_count_high_005": 1,
+            "image_count_high_006": 1,
+            "image_count_high_007": 1,
+            "image_count_high_008": 1,
+            "image_count_high_009": 1,
+            "image_count_high_010": 1,
+            "image_count_high_011": 2
+          },
+          "distinct_samples": 12,
+          "steps": 8,
+          "step_time_s_mean": 13.59296369596268,
+          "step_time_s_stdev": 0.276145278059913,
+          "throughput_samples_per_s": 0.1471349475165619,
+          "peak_allocated_bytes": 14955625472,
+          "encoder_forward_ms_mean": 107.20057598617859,
+          "encoder_forward_ms_stdev": 6.74016463081731,
+          "visual_tokens_mean": 576,
+          "image_counts_exercised": [
+            1,
+            2,
+            4,
+            8
+          ],
+          "sequence_lengths_exercised": [
+            607,
+            609,
+            613,
+            621
+          ],
+          "image_gradient_checks": 60
+        }
+      }
+    }
+  ],
+  "code_sha256": {
+    "optimus_qwen.py": "6d5f14631efa4f687af8fd7262985c0050018ca1bae9e6817f191838ba766757",
+    "optimus_runtime.py": "b9d1ffa0f3e46c77eb0d17d40637a0069a22bd0af2c8defd2dcab8db8a0ac8ef",
+    "optimus_schedule.py": "28592cb83afc6a23864c79fdc2ff52c11d9e998cc7881c352cf0175b30489aea",
+    "manifest_data.py": "382b8a485f4af67c3bc50afee2228dbcb2be3a29a8f7dd663b70a3aacc6a752d",
+    "optimus_optimizer.py": "e83801eec64ad4be9777b9871000508da8538dc8c37038ec0a2219e79e5c09c0",
+    "optimus_config.py": "da16b6666367630a66a9ec9563f064cf62bcfbc1776b6c31c4f9db5599cc452e",
+    "optimus_experiment.py": "1cb5ea5a4435f42a32638646234e8b91dea2f3bc1f3c8f4234ffcf6157cf6bec",
+    "pp2_equivalence.py": "6ca01ece6b9a24cd51954acadf6bbf0704e13a9c56cf12f6ccc2a928b3391484"
+  },
+  "pmp_commit": "3413f297e9666aa75c681bb588a7a61d92a33e5b",
+  "mcore_commit": "2220aa0d4a63dd6bb221d438152f05c2dd7e9a9e",
+  "model_config_sha256": "422adefa19e62dd175961cec85bc0400344fe5bf9b22bd1182e05aaae78556e0",
+  "evidence_archive_sha256": "4e00db1a8b019610bd4517efe2f0d24a36b835a0c633b11f9c801dbcb2b45296",
+  "local_summary_archive_sha256": "e37149d6501aa7bf766ff19b616e760a911562feeba7542820d7505433cd10f3",
+  "raw_evidence": "/data/d0/gds/zyli26/csci5540-optimus-sync-20261122/gpu-evidence-29923.tar.gz",
+  "local_evidence": "project/optimus-sync-20261122/gpu-evidence-29923 (configs, metrics and comparator summaries)",
+  "comparison_method": "Comparator executed on GPU node; local check of summaries and source fingerprints. Per-parameter samples retained in the full remote archive.",
+  "performance_claim": false,
+  "full_optimus_reproduction": false,
+  "limitations": [
+    "one case and one repeat per order",
+    "CPU optimizer offload",
+    "fixed encoder placement",
+    "serial reference is an internal correctness control, not native Megatron",
+    "different physical GPU counts, clipping, optimizer residence and initial weights remain across backends"
+  ],
+  "environment": {
+    "python": "3.12.3",
+    "packages": {
+      "torch": "2.7.0a0+7c8ec84dab.nv25.3",
+      "transformers": "4.49.0",
+      "Pillow": "11.1.0",
+      "numpy": "1.26.4",
+      "tokenizers": "0.21.4",
+      "transformer_engine": "2.1.0+450146a"
+    }
+  },
+  "prepared_environment_record": "../native_pp2_smoke/environment.json",
+  "launcher": "track_b_cluster/scripts/run_heterogeneity_suite.sh",
+  "case_selector": "image_count_high",
+  "input_plans": "inputs/bucket and inputs/mixed in the evidence archive"
+}

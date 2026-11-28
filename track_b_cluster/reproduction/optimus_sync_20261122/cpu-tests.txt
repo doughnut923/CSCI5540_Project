@@ -1,0 +1,17 @@
+test_bucket_plan_requires_complete_coverage (test_optimus.PlanTests.test_bucket_plan_requires_complete_coverage) ... ok
+test_corrupt_plans_rejected (test_optimus.PlanTests.test_corrupt_plans_rejected) ... ok
+test_fused_gradient_is_not_counted_twice (test_optimus.PlanTests.test_fused_gradient_is_not_counted_twice) ... ok
+test_large_parameter_sample_indices (test_optimus.PlanTests.test_large_parameter_sample_indices) ... ok
+test_mixed_lengths_preserve_manifest_order (test_optimus.PlanTests.test_mixed_lengths_preserve_manifest_order) ... ok
+test_model_overrides_are_local_to_optimus (test_optimus.PlanTests.test_model_overrides_are_local_to_optimus) ... ok
+test_ordinary_bf16_gradients_accumulate_in_fp32 (test_optimus.PlanTests.test_ordinary_bf16_gradients_accumulate_in_fp32) ... ok
+test_shared_manifest_smoke_without_derived_counts (test_optimus.PlanTests.test_shared_manifest_smoke_without_derived_counts) ... ok
+test_two_process_training_matches_unpartitioned_reference (test_optimus.PlanTests.test_two_process_training_matches_unpartitioned_reference) ... world=2: three updates match unpartitioned reference
+ok
+test_varied_worlds_and_unequal_work (test_optimus.PlanTests.test_varied_worlds_and_unequal_work) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 2.219s
+
+OK
+world=4: three updates match unpartitioned reference
