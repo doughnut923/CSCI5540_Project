@@ -1,0 +1,14 @@
+Loading Qwen/Qwen2-VL-2B-Instruct on mps with bfloat16
+Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]Loading checkpoint shards: 100%|##########| 2/2 [00:00<00:00, 25.53it/s]
+Loaded 2,208,985,600 trainable parameters
+Case single_image: 1 images, 234 visual tokens
+  visual output [234, 1536], expected 234 tokens
+  step 1: loss=3.025573; backward
+  gradients valid; AdamW step
+  step 1: passed
+Case two_images: 2 images, 486 visual tokens
+  visual output [486, 1536], expected 486 tokens
+  step 1: loss=3.957309; backward
+  gradients valid; AdamW step
+  step 1: passed
+Result: passed (runs/final-macos-576/result.json)

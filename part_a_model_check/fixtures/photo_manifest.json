@@ -1,0 +1,162 @@
+[
+  {
+    "row_idx": 0,
+    "label": 0,
+    "label_code": "n01440764",
+    "viewer_size": [
+      500,
+      375
+    ],
+    "file": "photos/imagenet_row_0000.jpg",
+    "sha256": "abf8e6170852042df23127ff6f00f861dadd48ba746cab0cddce6ff8843149d4",
+    "bytes": 57775,
+    "source": "https://huggingface.co/datasets/mrm8488/ImageNet1K-val",
+    "config": "default",
+    "split": "train",
+    "usage": "real-photo processor pilot; repeatedly sampled small preview pool",
+    "original_wh": [
+      500,
+      375
+    ]
+  },
+  {
+    "row_idx": 2500,
+    "label": 50,
+    "label_code": "n01698640",
+    "viewer_size": [
+      500,
+      383
+    ],
+    "file": "photos/imagenet_row_2500.jpg",
+    "sha256": "5de18b0524d390304288298a2ae24fdaf869dc9f7b16aa15a061ad6dd1e2e469",
+    "bytes": 45308,
+    "source": "https://huggingface.co/datasets/mrm8488/ImageNet1K-val",
+    "config": "default",
+    "split": "train",
+    "usage": "real-photo processor pilot; repeatedly sampled small preview pool",
+    "original_wh": [
+      500,
+      383
+    ]
+  },
+  {
+    "row_idx": 7500,
+    "label": 150,
+    "label_code": "n02077923",
+    "viewer_size": [
+      500,
+      383
+    ],
+    "file": "photos/imagenet_row_7500.jpg",
+    "sha256": "2e4bfae2f1be2be30970ec9859a8b6af84930d74f5e46715163a68d3fd3a3e58",
+    "bytes": 51995,
+    "source": "https://huggingface.co/datasets/mrm8488/ImageNet1K-val",
+    "config": "default",
+    "split": "train",
+    "usage": "real-photo processor pilot; repeatedly sampled small preview pool",
+    "original_wh": [
+      500,
+      383
+    ]
+  },
+  {
+    "row_idx": 12500,
+    "label": 250,
+    "label_code": "n02110185",
+    "viewer_size": [
+      500,
+      375
+    ],
+    "file": "photos/imagenet_row_12500.jpg",
+    "sha256": "8faaa5acb8712832aad2786796b992127896baa95a01a4129bb42f2d2eab3028",
+    "bytes": 38059,
+    "source": "https://huggingface.co/datasets/mrm8488/ImageNet1K-val",
+    "config": "default",
+    "split": "train",
+    "usage": "real-photo processor pilot; repeatedly sampled small preview pool",
+    "original_wh": [
+      500,
+      375
+    ]
+  },
+  {
+    "row_idx": 17500,
+    "label": 350,
+    "label_code": "n02417914",
+    "viewer_size": [
+      500,
+      375
+    ],
+    "file": "photos/imagenet_row_17500.jpg",
+    "sha256": "62e195f5101040ba201503a386cdead8557d832fab23072d9b3349b6589a1d90",
+    "bytes": 55457,
+    "source": "https://huggingface.co/datasets/mrm8488/ImageNet1K-val",
+    "config": "default",
+    "split": "train",
+    "usage": "real-photo processor pilot; repeatedly sampled small preview pool",
+    "original_wh": [
+      500,
+      375
+    ]
+  },
+  {
+    "row_idx": 22500,
+    "label": 450,
+    "label_code": "n02860847",
+    "viewer_size": [
+      500,
+      332
+    ],
+    "file": "photos/imagenet_row_22500.jpg",
+    "sha256": "d93e0b3dd52bfb5b3c92025f2adf713d766fff9102b0c6fc0a1813a079cb77ae",
+    "bytes": 43982,
+    "source": "https://huggingface.co/datasets/mrm8488/ImageNet1K-val",
+    "config": "default",
+    "split": "train",
+    "usage": "real-photo processor pilot; repeatedly sampled small preview pool",
+    "original_wh": [
+      500,
+      332
+    ]
+  },
+  {
+    "row_idx": 27500,
+    "label": 550,
+    "label_code": "n03297495",
+    "viewer_size": [
+      334,
+      500
+    ],
+    "file": "photos/imagenet_row_27500.jpg",
+    "sha256": "4ad924643f2e51689e69415696edd3dd8d51aa29a5859546ff3377537eb01b48",
+    "bytes": 23695,
+    "source": "https://huggingface.co/datasets/mrm8488/ImageNet1K-val",
+    "config": "default",
+    "split": "train",
+    "usage": "real-photo processor pilot; repeatedly sampled small preview pool",
+    "original_wh": [
+      334,
+      500
+    ]
+  },
+  {
+    "row_idx": 35000,
+    "label": 700,
+    "label_code": "n03887697",
+    "viewer_size": [
+      480,
+      360
+    ],
+    "file": "photos/imagenet_row_35000.jpg",
+    "sha256": "6d70a95a3b2faf9c829ff73ca24b9c0da31c5854ccb8d6c33dc09f21bb39fa0a",
+    "bytes": 31267,
+    "source": "https://huggingface.co/datasets/mrm8488/ImageNet1K-val",
+    "config": "default",
+    "split": "train",
+    "usage": "real-photo processor pilot; repeatedly sampled small preview pool",
+    "original_wh": [
+      480,
+      360
+    ]
+  }
+]
