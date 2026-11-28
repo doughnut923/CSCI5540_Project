@@ -1,0 +1,956 @@
+{
+  "source_commit": "d309514eb012c33b5b2c619e6f88b9fd43d43c2f",
+  "audit_commit": "1ca3e2a15ae83b6a86dba802b59153b45ce8865e",
+  "processor_model_commit": "895c3a49bc3fa70a340399125c650a463535e71c",
+  "packages": {
+    "torch": "2.5.1",
+    "transformers": "4.49.0",
+    "pillow": "13.0.0",
+    "numpy": "2.3.5"
+  },
+  "chat_template_sha256": "ad60d90252ed0b0705ba14e2d0ad0fec0beac1ea955642b54059b36052d8bc96",
+  "cases": {
+    "image_count_low": {
+      "manifest_sha256": "2c0560253ce45ffb1776c90ed312260674746d8505392cf7a4e5cdb39b1066c4",
+      "order_sha256": "6de88f4eb0d28dfa362ee231b07e3175233bcf0a0709e2f52d96f46311af30b8",
+      "multiplicity_sha256": "32608cc424d86bbe61aa44d3758f7aa1f8ea30f7832ed52a044544d8a8fbe089",
+      "total_measured_sample_visits": 16,
+      "cases": {
+        "image_count_low_000": {
+          "file": "tensors/image_count_low_000.npz",
+          "sha256": "c99d5350466983c5678e39b64319825aa682dc810008fb61dbf8d3484d7e7a44",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_low_001": {
+          "file": "tensors/image_count_low_001.npz",
+          "sha256": "83c0db75f460655c5049c50e01dedfabf8e0125da1f9daad06665c6bbd1e3e5e",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_low_002": {
+          "file": "tensors/image_count_low_002.npz",
+          "sha256": "1fc63c633dbc488a72e9ddb3198922fcf98e324cffb4b86154000b6dcd889f2a",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_low_003": {
+          "file": "tensors/image_count_low_003.npz",
+          "sha256": "84cc11a09605f8870993cd1a47a1344d70681351d76e61a336433c9f5afc55ba",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_low_004": {
+          "file": "tensors/image_count_low_004.npz",
+          "sha256": "79b2ab1203afa7728953d3925e345b5ef514fd4d347312e7d47f3c8508666f73",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_low_005": {
+          "file": "tensors/image_count_low_005.npz",
+          "sha256": "4c09e1dd5f517c615d5ae466d7b588489841d4294dda69ecf93f5732bf9cd017",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_low_006": {
+          "file": "tensors/image_count_low_006.npz",
+          "sha256": "84cc11a09605f8870993cd1a47a1344d70681351d76e61a336433c9f5afc55ba",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_low_007": {
+          "file": "tensors/image_count_low_007.npz",
+          "sha256": "4c09e1dd5f517c615d5ae466d7b588489841d4294dda69ecf93f5732bf9cd017",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_low_008": {
+          "file": "tensors/image_count_low_008.npz",
+          "sha256": "4c09e1dd5f517c615d5ae466d7b588489841d4294dda69ecf93f5732bf9cd017",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_low_009": {
+          "file": "tensors/image_count_low_009.npz",
+          "sha256": "e60788ac2c4c670d8ea12e35a610689b3b875ed0f49079df0b5ff31d4dced161",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_low_010": {
+          "file": "tensors/image_count_low_010.npz",
+          "sha256": "c99d5350466983c5678e39b64319825aa682dc810008fb61dbf8d3484d7e7a44",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_low_011": {
+          "file": "tensors/image_count_low_011.npz",
+          "sha256": "79b2ab1203afa7728953d3925e345b5ef514fd4d347312e7d47f3c8508666f73",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        }
+      }
+    },
+    "image_count_high": {
+      "manifest_sha256": "bd58357cb313dc3da892849d802a0f5e004fd8b94ea57e13bd498ab23600e1d1",
+      "order_sha256": "a768a849328e108fbf7aac1f70142c5ee209170dccfa41470d0d41a10d4d359c",
+      "multiplicity_sha256": "90955d2c51efe4b3817a28b86f01c328f6064f90f5b0de78bfd7be9408be9f7f",
+      "total_measured_sample_visits": 16,
+      "cases": {
+        "image_count_high_000": {
+          "file": "tensors/image_count_high_000.npz",
+          "sha256": "c99d5350466983c5678e39b64319825aa682dc810008fb61dbf8d3484d7e7a44",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_high_001": {
+          "file": "tensors/image_count_high_001.npz",
+          "sha256": "5366f82823dea48737468bd8c8190c097b7b8736997cf7a33a8332a41f12285a",
+          "image_count": 2,
+          "visual_tokens_per_image": [
+            288,
+            288
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              32,
+              36
+            ],
+            [
+              1,
+              32,
+              36
+            ]
+          ],
+          "sequence_length": 609,
+          "supervised_tokens": 6
+        },
+        "image_count_high_002": {
+          "file": "tensors/image_count_high_002.npz",
+          "sha256": "c489494692ab7b8c163a4358fcf72b24bfd2758e3fdd707d102ce4f99f8d34a7",
+          "image_count": 4,
+          "visual_tokens_per_image": [
+            144,
+            144,
+            144,
+            144
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              24,
+              24
+            ],
+            [
+              1,
+              24,
+              24
+            ],
+            [
+              1,
+              24,
+              24
+            ],
+            [
+              1,
+              24,
+              24
+            ]
+          ],
+          "sequence_length": 613,
+          "supervised_tokens": 6
+        },
+        "image_count_high_003": {
+          "file": "tensors/image_count_high_003.npz",
+          "sha256": "63b3a0adb1c3e25d8536c9d10fda154e29d418a781d15512759c8ec7df9346e0",
+          "image_count": 8,
+          "visual_tokens_per_image": [
+            72,
+            72,
+            72,
+            72,
+            72,
+            72,
+            72,
+            72
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ]
+          ],
+          "sequence_length": 621,
+          "supervised_tokens": 6
+        },
+        "image_count_high_004": {
+          "file": "tensors/image_count_high_004.npz",
+          "sha256": "83c0db75f460655c5049c50e01dedfabf8e0125da1f9daad06665c6bbd1e3e5e",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_high_005": {
+          "file": "tensors/image_count_high_005.npz",
+          "sha256": "9205ceceffc6c380d78ab38a35a623ba53e068cdf87a850f49d0470001d26f89",
+          "image_count": 2,
+          "visual_tokens_per_image": [
+            288,
+            288
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              32,
+              36
+            ],
+            [
+              1,
+              32,
+              36
+            ]
+          ],
+          "sequence_length": 609,
+          "supervised_tokens": 6
+        },
+        "image_count_high_006": {
+          "file": "tensors/image_count_high_006.npz",
+          "sha256": "95b4b21bf9bfce4d4207c117b9946ceed069913e6bde16f14089e5b7f6911cac",
+          "image_count": 4,
+          "visual_tokens_per_image": [
+            144,
+            144,
+            144,
+            144
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              24,
+              24
+            ],
+            [
+              1,
+              24,
+              24
+            ],
+            [
+              1,
+              24,
+              24
+            ],
+            [
+              1,
+              24,
+              24
+            ]
+          ],
+          "sequence_length": 613,
+          "supervised_tokens": 6
+        },
+        "image_count_high_007": {
+          "file": "tensors/image_count_high_007.npz",
+          "sha256": "b3110be47b3e76817e83445d5f5eb2aa9ac07480d8516d3416e3a67da6967c0e",
+          "image_count": 8,
+          "visual_tokens_per_image": [
+            72,
+            72,
+            72,
+            72,
+            72,
+            72,
+            72,
+            72
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ]
+          ],
+          "sequence_length": 621,
+          "supervised_tokens": 6
+        },
+        "image_count_high_008": {
+          "file": "tensors/image_count_high_008.npz",
+          "sha256": "1fc63c633dbc488a72e9ddb3198922fcf98e324cffb4b86154000b6dcd889f2a",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_high_009": {
+          "file": "tensors/image_count_high_009.npz",
+          "sha256": "543d29ceeadad1fc7a9fc17a2d84478bcfbbb17ed4c8f6d64ba20510b66739d5",
+          "image_count": 2,
+          "visual_tokens_per_image": [
+            288,
+            288
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              32,
+              36
+            ],
+            [
+              1,
+              32,
+              36
+            ]
+          ],
+          "sequence_length": 609,
+          "supervised_tokens": 6
+        },
+        "image_count_high_010": {
+          "file": "tensors/image_count_high_010.npz",
+          "sha256": "f7d48833f1d628155dd32af7ee7defa2d104531008ded976426780b846460d80",
+          "image_count": 4,
+          "visual_tokens_per_image": [
+            144,
+            144,
+            144,
+            144
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              24,
+              24
+            ],
+            [
+              1,
+              24,
+              24
+            ],
+            [
+              1,
+              24,
+              24
+            ],
+            [
+              1,
+              24,
+              24
+            ]
+          ],
+          "sequence_length": 613,
+          "supervised_tokens": 6
+        },
+        "image_count_high_011": {
+          "file": "tensors/image_count_high_011.npz",
+          "sha256": "ab24de8381ae15a11963a774108661ae4a00cadc5fa84f2c0b0509fb28524281",
+          "image_count": 8,
+          "visual_tokens_per_image": [
+            72,
+            72,
+            72,
+            72,
+            72,
+            72,
+            72,
+            72
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ],
+            [
+              1,
+              16,
+              18
+            ]
+          ],
+          "sequence_length": 621,
+          "supervised_tokens": 6
+        }
+      }
+    },
+    "image_count_medium": {
+      "manifest_sha256": "bf61cc9c17a73fbdf52ae0d5aa2e4893f2511c7f7c8b98e9033703243d62ce67",
+      "order_sha256": "c06a77ffad23ad730e11389efda681831c8a8f8adcb65212d099e0fead2354fb",
+      "multiplicity_sha256": "fe5a8f31a072fc237f9b1b2b1f82f8b68b04e17616aaaf7ee8dd445a8f6624ee",
+      "total_measured_sample_visits": 16,
+      "cases": {
+        "image_count_medium_000": {
+          "file": "tensors/image_count_medium_000.npz",
+          "sha256": "c99d5350466983c5678e39b64319825aa682dc810008fb61dbf8d3484d7e7a44",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_medium_001": {
+          "file": "tensors/image_count_medium_001.npz",
+          "sha256": "5366f82823dea48737468bd8c8190c097b7b8736997cf7a33a8332a41f12285a",
+          "image_count": 2,
+          "visual_tokens_per_image": [
+            288,
+            288
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              32,
+              36
+            ],
+            [
+              1,
+              32,
+              36
+            ]
+          ],
+          "sequence_length": 609,
+          "supervised_tokens": 6
+        },
+        "image_count_medium_002": {
+          "file": "tensors/image_count_medium_002.npz",
+          "sha256": "2ae9a96576775f04699c1a92bff22817c87b71c370ed25d570e930291623e08e",
+          "image_count": 3,
+          "visual_tokens_per_image": [
+            192,
+            192,
+            192
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              24,
+              32
+            ],
+            [
+              1,
+              24,
+              32
+            ],
+            [
+              1,
+              24,
+              32
+            ]
+          ],
+          "sequence_length": 611,
+          "supervised_tokens": 6
+        },
+        "image_count_medium_003": {
+          "file": "tensors/image_count_medium_003.npz",
+          "sha256": "83c0db75f460655c5049c50e01dedfabf8e0125da1f9daad06665c6bbd1e3e5e",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_medium_004": {
+          "file": "tensors/image_count_medium_004.npz",
+          "sha256": "9205ceceffc6c380d78ab38a35a623ba53e068cdf87a850f49d0470001d26f89",
+          "image_count": 2,
+          "visual_tokens_per_image": [
+            288,
+            288
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              32,
+              36
+            ],
+            [
+              1,
+              32,
+              36
+            ]
+          ],
+          "sequence_length": 609,
+          "supervised_tokens": 6
+        },
+        "image_count_medium_005": {
+          "file": "tensors/image_count_medium_005.npz",
+          "sha256": "da6af738477225586b3645599948330267cf12c8a8414438aed84a8ba7b0cd0d",
+          "image_count": 3,
+          "visual_tokens_per_image": [
+            192,
+            192,
+            192
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              24,
+              32
+            ],
+            [
+              1,
+              24,
+              32
+            ],
+            [
+              1,
+              24,
+              32
+            ]
+          ],
+          "sequence_length": 611,
+          "supervised_tokens": 6
+        },
+        "image_count_medium_006": {
+          "file": "tensors/image_count_medium_006.npz",
+          "sha256": "1fc63c633dbc488a72e9ddb3198922fcf98e324cffb4b86154000b6dcd889f2a",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_medium_007": {
+          "file": "tensors/image_count_medium_007.npz",
+          "sha256": "543d29ceeadad1fc7a9fc17a2d84478bcfbbb17ed4c8f6d64ba20510b66739d5",
+          "image_count": 2,
+          "visual_tokens_per_image": [
+            288,
+            288
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              32,
+              36
+            ],
+            [
+              1,
+              32,
+              36
+            ]
+          ],
+          "sequence_length": 609,
+          "supervised_tokens": 6
+        },
+        "image_count_medium_008": {
+          "file": "tensors/image_count_medium_008.npz",
+          "sha256": "30167083ddcdb0acd546c1f16c816ed57d66b725057a7fe1f64a79d9c6e6a5fa",
+          "image_count": 3,
+          "visual_tokens_per_image": [
+            192,
+            192,
+            192
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              24,
+              32
+            ],
+            [
+              1,
+              24,
+              32
+            ],
+            [
+              1,
+              24,
+              32
+            ]
+          ],
+          "sequence_length": 611,
+          "supervised_tokens": 6
+        },
+        "image_count_medium_009": {
+          "file": "tensors/image_count_medium_009.npz",
+          "sha256": "84cc11a09605f8870993cd1a47a1344d70681351d76e61a336433c9f5afc55ba",
+          "image_count": 1,
+          "visual_tokens_per_image": [
+            576
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              48,
+              48
+            ]
+          ],
+          "sequence_length": 607,
+          "supervised_tokens": 6
+        },
+        "image_count_medium_010": {
+          "file": "tensors/image_count_medium_010.npz",
+          "sha256": "0f3bf63295f75a7533ec8706bf54456e89f7673798ab8fd2b19c78e16e7115a4",
+          "image_count": 2,
+          "visual_tokens_per_image": [
+            288,
+            288
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              32,
+              36
+            ],
+            [
+              1,
+              32,
+              36
+            ]
+          ],
+          "sequence_length": 609,
+          "supervised_tokens": 6
+        },
+        "image_count_medium_011": {
+          "file": "tensors/image_count_medium_011.npz",
+          "sha256": "77edc1b19745ae0a65621d1961359f219e9e3ce34eb81e26763d1be63a9da607",
+          "image_count": 3,
+          "visual_tokens_per_image": [
+            192,
+            192,
+            192
+          ],
+          "visual_tokens_total": 576,
+          "image_grid_thw": [
+            [
+              1,
+              24,
+              32
+            ],
+            [
+              1,
+              24,
+              32
+            ],
+            [
+              1,
+              24,
+              32
+            ]
+          ],
+          "sequence_length": 611,
+          "supervised_tokens": 6
+        }
+      }
+    }
+  }
+}

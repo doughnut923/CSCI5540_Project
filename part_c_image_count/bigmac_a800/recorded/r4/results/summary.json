@@ -1,0 +1,82 @@
+{
+  "cases": {
+    "image_count_low": {
+      "BigMac": {
+        "mean_step_ms": 342.81613132043276,
+        "samples_s": 5.834031182536697,
+        "max_rank_peak_allocated_gib": 4.88940954208374,
+        "paired_block_mean_ms": [
+          347.5301497383043,
+          340.91040899511427,
+          342.01657213270664,
+          340.8073944156058
+        ],
+        "timed_steps": 32
+      },
+      "Optimus-PP": {
+        "mean_step_ms": 330.62578667886555,
+        "samples_s": 6.04913494525031,
+        "max_rank_peak_allocated_gib": 4.890458106994629,
+        "paired_block_mean_ms": [
+          332.8850950929336,
+          330.19666228210554,
+          329.5718865701929,
+          329.8495027702302
+        ],
+        "timed_steps": 32
+      }
+    },
+    "image_count_high": {
+      "BigMac": {
+        "mean_step_ms": 300.2676211617654,
+        "samples_s": 6.66072483027574,
+        "max_rank_peak_allocated_gib": 4.941720485687256,
+        "paired_block_mean_ms": [
+          300.5276749609038,
+          299.03691267827526,
+          301.11605423735455,
+          300.38984277052805
+        ],
+        "timed_steps": 32
+      },
+      "Optimus-PP": {
+        "mean_step_ms": 288.72168851376045,
+        "samples_s": 6.92708611637494,
+        "max_rank_peak_allocated_gib": 4.943435192108154,
+        "paired_block_mean_ms": [
+          287.4865120393224,
+          290.1955021661706,
+          288.39872346725315,
+          288.80601638229564
+        ],
+        "timed_steps": 32
+      }
+    },
+    "image_count_medium": {
+      "BigMac": {
+        "mean_step_ms": 304.84358727699146,
+        "samples_s": 6.560741585102561,
+        "max_rank_peak_allocated_gib": 4.915198802947998,
+        "paired_block_mean_ms": [
+          308.62960091326386,
+          303.5215961863287,
+          302.44362802477553,
+          304.77952398359776
+        ],
+        "timed_steps": 32
+      },
+      "Optimus-PP": {
+        "mean_step_ms": 291.60100560693536,
+        "samples_s": 6.8586869096600696,
+        "max_rank_peak_allocated_gib": 4.9149627685546875,
+        "paired_block_mean_ms": [
+          292.27031365735456,
+          290.8191484748386,
+          291.2674624240026,
+          292.0470978715457
+        ],
+        "timed_steps": 32
+      }
+    }
+  }
+}

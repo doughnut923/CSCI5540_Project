@@ -1,0 +1,379 @@
+{
+  "scope": "real-photo small-pool engineering pilot",
+  "case": "image_count_medium",
+  "batching": "manifest",
+  "samples": [
+    {
+      "sample_id": "image_count_medium_000",
+      "images": [
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_35000.jpg",
+          "sha256": "6d70a95a3b2faf9c829ff73ca24b9c0da31c5854ccb8d6c33dc09f21bb39fa0a",
+          "source_row": 35000,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 1
+          }
+        }
+      ],
+      "target_text": "These are photographs.",
+      "axis": "image_count",
+      "level": "medium",
+      "processor_bounds": {
+        "min_pixels": 3136,
+        "max_pixels": 451584
+      },
+      "expected_visual_tokens": 576
+    },
+    {
+      "sample_id": "image_count_medium_001",
+      "images": [
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_0000.jpg",
+          "sha256": "abf8e6170852042df23127ff6f00f861dadd48ba746cab0cddce6ff8843149d4",
+          "source_row": 0,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 2
+          }
+        },
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_27500.jpg",
+          "sha256": "4ad924643f2e51689e69415696edd3dd8d51aa29a5859546ff3377537eb01b48",
+          "source_row": 27500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 2
+          }
+        }
+      ],
+      "target_text": "These are photographs.",
+      "axis": "image_count",
+      "level": "medium",
+      "processor_bounds": {
+        "min_pixels": 3136,
+        "max_pixels": 225792
+      },
+      "expected_visual_tokens": 576
+    },
+    {
+      "sample_id": "image_count_medium_002",
+      "images": [
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_7500.jpg",
+          "sha256": "2e4bfae2f1be2be30970ec9859a8b6af84930d74f5e46715163a68d3fd3a3e58",
+          "source_row": 7500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 3
+          }
+        },
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_2500.jpg",
+          "sha256": "5de18b0524d390304288298a2ae24fdaf869dc9f7b16aa15a061ad6dd1e2e469",
+          "source_row": 2500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 3
+          }
+        },
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_27500.jpg",
+          "sha256": "4ad924643f2e51689e69415696edd3dd8d51aa29a5859546ff3377537eb01b48",
+          "source_row": 27500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 3
+          }
+        }
+      ],
+      "target_text": "These are photographs.",
+      "axis": "image_count",
+      "level": "medium",
+      "processor_bounds": {
+        "min_pixels": 3136,
+        "max_pixels": 150528
+      },
+      "expected_visual_tokens": 576
+    },
+    {
+      "sample_id": "image_count_medium_003",
+      "images": [
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_2500.jpg",
+          "sha256": "5de18b0524d390304288298a2ae24fdaf869dc9f7b16aa15a061ad6dd1e2e469",
+          "source_row": 2500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 1
+          }
+        }
+      ],
+      "target_text": "These are photographs.",
+      "axis": "image_count",
+      "level": "medium",
+      "processor_bounds": {
+        "min_pixels": 3136,
+        "max_pixels": 451584
+      },
+      "expected_visual_tokens": 576
+    },
+    {
+      "sample_id": "image_count_medium_004",
+      "images": [
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_22500.jpg",
+          "sha256": "d93e0b3dd52bfb5b3c92025f2adf713d766fff9102b0c6fc0a1813a079cb77ae",
+          "source_row": 22500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 2
+          }
+        },
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_35000.jpg",
+          "sha256": "6d70a95a3b2faf9c829ff73ca24b9c0da31c5854ccb8d6c33dc09f21bb39fa0a",
+          "source_row": 35000,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 2
+          }
+        }
+      ],
+      "target_text": "These are photographs.",
+      "axis": "image_count",
+      "level": "medium",
+      "processor_bounds": {
+        "min_pixels": 3136,
+        "max_pixels": 225792
+      },
+      "expected_visual_tokens": 576
+    },
+    {
+      "sample_id": "image_count_medium_005",
+      "images": [
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_2500.jpg",
+          "sha256": "5de18b0524d390304288298a2ae24fdaf869dc9f7b16aa15a061ad6dd1e2e469",
+          "source_row": 2500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 3
+          }
+        },
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_17500.jpg",
+          "sha256": "62e195f5101040ba201503a386cdead8557d832fab23072d9b3349b6589a1d90",
+          "source_row": 17500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 3
+          }
+        },
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_22500.jpg",
+          "sha256": "d93e0b3dd52bfb5b3c92025f2adf713d766fff9102b0c6fc0a1813a079cb77ae",
+          "source_row": 22500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 3
+          }
+        }
+      ],
+      "target_text": "These are photographs.",
+      "axis": "image_count",
+      "level": "medium",
+      "processor_bounds": {
+        "min_pixels": 3136,
+        "max_pixels": 150528
+      },
+      "expected_visual_tokens": 576
+    },
+    {
+      "sample_id": "image_count_medium_006",
+      "images": [
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_12500.jpg",
+          "sha256": "8faaa5acb8712832aad2786796b992127896baa95a01a4129bb42f2d2eab3028",
+          "source_row": 12500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 1
+          }
+        }
+      ],
+      "target_text": "These are photographs.",
+      "axis": "image_count",
+      "level": "medium",
+      "processor_bounds": {
+        "min_pixels": 3136,
+        "max_pixels": 451584
+      },
+      "expected_visual_tokens": 576
+    },
+    {
+      "sample_id": "image_count_medium_007",
+      "images": [
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_0000.jpg",
+          "sha256": "abf8e6170852042df23127ff6f00f861dadd48ba746cab0cddce6ff8843149d4",
+          "source_row": 0,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 2
+          }
+        },
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_35000.jpg",
+          "sha256": "6d70a95a3b2faf9c829ff73ca24b9c0da31c5854ccb8d6c33dc09f21bb39fa0a",
+          "source_row": 35000,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 2
+          }
+        }
+      ],
+      "target_text": "These are photographs.",
+      "axis": "image_count",
+      "level": "medium",
+      "processor_bounds": {
+        "min_pixels": 3136,
+        "max_pixels": 225792
+      },
+      "expected_visual_tokens": 576
+    },
+    {
+      "sample_id": "image_count_medium_008",
+      "images": [
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_35000.jpg",
+          "sha256": "6d70a95a3b2faf9c829ff73ca24b9c0da31c5854ccb8d6c33dc09f21bb39fa0a",
+          "source_row": 35000,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 3
+          }
+        },
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_22500.jpg",
+          "sha256": "d93e0b3dd52bfb5b3c92025f2adf713d766fff9102b0c6fc0a1813a079cb77ae",
+          "source_row": 22500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 3
+          }
+        },
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_0000.jpg",
+          "sha256": "abf8e6170852042df23127ff6f00f861dadd48ba746cab0cddce6ff8843149d4",
+          "source_row": 0,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 3
+          }
+        }
+      ],
+      "target_text": "These are photographs.",
+      "axis": "image_count",
+      "level": "medium",
+      "processor_bounds": {
+        "min_pixels": 3136,
+        "max_pixels": 150528
+      },
+      "expected_visual_tokens": 576
+    },
+    {
+      "sample_id": "image_count_medium_009",
+      "images": [
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_22500.jpg",
+          "sha256": "d93e0b3dd52bfb5b3c92025f2adf713d766fff9102b0c6fc0a1813a079cb77ae",
+          "source_row": 22500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 1
+          }
+        }
+      ],
+      "target_text": "These are photographs.",
+      "axis": "image_count",
+      "level": "medium",
+      "processor_bounds": {
+        "min_pixels": 3136,
+        "max_pixels": 451584
+      },
+      "expected_visual_tokens": 576
+    },
+    {
+      "sample_id": "image_count_medium_010",
+      "images": [
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_0000.jpg",
+          "sha256": "abf8e6170852042df23127ff6f00f861dadd48ba746cab0cddce6ff8843149d4",
+          "source_row": 0,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 2
+          }
+        },
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_12500.jpg",
+          "sha256": "8faaa5acb8712832aad2786796b992127896baa95a01a4129bb42f2d2eab3028",
+          "source_row": 12500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 2
+          }
+        }
+      ],
+      "target_text": "These are photographs.",
+      "axis": "image_count",
+      "level": "medium",
+      "processor_bounds": {
+        "min_pixels": 3136,
+        "max_pixels": 225792
+      },
+      "expected_visual_tokens": 576
+    },
+    {
+      "sample_id": "image_count_medium_011",
+      "images": [
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_17500.jpg",
+          "sha256": "62e195f5101040ba201503a386cdead8557d832fab23072d9b3349b6589a1d90",
+          "source_row": 17500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 3
+          }
+        },
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_22500.jpg",
+          "sha256": "d93e0b3dd52bfb5b3c92025f2adf713d766fff9102b0c6fc0a1813a079cb77ae",
+          "source_row": 22500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 3
+          }
+        },
+        {
+          "path_relative_to_repo_root": "part_c_image_count/real_photo_pilot/photos/imagenet_row_2500.jpg",
+          "sha256": "5de18b0524d390304288298a2ae24fdaf869dc9f7b16aa15a061ad6dd1e2e469",
+          "source_row": 2500,
+          "preparation": {
+            "type": "part_c_padded_control",
+            "image_count": 3
+          }
+        }
+      ],
+      "target_text": "These are photographs.",
+      "axis": "image_count",
+      "level": "medium",
+      "processor_bounds": {
+        "min_pixels": 3136,
+        "max_pixels": 150528
+      },
+      "expected_visual_tokens": 576
+    }
+  ]
+}

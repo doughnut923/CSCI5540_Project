@@ -1,0 +1,17 @@
+{
+  "gpus": [
+    {
+      "rank": 0,
+      "name": "NVIDIA A800-SXM4-80GB",
+      "memory": 85174583296
+    },
+    {
+      "rank": 1,
+      "name": "NVIDIA A800-SXM4-80GB",
+      "memory": 85174583296
+    }
+  ],
+  "distinct_devices_verified": true,
+  "torch": "2.11.0+cu128",
+  "cuda": "12.8"
+}
